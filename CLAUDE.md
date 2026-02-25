@@ -70,8 +70,7 @@
 ## Modelo de Datos
 
 ### Entidades
-- **User** — Usuario centralizado (cedula unique, cedula_type: fisica|juridica, name, email, phone, password_hash bcrypt, role: customer|admin, quote_quota default 5, quotes_used, status: active|suspended)
-- **UserProfile** — Perfil extendido progresivo (user_id, address, provincia, canton, distrito, actividad_comercial, admin_notes)
+- **User** — Usuario centralizado (cedula unique, cedula_type: fisica|juridica, nombre, apellido, email, telefono, password_hash bcrypt, role: customer|admin, quote_quota default 5, quotes_used, activo, direccion, provincia, canton, distrito, metadata JSONB)
 - **Technology** — CO2, UV, Fibra, MOPA (code, name, uv_premium_factor, is_active)
 - **Material** — Con factor de ajuste (name, category, factor 1.0-1.8, thicknesses[], notes)
 - **EngraveType** — Tipo grabado con factor tiempo (name, factor 1.0-3.0, speed_multiplier)
@@ -118,6 +117,8 @@
 | `/api/v1/auth/login` | POST | No | `{identificacion, password}` → `{token, usuario}` |
 | `/api/v1/auth/establecer-password` | POST | No | `{identificacion, password, email?, telefono?}` → `{token, usuario}` (valida GoMeta si no hay metadata) |
 | `/api/v1/auth/me` | GET | JWT | `→ {usuario}` |
+| `/api/v1/auth/profile` | GET | JWT | `→ {perfil completo con direccion}` |
+| `/api/v1/auth/profile` | PUT | JWT | `{email?, telefono?, provincia?, canton?, distrito?, direccion?}` → `{usuario}` |
 
 **Endpoints Config (públicos):**
 | Endpoint | Método | Auth | Descripción |
@@ -307,7 +308,7 @@ FABRICALASER_GOMETA_TIMEOUT=10                    # Timeout en segundos (default
 FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuando GoMeta offline
 ```
 
-## Fase Actual: 0D — Landing Page
+## Fase Actual: 1 — Cotizador (Pendiente)
 
 **Fases de Fundación:**
 | Fase | Nombre | Estado |
@@ -315,7 +316,7 @@ FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuan
 | 0A | Estructura + DB + Seed | ✅ COMPLETADA |
 | 0B | Sistema de Autenticación | ✅ COMPLETADA |
 | 0C | API Config + Admin | ✅ COMPLETADA |
-| 0D | Landing Page | ⏳ Pendiente |
+| 0D | Landing Page + Auth UI | ✅ COMPLETADA |
 
 **Completado 0A:**
 - Proyecto Go con chi, gorm, pgx, bcrypt, jwt-go
@@ -343,14 +344,27 @@ FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuan
 
 **Archivos clave implementados:**
 - `internal/services/cedula/cedula_service.go` — Cliente HTTP GoMeta API
-- `internal/services/auth/auth_service.go` — Lógica con validación externa
-- `internal/handlers/auth/auth_handler.go` — 5 endpoints auth
+- `internal/services/auth/auth_service.go` — Lógica con validación externa + UpdateProfile
+- `internal/handlers/auth/auth_handler.go` — 7 endpoints auth (incluye profile GET/PUT)
 - `internal/handlers/config/config_handler.go` — 7 endpoints config públicos
 - `internal/handlers/admin/admin_handler.go` — 18 endpoints admin CRUD
 - `internal/repository/*_repository.go` — 7 repositorios (user + 6 config)
 - `internal/utils/cedula.go` — Validación formato local
+- `web/landing/index.html` — Landing page con auth modal 4-estados
+- `web/mi-cuenta/index.html` — Página perfil usuario con edición de direccion
+- `migrations/008_user_profile_fields.sql` — Campos perfil CR (direccion, provincia, canton, distrito)
 
-**Siguiente:** Fase 0D — Landing Page (HTML estático, Nginx).
+**Completado 0D:**
+- Landing page HTML estática (`web/landing/index.html`)
+- Auth modal con flujo 4 estados (cedula → registro/login/establecer password)
+- Pagina `/mi-cuenta` para perfil de usuario (`web/mi-cuenta/index.html`)
+- Endpoint `GET/PUT /api/v1/auth/profile` para perfil con direccion CR
+- Campos perfil usuario: direccion, provincia, canton, distrito (migracion 008)
+- Router sirve archivos estaticos (/, /mi-cuenta, /cotizar placeholder)
+- "COTIZAR ONLINE" verifica auth antes de redirigir
+- No se muestra "GoMeta" en UI - solo "Identidad verificada"
+
+**Siguiente:** Fase 1 — Motor SVG + Cotizador.
 
 ## Notas para Claude Code
 - Monolito modular. NO crear microservicios.

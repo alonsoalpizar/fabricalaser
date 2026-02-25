@@ -429,6 +429,25 @@ func (s *AuthService) GetCurrentUser(userID uint) (*models.User, error) {
 	return s.userRepo.FindByID(userID)
 }
 
+// UpdateProfile updates user profile fields
+func (s *AuthService) UpdateProfile(userID uint, email, telefono, direccion, provincia, canton, distrito *string) (*models.User, error) {
+	// Check if email is used by another user
+	if email != nil && *email != "" {
+		existingUser, err := s.userRepo.FindByEmail(*email)
+		if err == nil && existingUser != nil && existingUser.ID != userID {
+			return nil, ErrEmailExists
+		}
+	}
+
+	// Update profile
+	if err := s.userRepo.UpdateProfile(userID, email, telefono, direccion, provincia, canton, distrito); err != nil {
+		return nil, err
+	}
+
+	// Return updated user
+	return s.userRepo.FindByID(userID)
+}
+
 // extractDatosFromMetadata extracts DatosRegistroCivil from metadata extras
 func extractDatosFromMetadata(extras map[string]interface{}) *DatosRegistroCivil {
 	getString := func(m map[string]interface{}, key string) string {

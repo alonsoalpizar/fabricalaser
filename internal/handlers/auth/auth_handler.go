@@ -265,6 +265,138 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetProfile handles GET /api/v1/auth/profile
+func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID")
+	if userID == nil {
+		respondError(w, http.StatusUnauthorized, "UNAUTHORIZED", "No autenticado")
+		return
+	}
+
+	user, err := h.service.GetCurrentUser(userID.(uint))
+	if err != nil {
+		respondError(w, http.StatusNotFound, "NOT_FOUND", "Usuario no encontrado")
+		return
+	}
+
+	// Return full profile including address fields
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"id":              user.ID,
+		"cedula":          user.Cedula,
+		"cedula_type":     user.CedulaType,
+		"nombre":          user.Nombre,
+		"apellido":        user.Apellido,
+		"nombre_completo": user.NombreCompleto(),
+		"email":           user.Email,
+		"telefono":        user.Telefono,
+		"role":            user.Role,
+		"quote_quota":     user.QuoteQuota,
+		"quotes_used":     user.QuotesUsed,
+		"remaining_quotes": user.RemainingQuotes(),
+		"direccion":       user.Direccion,
+		"provincia":       user.Provincia,
+		"canton":          user.Canton,
+		"distrito":        user.Distrito,
+		"activo":          user.Activo,
+		"created_at":      user.CreatedAt,
+	})
+}
+
+// UpdateProfile handles PUT /api/v1/auth/profile
+func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID")
+	if userID == nil {
+		respondError(w, http.StatusUnauthorized, "UNAUTHORIZED", "No autenticado")
+		return
+	}
+
+	var req struct {
+		Email     *string `json:"email"`
+		Telefono  *string `json:"telefono"`
+		Direccion *string `json:"direccion"`
+		Provincia *string `json:"provincia"`
+		Canton    *string `json:"canton"`
+		Distrito  *string `json:"distrito"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
+		return
+	}
+
+	// Validate email if provided
+	if req.Email != nil {
+		email := strings.ToLower(strings.TrimSpace(*req.Email))
+		if email == "" || !isValidEmail(email) {
+			respondError(w, http.StatusBadRequest, "INVALID_EMAIL", "Email válido es requerido")
+			return
+		}
+		req.Email = &email
+	}
+
+	// Trim optional fields
+	if req.Telefono != nil {
+		tel := strings.TrimSpace(*req.Telefono)
+		req.Telefono = &tel
+	}
+	if req.Direccion != nil {
+		dir := strings.TrimSpace(*req.Direccion)
+		req.Direccion = &dir
+	}
+	if req.Provincia != nil {
+		prov := strings.TrimSpace(*req.Provincia)
+		req.Provincia = &prov
+	}
+	if req.Canton != nil {
+		cant := strings.TrimSpace(*req.Canton)
+		req.Canton = &cant
+	}
+	if req.Distrito != nil {
+		dist := strings.TrimSpace(*req.Distrito)
+		req.Distrito = &dist
+	}
+
+	user, err := h.service.UpdateProfile(
+		userID.(uint),
+		req.Email,
+		req.Telefono,
+		req.Direccion,
+		req.Provincia,
+		req.Canton,
+		req.Distrito,
+	)
+
+	if err != nil {
+		code := "UPDATE_ERROR"
+		status := http.StatusBadRequest
+
+		if err.Error() == "ya existe una cuenta con este email" {
+			code = "EMAIL_EXISTS"
+		}
+
+		respondError(w, status, code, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message": "Perfil actualizado correctamente",
+		"usuario": map[string]interface{}{
+			"id":              user.ID,
+			"cedula":          user.Cedula,
+			"cedula_type":     user.CedulaType,
+			"nombre":          user.Nombre,
+			"apellido":        user.Apellido,
+			"nombre_completo": user.NombreCompleto(),
+			"email":           user.Email,
+			"telefono":        user.Telefono,
+			"direccion":       user.Direccion,
+			"provincia":       user.Provincia,
+			"canton":          user.Canton,
+			"distrito":        user.Distrito,
+		},
+	})
+}
+
 // isValidEmail checks if email format is valid
 func isValidEmail(email string) bool {
 	// Simple check - contains @ and at least one . after @

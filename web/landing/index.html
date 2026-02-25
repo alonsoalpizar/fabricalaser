@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FabricaLaser.com — Corte y Grabado Láser de Alta Precisión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #F6F4F0;
+  --bg-warm: #EDEAE4;
+  --bg-card: #FFFFFF;
+  --bg-dark: #1C1C1E;
+  --bg-dark-soft: #2C2C2E;
+  --border: #D8D4CC;
+  --border-light: #E8E5DF;
+  --text: #1C1C1E;
+  --text-secondary: #5A5754;
+  --text-muted: #8A8681;
+  --accent: #B8543E;
+  --accent-soft: rgba(184, 84, 62, 0.08);
+  --accent-hover: #9C4533;
+  --white: #FFFFFF;
+
+  /* Feedback colors */
+  --success: #10b981;
+  --success-soft: rgba(16, 185, 129, 0.1);
+  --info: #06b6d4;
+  --info-soft: rgba(6, 182, 212, 0.1);
+  --primary: #3b82f6;
+  --primary-soft: rgba(59, 130, 246, 0.1);
+  --error: #ef4444;
+  --error-soft: rgba(239, 68, 68, 0.1);
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* ========== NAV ========== */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 1.15rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(246, 244, 240, 0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.nav-logo {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.nav-logo span { color: var(--accent); }
+
+.nav-links {
+  display: flex;
+  gap: 2.5rem;
+  list-style: none;
+  align-items: center;
+}
+
+.nav-links a {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  transition: color 0.3s;
+}
+
+.nav-links a:hover { color: var(--text); }
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-login {
+  padding: 0.55rem 1.25rem;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.nav-login:hover { border-color: var(--text-secondary); background: var(--white); }
+
+.nav-cta {
+  padding: 0.55rem 1.5rem;
+  background: var(--accent);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.nav-cta:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+/* User menu when logged in */
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.nav-user:hover { border-color: var(--text-secondary); }
+
+.nav-user-avatar {
+  width: 26px;
+  height: 26px;
+  background: var(--accent);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.nav-user-name {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ========== HERO ========== */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8rem 2.5rem 4rem;
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: fade-up 0.8s var(--ease) 0.2s forwards;
+}
+
+.hero-eyebrow-line { width: 2rem; height: 1px; background: var(--accent); }
+
+.hero-eyebrow-text {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  max-width: 750px;
+  opacity: 0;
+  animation: fade-up 1s var(--ease) 0.35s forwards;
+}
+
+.hero h1 em { font-style: italic; color: var(--accent); }
+
+.hero-sub {
+  margin-top: 1.75rem;
+  font-size: 1.1rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  max-width: 500px;
+  line-height: 1.75;
+  opacity: 0;
+  animation: fade-up 1s var(--ease) 0.55s forwards;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2.75rem;
+  opacity: 0;
+  animation: fade-up 1s var(--ease) 0.7s forwards;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: var(--accent);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(184, 84, 62, 0.2); }
+
+.btn-primary svg { width: 16px; height: 16px; transition: transform 0.3s var(--ease); }
+.btn-primary:hover svg { transform: translateX(3px); }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.95rem 1.75rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+  border: 1px solid var(--border);
+  background: none;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.btn-outline:hover { border-color: var(--text-secondary); background: var(--white); }
+
+.hero-stats {
+  display: flex;
+  gap: 3.5rem;
+  margin-top: 5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border);
+  opacity: 0;
+  animation: fade-up 1s var(--ease) 0.9s forwards;
+}
+
+.hero-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.hero-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+  letter-spacing: 0.03em;
+}
+
+/* ========== CAPABILITIES STRIP ========== */
+.cap-strip {
+  padding: 1.75rem 2.5rem;
+  background: var(--bg-warm);
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: center;
+  gap: 3.5rem;
+  flex-wrap: wrap;
+}
+
+.cap-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.cap-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ========== SECTION UTILITY ========== */
+.section {
+  padding: 6rem 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.section-label::before {
+  content: '';
+  width: 1.5rem;
+  height: 1px;
+  background: var(--accent);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.section-title em { font-style: italic; color: var(--accent); }
+
+.section-desc {
+  font-size: 1rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  max-width: 520px;
+  line-height: 1.75;
+}
+
+/* ========== TECHNOLOGY / CAPACITY ========== */
+.tech-section {
+  padding: 6rem 2.5rem;
+  background: var(--bg-dark);
+  color: var(--white);
+}
+
+.tech-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.tech-section .section-label { color: rgba(255,255,255,0.4); }
+.tech-section .section-label::before { background: var(--accent); }
+.tech-section .section-title { color: var(--white); }
+.tech-section .section-desc { color: rgba(255,255,255,0.55); }
+
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin-top: 3.5rem;
+  background: var(--bg-dark-soft);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.tech-card {
+  padding: 2.5rem 2rem;
+  background: var(--bg-dark);
+  transition: all 0.4s var(--ease);
+  position: relative;
+}
+
+.tech-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 1.5rem; right: 1.5rem;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.4s var(--ease);
+}
+
+.tech-card:hover { background: var(--bg-dark-soft); }
+.tech-card:hover::after { transform: scaleX(1); }
+
+.tech-card-name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+}
+
+.tech-card-desc {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.45);
+  font-weight: 300;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.tech-card-materials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tech-mat {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: rgba(255,255,255,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tech-badge {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(184, 84, 62, 0.12);
+  border: 1px solid rgba(184, 84, 62, 0.2);
+}
+
+/* ========== SERVICES ========== */
+.services-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 3.5rem;
+}
+
+.service-card {
+  padding: 2.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  transition: all 0.4s var(--ease);
+  display: flex;
+  flex-direction: column;
+}
+
+.service-card:hover { border-color: var(--border); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.04); }
+
+.service-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  background: var(--accent-soft);
+  border-radius: 8px;
+}
+
+.service-icon svg { width: 18px; height: 18px; stroke: var(--accent); fill: none; stroke-width: 1.8; }
+
+.service-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.service-card p {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+
+.service-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+}
+
+.service-tag {
+  padding: 0.25rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+}
+
+/* ========== PROCESS ========== */
+.process-section { background: var(--bg-warm); border-top: 1px solid var(--border-light); }
+
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  margin-top: 3.5rem;
+}
+
+.process-card { text-align: left; }
+
+.process-num {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  color: var(--accent);
+  opacity: 0.35;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+
+.process-card h4 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.process-card p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 300;
+  line-height: 1.65;
+}
+
+/* ========== CONTACT / CTA ========== */
+.cta-section {
+  padding: 6rem 2.5rem;
+  background: var(--bg-dark);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40vw; height: 40vw;
+  background: radial-gradient(ellipse, rgba(184, 84, 62, 0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.cta-section .section-label { justify-content: center; color: rgba(255,255,255,0.35); position: relative; }
+.cta-section .section-label::before { background: var(--accent); }
+.cta-section .section-title { color: var(--white); max-width: 550px; margin: 0 auto 1rem; position: relative; }
+.cta-section .section-desc { color: rgba(255,255,255,0.5); max-width: 440px; margin: 0 auto 2.5rem; position: relative; }
+
+.cta-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.btn-primary-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: var(--accent);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.btn-primary-dark:hover { background: #c45a42; transform: translateY(-2px); }
+.btn-primary-dark svg { width: 16px; height: 16px; }
+
+.btn-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.75rem;
+  background: transparent;
+  color: rgba(255,255,255,0.7);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  border: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.btn-wa:hover { border-color: rgba(255,255,255,0.3); color: var(--white); background: rgba(255,255,255,0.04); }
+
+/* ========== FOOTER ========== */
+.footer {
+  padding: 2.5rem 2.5rem;
+  background: var(--bg-dark);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-brand {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+
+.footer-brand span { color: var(--accent); }
+
+.footer-links { display: flex; gap: 2rem; }
+.footer-links a { font-size: 0.76rem; color: rgba(255,255,255,0.3); transition: color 0.3s; }
+.footer-links a:hover { color: rgba(255,255,255,0.7); }
+.footer-cr { font-size: 0.7rem; color: rgba(255,255,255,0.25); }
+
+/* ========== AUTH MODAL ========== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s var(--ease);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  background: var(--white);
+  width: 100%;
+  max-width: 420px;
+  margin: 1rem;
+  padding: 2.5rem;
+  transform: translateY(20px);
+  transition: transform 0.3s var(--ease);
+}
+
+.modal-overlay.active .modal {
+  transform: translateY(0);
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.modal-close:hover { color: var(--text); }
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.modal-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+/* Form elements */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  transition: all 0.2s var(--ease);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--white);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+}
+
+.form-error {
+  font-size: 0.72rem;
+  color: var(--error);
+  margin-top: 0.35rem;
+}
+
+/* Status cards */
+.status-card {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.status-card-success {
+  background: var(--success-soft);
+  border: 1px solid var(--success);
+}
+
+.status-card-info {
+  background: var(--primary-soft);
+  border: 1px solid var(--primary);
+}
+
+.status-card-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.status-card-success .status-card-icon { color: var(--success); }
+.status-card-info .status-card-icon { color: var(--primary); }
+
+.status-card-content {
+  flex: 1;
+}
+
+.status-card-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-card-success .status-card-title { color: var(--success); }
+.status-card-info .status-card-title { color: var(--primary); }
+
+.status-card-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 0.25rem;
+}
+
+/* Buttons */
+.btn-submit {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: var(--accent);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+
+.btn-back:hover { color: var(--text); }
+
+/* Loading spinner */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 900px) {
+  .nav { padding: 1rem 1.5rem; }
+  .nav-links { display: none; }
+  .hero { padding: 7rem 1.5rem 3rem; min-height: auto; }
+  .hero-stats { gap: 2rem; flex-wrap: wrap; }
+  .section { padding: 4rem 1.5rem; }
+  .tech-section { padding: 4rem 1.5rem; }
+  .tech-grid { grid-template-columns: 1fr 1fr; }
+  .services-grid { grid-template-columns: 1fr; }
+  .process-grid { grid-template-columns: 1fr 1fr; gap: 2rem 1.5rem; }
+  .cap-strip { gap: 1.5rem; padding: 1.25rem 1.5rem; }
+  .footer { flex-direction: column; gap: 1.25rem; text-align: center; }
+}
+
+@media (max-width: 600px) {
+  .tech-grid { grid-template-columns: 1fr; }
+  .process-grid { grid-template-columns: 1fr; }
+  .hero-actions { flex-direction: column; align-items: flex-start; }
+  .cta-buttons { flex-direction: column; align-items: center; }
+  .nav-actions { gap: 0.5rem; }
+  .nav-login { padding: 0.5rem 0.75rem; font-size: 0.72rem; }
+  .nav-cta { padding: 0.5rem 0.75rem; font-size: 0.72rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">FABRICA<span>LASER</span>.COM</div>
+  <ul class="nav-links">
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#tecnologia">Tecnologia</a></li>
+    <li><a href="#proceso">Como funciona</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <div class="nav-actions" id="navActions">
+    <!-- Dynamic: shows login/cta buttons or user menu -->
+    <button class="nav-login" onclick="openAuthModal()">Ingresar</button>
+    <button class="nav-cta" onclick="handleCotizar()">COTIZAR ONLINE</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">
+    <span class="hero-eyebrow-line"></span>
+    <span class="hero-eyebrow-text">Corte y grabado laser - Costa Rica</span>
+  </div>
+
+  <h1>Precision laser.<br>Calidad <em>sin limites.</em></h1>
+
+  <p class="hero-sub">Corte y grabado con tecnologia de ultima generacion. Cotiza tu proyecto online o contactanos directamente - trabajamos con vos desde el diseno hasta la pieza final.</p>
+
+  <div class="hero-actions">
+    <button class="btn-primary" onclick="handleCotizar()">
+      Cotizar proyecto
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+    </button>
+    <button class="btn-outline" onclick="document.getElementById('servicios').scrollIntoView()">
+      Ver servicios
+    </button>
+  </div>
+
+  <div class="hero-stats">
+    <div>
+      <div class="hero-stat-value">+-0.1mm</div>
+      <div class="hero-stat-label">Tolerancia de corte</div>
+    </div>
+    <div>
+      <div class="hero-stat-value">4 tecnologias</div>
+      <div class="hero-stat-label">CO2 - UV - Fibra - MOPA</div>
+    </div>
+    <div>
+      <div class="hero-stat-value">7+ materiales</div>
+      <div class="hero-stat-label">Madera a metal</div>
+    </div>
+    <div>
+      <div class="hero-stat-value">Cotizacion online</div>
+      <div class="hero-stat-label">Subi tu SVG y cotiza</div>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES STRIP -->
+<div class="cap-strip">
+  <div class="cap-item"><span class="cap-dot"></span> Tolerancias +-0.1mm</div>
+  <div class="cap-item"><span class="cap-dot"></span> Acabados de alta definicion</div>
+  <div class="cap-item"><span class="cap-dot"></span> Produccion unitaria y en serie</div>
+  <div class="cap-item"><span class="cap-dot"></span> Cotizacion online disponible</div>
+</div>
+
+<!-- TECHNOLOGY -->
+<section class="tech-section" id="tecnologia">
+  <div class="tech-inner">
+    <div class="section-label">Tecnologia</div>
+    <h2 class="section-title">Cuatro tecnologias laser.<br>Calidad y variedad <em>unicas.</em></h2>
+    <p class="section-desc">Cada material y cada acabado requiere la tecnologia correcta. Contamos con la gama completa para ofrecer el resultado optimo en cada proyecto.</p>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-card-name">CO2</div>
+        <div class="tech-card-desc">El caballo de batalla. Ideal para materiales organicos con cortes limpios y grabados definidos.</div>
+        <div class="tech-card-materials">
+          <span class="tech-mat">Madera</span>
+          <span class="tech-mat">MDF</span>
+          <span class="tech-mat">Acrilico</span>
+          <span class="tech-mat">Cuero</span>
+          <span class="tech-mat">Papel</span>
+        </div>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-badge">Premium</div>
+        <div class="tech-card-name">UV</div>
+        <div class="tech-card-desc">Precision superior en materiales delicados. Grabado en frio sin dano termico al sustrato.</div>
+        <div class="tech-card-materials">
+          <span class="tech-mat">Vidrio</span>
+          <span class="tech-mat">Cristal</span>
+          <span class="tech-mat">Acrilico</span>
+          <span class="tech-mat">Plasticos</span>
+        </div>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-name">Fibra</div>
+        <div class="tech-card-desc">Potencia concentrada para marcar y grabar superficies metalicas con durabilidad permanente.</div>
+        <div class="tech-card-materials">
+          <span class="tech-mat">Acero inox</span>
+          <span class="tech-mat">Aluminio</span>
+          <span class="tech-mat">Metales</span>
+        </div>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-badge">Especializado</div>
+        <div class="tech-card-name">MOPA</div>
+        <div class="tech-card-desc">Grabado a color sobre metal y control avanzado de pulso para acabados unicos.</div>
+        <div class="tech-card-materials">
+          <span class="tech-mat">Color en metal</span>
+          <span class="tech-mat">Grabado fino</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="section" id="servicios">
+  <div class="section-label">Servicios</div>
+  <h2 class="section-title">Corte, grabado y<br><em>personalizacion</em> laser.</h2>
+  <p class="section-desc">Desde prototipos unitarios hasta series de produccion. Cada proyecto con la tecnologia y el material adecuados.</p>
+
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>
+      </div>
+      <h3>Corte laser</h3>
+      <p>Cortes de alta precision en multiples materiales y espesores. Piezas tecnicas, senaletica, prototipos funcionales y piezas decorativas.</p>
+      <div class="service-tags">
+        <span class="service-tag">Acrilico</span>
+        <span class="service-tag">MDF</span>
+        <span class="service-tag">Madera</span>
+        <span class="service-tag">ABS/PC</span>
+        <span class="service-tag">Cuero</span>
+      </div>
+    </div>
+
+    <div class="service-card">
+      <div class="service-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M8 7l4-4 4 4"/><circle cx="12" cy="14" r="4"/></svg>
+      </div>
+      <h3>Grabado vectorial</h3>
+      <p>Logos, texto, contornos y disenos lineales con maxima definicion. Personalizacion para branding, regalos corporativos y trofeos.</p>
+      <div class="service-tags">
+        <span class="service-tag">Logos</span>
+        <span class="service-tag">Texto</span>
+        <span class="service-tag">Senaletica</span>
+        <span class="service-tag">Trofeos</span>
+      </div>
+    </div>
+
+    <div class="service-card">
+      <div class="service-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>
+      </div>
+      <h3>Fotograbado y raster</h3>
+      <p>Imagenes fotograficas, degradados y texturas complejas grabadas con detalle. La especialidad de nuestra tecnologia UV en vidrio y cristal.</p>
+      <div class="service-tags">
+        <span class="service-tag">Fotografias</span>
+        <span class="service-tag">Degradados</span>
+        <span class="service-tag">Vidrio</span>
+        <span class="service-tag">Metal</span>
+      </div>
+    </div>
+
+    <div class="service-card">
+      <div class="service-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      </div>
+      <h3>Series y produccion</h3>
+      <p>Descuentos por volumen para series desde 10 piezas. Cola de produccion priorizada con seguimiento de tu orden en cada etapa.</p>
+      <div class="service-tags">
+        <span class="service-tag">10+ pcs: 5% desc</span>
+        <span class="service-tag">50+ pcs: 15% desc</span>
+        <span class="service-tag">100+ pcs: 20% desc</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="section process-section" id="proceso">
+  <div class="section-label">Como funciona</div>
+  <h2 class="section-title">Cotiza tu proyecto <em>online.</em></h2>
+  <p class="section-desc">Nuestro cotizador analiza tu archivo SVG, calcula tiempos y materiales, y te entrega un precio con desglose completo. Tambien podes contactarnos directamente si preferis atencion personalizada.</p>
+
+  <div class="process-grid">
+    <div class="process-card">
+      <div class="process-num">01</div>
+      <h4>Registrate</h4>
+      <p>Crea tu cuenta con tu cedula fisica o juridica. Rapido y seguro.</p>
+    </div>
+    <div class="process-card">
+      <div class="process-num">02</div>
+      <h4>Subi tu diseno</h4>
+      <p>Carga tu archivo SVG. El sistema analiza automaticamente las operaciones de corte y grabado.</p>
+    </div>
+    <div class="process-card">
+      <div class="process-num">03</div>
+      <h4>Elegi material y tecnologia</h4>
+      <p>Selecciona entre nuestros materiales y tecnologias. Ves el precio actualizado segun tu seleccion.</p>
+    </div>
+    <div class="process-card">
+      <div class="process-num">04</div>
+      <h4>Recibi tu cotizacion</h4>
+      <p>Obtene el desglose completo de tu proyecto. Si todo esta bien, confirmas y pasamos a produccion.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contacto">
+  <div class="section-label">Empeza ahora</div>
+  <h2 class="section-title">Tu proximo proyecto<br>empieza <em>aqui.</em></h2>
+  <p class="section-desc">Registrate con tu cedula y subi tu diseno para cotizar. O si preferis, escribinos por WhatsApp y te atendemos directamente.</p>
+
+  <div class="cta-buttons">
+    <button class="btn-primary-dark" onclick="handleCotizar()">
+      Cotizar online
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+    </button>
+    <a href="https://wa.me/50688888888" target="_blank" class="btn-wa">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+      WhatsApp
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer" style="background: var(--bg-dark);">
+    <div class="footer-brand">FABRICA<span>LASER</span>.COM</div>
+    <div class="footer-links">
+      <a href="#servicios">Servicios</a>
+      <a href="#tecnologia">Tecnologia</a>
+      <a href="#proceso">Proceso</a>
+      <a href="https://wa.me/50688888888">WhatsApp</a>
+    </div>
+    <div class="footer-cr">Costa Rica - 2026</div>
+  </div>
+</footer>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal" style="position: relative;">
+    <button class="modal-close" onclick="closeAuthModal()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+
+    <!-- State 1: Cedula Input -->
+    <div id="authState1">
+      <h2 class="modal-title">Ingresa tu cedula</h2>
+      <p class="modal-subtitle">Fisica (9 digitos) o juridica (10 digitos)</p>
+
+      <div class="form-group">
+        <label class="form-label">Numero de cedula</label>
+        <input type="text" class="form-input" id="cedulaInput" placeholder="Ej: 123456789" maxlength="10" autocomplete="off">
+        <p class="form-hint" id="cedulaHint">Ingresa tu numero de cedula sin guiones</p>
+        <p class="form-error" id="cedulaError" style="display: none;"></p>
+      </div>
+
+      <button class="btn-submit" id="cedulaSubmit" onclick="verificarCedula()" disabled>
+        Continuar
+      </button>
+    </div>
+
+    <!-- State 2A: Register (new user) -->
+    <div id="authState2A" style="display: none;">
+      <button class="btn-back" onclick="goBackToState1()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Cambiar cedula
+      </button>
+
+      <div class="status-card status-card-success">
+        <svg class="status-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <div class="status-card-content">
+          <div class="status-card-title">Identidad verificada</div>
+          <div class="status-card-name" id="registerName">NOMBRE COMPLETO</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" class="form-input" id="registerEmail" placeholder="tu@email.com">
+        <p class="form-error" id="registerEmailError" style="display: none;"></p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Telefono</label>
+        <input type="tel" class="form-input" id="registerTelefono" placeholder="8888-8888">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Contrasena *</label>
+        <input type="password" class="form-input" id="registerPassword" placeholder="Minimo 6 caracteres">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirmar contrasena *</label>
+        <input type="password" class="form-input" id="registerPasswordConfirm" placeholder="Repite tu contrasena">
+        <p class="form-error" id="registerPasswordError" style="display: none;"></p>
+      </div>
+
+      <button class="btn-submit" id="registerSubmit" onclick="registrar()">
+        Crear cuenta
+      </button>
+    </div>
+
+    <!-- State 2B: Login (existing user with password) -->
+    <div id="authState2B" style="display: none;">
+      <button class="btn-back" onclick="goBackToState1()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Cambiar cedula
+      </button>
+
+      <h2 class="modal-title">Bienvenido de vuelta</h2>
+      <p class="modal-subtitle" id="loginGreeting">Hola, NOMBRE</p>
+
+      <div class="form-group">
+        <label class="form-label">Contrasena</label>
+        <input type="password" class="form-input" id="loginPassword" placeholder="Tu contrasena">
+        <p class="form-error" id="loginPasswordError" style="display: none;"></p>
+      </div>
+
+      <button class="btn-submit" id="loginSubmit" onclick="login()">
+        Ingresar
+      </button>
+    </div>
+
+    <!-- State 2C: Establish Password (admin-created user) -->
+    <div id="authState2C" style="display: none;">
+      <button class="btn-back" onclick="goBackToState1()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Cambiar cedula
+      </button>
+
+      <div class="status-card status-card-info">
+        <svg class="status-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 16v-4M12 8h.01"/>
+        </svg>
+        <div class="status-card-content">
+          <div class="status-card-title">Ya tienes cuenta registrada</div>
+          <div class="status-card-name" id="establishName">NOMBRE</div>
+        </div>
+      </div>
+
+      <p class="modal-subtitle">Completa tus datos para activar tu cuenta</p>
+
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" class="form-input" id="establishEmail" placeholder="tu@email.com">
+        <p class="form-error" id="establishEmailError" style="display: none;"></p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Telefono</label>
+        <input type="tel" class="form-input" id="establishTelefono" placeholder="8888-8888">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Contrasena *</label>
+        <input type="password" class="form-input" id="establishPassword" placeholder="Minimo 6 caracteres">
+        <p class="form-error" id="establishPasswordError" style="display: none;"></p>
+      </div>
+
+      <button class="btn-submit" id="establishSubmit" onclick="establecerPassword()">
+        Activar cuenta
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// API Base URL
+const API_BASE = '/api/v1';
+
+// Auth state
+let currentCedula = '';
+let currentCedulaData = null;
+let redirectAfterAuth = null;
+
+// Check if user is logged in on page load
+document.addEventListener('DOMContentLoaded', function() {
+  updateNavForAuth();
+
+  // Enable/disable cedula submit based on input
+  const cedulaInput = document.getElementById('cedulaInput');
+  cedulaInput.addEventListener('input', function() {
+    const value = this.value.replace(/\D/g, '');
+    this.value = value;
+    document.getElementById('cedulaSubmit').disabled = value.length < 9;
+    document.getElementById('cedulaError').style.display = 'none';
+  });
+
+  // Enter key handlers
+  cedulaInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !document.getElementById('cedulaSubmit').disabled) {
+      verificarCedula();
+    }
+  });
+
+  document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') login();
+  });
+});
+
+// Update nav based on auth state
+function updateNavForAuth() {
+  const token = localStorage.getItem('fl_token');
+  const user = JSON.parse(localStorage.getItem('fl_user') || 'null');
+  const navActions = document.getElementById('navActions');
+
+  if (token && user) {
+    // User is logged in
+    const initials = (user.nombre || 'U').charAt(0).toUpperCase();
+    navActions.innerHTML = `
+      <div class="nav-user" onclick="window.location.href='/mi-cuenta'">
+        <div class="nav-user-avatar">${initials}</div>
+        <span class="nav-user-name">${user.nombre}</span>
+      </div>
+      <button class="nav-cta" onclick="window.location.href='/cotizar'">COTIZAR ONLINE</button>
+    `;
+  } else {
+    // User is not logged in
+    navActions.innerHTML = `
+      <button class="nav-login" onclick="openAuthModal()">Ingresar</button>
+      <button class="nav-cta" onclick="handleCotizar()">COTIZAR ONLINE</button>
+    `;
+  }
+}
+
+// Handle cotizar button - check auth first
+function handleCotizar() {
+  const token = localStorage.getItem('fl_token');
+  if (token) {
+    window.location.href = '/cotizar';
+  } else {
+    redirectAfterAuth = '/cotizar';
+    openAuthModal();
+  }
+}
+
+// Open auth modal
+function openAuthModal() {
+  document.getElementById('authModal').classList.add('active');
+  document.getElementById('cedulaInput').focus();
+  document.body.style.overflow = 'hidden';
+}
+
+// Close auth modal
+function closeAuthModal() {
+  document.getElementById('authModal').classList.remove('active');
+  document.body.style.overflow = '';
+  resetAuthModal();
+}
+
+// Reset modal to initial state
+function resetAuthModal() {
+  document.getElementById('authState1').style.display = 'block';
+  document.getElementById('authState2A').style.display = 'none';
+  document.getElementById('authState2B').style.display = 'none';
+  document.getElementById('authState2C').style.display = 'none';
+  document.getElementById('cedulaInput').value = '';
+  document.getElementById('cedulaSubmit').disabled = true;
+  document.getElementById('cedulaError').style.display = 'none';
+  currentCedula = '';
+  currentCedulaData = null;
+}
+
+// Go back to state 1
+function goBackToState1() {
+  document.getElementById('authState1').style.display = 'block';
+  document.getElementById('authState2A').style.display = 'none';
+  document.getElementById('authState2B').style.display = 'none';
+  document.getElementById('authState2C').style.display = 'none';
+  document.getElementById('cedulaInput').focus();
+}
+
+// Show loading state on button
+function setButtonLoading(buttonId, loading) {
+  const btn = document.getElementById(buttonId);
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Procesando...';
+  } else {
+    btn.disabled = false;
+    // Restore original text based on button
+    const texts = {
+      'cedulaSubmit': 'Continuar',
+      'registerSubmit': 'Crear cuenta',
+      'loginSubmit': 'Ingresar',
+      'establishSubmit': 'Activar cuenta'
+    };
+    btn.innerHTML = texts[buttonId] || 'Enviar';
+  }
+}
+
+// Verify cedula against API
+async function verificarCedula() {
+  const cedula = document.getElementById('cedulaInput').value;
+  const errorEl = document.getElementById('cedulaError');
+
+  if (cedula.length < 9) {
+    errorEl.textContent = 'La cedula debe tener al menos 9 digitos';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  setButtonLoading('cedulaSubmit', true);
+  errorEl.style.display = 'none';
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/verificar-cedula`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identificacion: cedula })
+    });
+
+    const result = await response.json();
+
+    if (result.error) {
+      errorEl.textContent = result.error.message || 'Error al verificar cedula';
+      errorEl.style.display = 'block';
+      setButtonLoading('cedulaSubmit', false);
+      return;
+    }
+
+    currentCedula = cedula;
+    currentCedulaData = result.data;
+
+    // Determine which state to show
+    if (result.data.existe && result.data.tienePassword) {
+      // State 2B: Login
+      showLoginState(result.data);
+    } else if (result.data.existe && !result.data.tienePassword) {
+      // State 2C: Establish password
+      showEstablishState(result.data);
+    } else {
+      // State 2A: Register
+      showRegisterState(result.data);
+    }
+
+  } catch (error) {
+    errorEl.textContent = 'Error de conexion. Intenta de nuevo.';
+    errorEl.style.display = 'block';
+  }
+
+  setButtonLoading('cedulaSubmit', false);
+}
+
+// Show register state (2A)
+function showRegisterState(data) {
+  document.getElementById('authState1').style.display = 'none';
+  document.getElementById('authState2A').style.display = 'block';
+
+  // Set name from verified data
+  if (data.datosRegistroCivil) {
+    document.getElementById('registerName').textContent = data.datosRegistroCivil.nombreCompleto || data.datosRegistroCivil.nombre;
+  } else {
+    document.getElementById('registerName').textContent = 'Usuario verificado';
+  }
+
+  document.getElementById('registerEmail').focus();
+}
+
+// Show login state (2B)
+function showLoginState(data) {
+  document.getElementById('authState1').style.display = 'none';
+  document.getElementById('authState2B').style.display = 'block';
+
+  // Set greeting
+  let nombre = 'usuario';
+  if (data.datosRegistroCivil && data.datosRegistroCivil.nombre) {
+    nombre = data.datosRegistroCivil.nombre.split(' ')[0];
+  }
+  document.getElementById('loginGreeting').textContent = `Hola, ${nombre}`;
+
+  document.getElementById('loginPassword').focus();
+}
+
+// Show establish password state (2C)
+function showEstablishState(data) {
+  document.getElementById('authState1').style.display = 'none';
+  document.getElementById('authState2C').style.display = 'block';
+
+  // Set name
+  if (data.cliente) {
+    document.getElementById('establishName').textContent = data.cliente.nombre;
+    if (data.cliente.email) {
+      document.getElementById('establishEmail').value = data.cliente.email;
+    }
+  }
+
+  document.getElementById('establishEmail').focus();
+}
+
+// Register new user
+async function registrar() {
+  const email = document.getElementById('registerEmail').value.trim();
+  const telefono = document.getElementById('registerTelefono').value.trim();
+  const password = document.getElementById('registerPassword').value;
+  const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+
+  // Validation
+  document.getElementById('registerEmailError').style.display = 'none';
+  document.getElementById('registerPasswordError').style.display = 'none';
+
+  if (!email || !email.includes('@')) {
+    document.getElementById('registerEmailError').textContent = 'Ingresa un email valido';
+    document.getElementById('registerEmailError').style.display = 'block';
+    return;
+  }
+
+  if (password.length < 6) {
+    document.getElementById('registerPasswordError').textContent = 'La contrasena debe tener al menos 6 caracteres';
+    document.getElementById('registerPasswordError').style.display = 'block';
+    return;
+  }
+
+  if (password !== passwordConfirm) {
+    document.getElementById('registerPasswordError').textContent = 'Las contrasenas no coinciden';
+    document.getElementById('registerPasswordError').style.display = 'block';
+    return;
+  }
+
+  setButtonLoading('registerSubmit', true);
+
+  try {
+    // Get nombre from verified data
+    let nombre = 'Usuario';
+    if (currentCedulaData && currentCedulaData.datosRegistroCivil) {
+      nombre = currentCedulaData.datosRegistroCivil.nombreCompleto || currentCedulaData.datosRegistroCivil.nombre;
+    }
+
+    const response = await fetch(`${API_BASE}/auth/registro`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        identificacion: currentCedula,
+        nombre: nombre,
+        email: email,
+        telefono: telefono,
+        password: password
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.error) {
+      if (result.error.code === 'EMAIL_EXISTS') {
+        document.getElementById('registerEmailError').textContent = 'Este email ya esta registrado';
+        document.getElementById('registerEmailError').style.display = 'block';
+      } else {
+        document.getElementById('registerPasswordError').textContent = result.error.message;
+        document.getElementById('registerPasswordError').style.display = 'block';
+      }
+      setButtonLoading('registerSubmit', false);
+      return;
+    }
+
+    // Success - save token and redirect
+    handleAuthSuccess(result.data);
+
+  } catch (error) {
+    document.getElementById('registerPasswordError').textContent = 'Error de conexion. Intenta de nuevo.';
+    document.getElementById('registerPasswordError').style.display = 'block';
+    setButtonLoading('registerSubmit', false);
+  }
+}
+
+// Login existing user
+async function login() {
+  const password = document.getElementById('loginPassword').value;
+
+  document.getElementById('loginPasswordError').style.display = 'none';
+
+  if (!password) {
+    document.getElementById('loginPasswordError').textContent = 'Ingresa tu contrasena';
+    document.getElementById('loginPasswordError').style.display = 'block';
+    return;
+  }
+
+  setButtonLoading('loginSubmit', true);
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        identificacion: currentCedula,
+        password: password
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.error) {
+      if (result.error.code === 'INVALID_PASSWORD') {
+        document.getElementById('loginPasswordError').textContent = 'Contrasena incorrecta';
+      } else {
+        document.getElementById('loginPasswordError').textContent = result.error.message;
+      }
+      document.getElementById('loginPasswordError').style.display = 'block';
+      setButtonLoading('loginSubmit', false);
+      return;
+    }
+
+    // Success
+    handleAuthSuccess(result.data);
+
+  } catch (error) {
+    document.getElementById('loginPasswordError').textContent = 'Error de conexion. Intenta de nuevo.';
+    document.getElementById('loginPasswordError').style.display = 'block';
+    setButtonLoading('loginSubmit', false);
+  }
+}
+
+// Establish password for admin-created user
+async function establecerPassword() {
+  const email = document.getElementById('establishEmail').value.trim();
+  const telefono = document.getElementById('establishTelefono').value.trim();
+  const password = document.getElementById('establishPassword').value;
+
+  document.getElementById('establishEmailError').style.display = 'none';
+  document.getElementById('establishPasswordError').style.display = 'none';
+
+  if (!email || !email.includes('@')) {
+    document.getElementById('establishEmailError').textContent = 'Ingresa un email valido';
+    document.getElementById('establishEmailError').style.display = 'block';
+    return;
+  }
+
+  if (password.length < 6) {
+    document.getElementById('establishPasswordError').textContent = 'La contrasena debe tener al menos 6 caracteres';
+    document.getElementById('establishPasswordError').style.display = 'block';
+    return;
+  }
+
+  setButtonLoading('establishSubmit', true);
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/establecer-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        identificacion: currentCedula,
+        email: email,
+        telefono: telefono,
+        password: password
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.error) {
+      if (result.error.code === 'EMAIL_EXISTS') {
+        document.getElementById('establishEmailError').textContent = 'Este email ya esta registrado';
+        document.getElementById('establishEmailError').style.display = 'block';
+      } else {
+        document.getElementById('establishPasswordError').textContent = result.error.message;
+        document.getElementById('establishPasswordError').style.display = 'block';
+      }
+      setButtonLoading('establishSubmit', false);
+      return;
+    }
+
+    // Success
+    handleAuthSuccess(result.data);
+
+  } catch (error) {
+    document.getElementById('establishPasswordError').textContent = 'Error de conexion. Intenta de nuevo.';
+    document.getElementById('establishPasswordError').style.display = 'block';
+    setButtonLoading('establishSubmit', false);
+  }
+}
+
+// Handle successful authentication
+function handleAuthSuccess(data) {
+  // Save token and user data
+  localStorage.setItem('fl_token', data.token);
+  localStorage.setItem('fl_user', JSON.stringify(data.usuario));
+
+  // Close modal
+  closeAuthModal();
+
+  // Update nav
+  updateNavForAuth();
+
+  // Redirect
+  if (redirectAfterAuth) {
+    window.location.href = redirectAfterAuth;
+    redirectAfterAuth = null;
+  } else {
+    window.location.href = '/mi-cuenta';
+  }
+}
+
+// Logout function (for user menu)
+function logout() {
+  localStorage.removeItem('fl_token');
+  localStorage.removeItem('fl_user');
+  updateNavForAuth();
+}
+
+// Close modal on overlay click
+document.getElementById('authModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeAuthModal();
+  }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeAuthModal();
+  }
+});
+</script>
+
+</body>
+</html>

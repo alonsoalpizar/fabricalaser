@@ -136,3 +136,33 @@ func (r *UserRepository) IncrementQuotesUsed(id uint) error {
 func (r *UserRepository) UpdateMetadata(id uint, metadata interface{}) error {
 	return r.db.Model(&models.User{}).Where("id = ?", id).Update("metadata", metadata).Error
 }
+
+// UpdateProfile updates user profile fields
+func (r *UserRepository) UpdateProfile(id uint, email, telefono, direccion, provincia, canton, distrito *string) error {
+	updates := make(map[string]interface{})
+
+	if email != nil {
+		updates["email"] = *email
+	}
+	if telefono != nil {
+		updates["telefono"] = telefono
+	}
+	if direccion != nil {
+		updates["direccion"] = direccion
+	}
+	if provincia != nil {
+		updates["provincia"] = provincia
+	}
+	if canton != nil {
+		updates["canton"] = canton
+	}
+	if distrito != nil {
+		updates["distrito"] = distrito
+	}
+
+	if len(updates) == 0 {
+		return nil
+	}
+
+	return r.db.Model(&models.User{}).Where("id = ?", id).Updates(updates).Error
+}

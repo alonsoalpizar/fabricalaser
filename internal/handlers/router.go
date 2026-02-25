@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/admin"
@@ -37,10 +39,12 @@ func NewRouter() *chi.Mux {
 		r.Post("/registro", authHandler.Registro)
 		r.Post("/establecer-password", authHandler.EstablecerPassword)
 
-		// Protected route
+		// Protected routes
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.AuthMiddleware)
 			r.Get("/me", authHandler.Me)
+			r.Get("/profile", authHandler.GetProfile)
+			r.Put("/profile", authHandler.UpdateProfile)
 		})
 	})
 
@@ -102,7 +106,35 @@ func NewRouter() *chi.Mux {
 	//     // Quote endpoints...
 	// })
 
+	// Static file routes
+	webDir := "/opt/FabricaLaser/web"
+
+	// Landing page
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "landing", "index.html"))
+	})
+
+	// Mi cuenta page
+	r.Get("/mi-cuenta", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "mi-cuenta", "index.html"))
+	})
+
+	// Cotizar page (placeholder until Phase 1)
+	r.Get("/cotizar", func(w http.ResponseWriter, r *http.Request) {
+		// For now, redirect to landing
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	})
+
+	// Static assets (if needed in future)
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(webDir, "static")))))
+
 	return r
+}
+
+// ensureDir checks if directory exists
+func ensureDir(dir string) bool {
+	_, err := os.Stat(dir)
+	return err == nil
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

@@ -23,6 +23,12 @@ type User struct {
 	Metadata     datatypes.JSON `gorm:"type:jsonb;default:'{}'" json:"metadata,omitempty"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
+
+	// Profile fields (Costa Rica address)
+	Direccion *string `gorm:"type:varchar(255)" json:"direccion,omitempty"`
+	Provincia *string `gorm:"type:varchar(100)" json:"provincia,omitempty"`
+	Canton    *string `gorm:"type:varchar(100)" json:"canton,omitempty"`
+	Distrito  *string `gorm:"type:varchar(100)" json:"distrito,omitempty"`
 }
 
 func (User) TableName() string {
