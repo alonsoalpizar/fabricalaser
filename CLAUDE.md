@@ -153,6 +153,110 @@
 | `/api/v1/admin/users` | GET | Listar usuarios (placeholder) |
 | `/api/v1/admin/users/{id}/quota` | PUT | Actualizar cuota de cotizaciones |
 
+**Endpoints Quotes (requieren JWT):**
+| Endpoint | Método | Auth | Descripción |
+|----------|--------|------|-------------|
+| `/api/v1/quotes/analyze` | POST | JWT+Quota | Subir SVG y analizarlo → `{data: SVGAnalysis, cached, message}` |
+| `/api/v1/quotes/calculate` | POST | JWT+Quota | Calcular precio → `{data: Quote, message}` |
+| `/api/v1/quotes/my` | GET | JWT | Mis cotizaciones → `{data: [], total, limit, offset}` |
+| `/api/v1/quotes/analyses` | GET | JWT | Mis análisis SVG → `{data: [], total, limit, offset}` |
+| `/api/v1/quotes/{id}` | GET | JWT | Ver cotización específica → `{data: Quote}` |
+
+**Request `/quotes/analyze` (multipart/form-data):**
+```
+POST /api/v1/quotes/analyze
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+
+svg: <archivo.svg>  (max 5MB)
+```
+
+**Response `/quotes/analyze`:**
+```json
+{
+  "data": {
+    "id": 1,
+    "filename": "logo.svg",
+    "width_mm": 100,
+    "height_mm": 50,
+    "cut_length_mm": 245.5,
+    "vector_length_mm": 120.3,
+    "raster_area_mm2": 1500.0,
+    "element_count": 15,
+    "status": "analyzed",
+    "warnings": [],
+    "created_at": "2026-02-25T..."
+  },
+  "cached": false,
+  "message": "SVG analizado correctamente"
+}
+```
+
+**Request `/quotes/calculate`:**
+```json
+{
+  "analysis_id": 1,
+  "technology_id": 2,
+  "material_id": 1,
+  "engrave_type_id": 1,
+  "quantity": 10,
+  "thickness": 3.0
+}
+```
+
+**Response `/quotes/calculate`:**
+```json
+{
+  "data": {
+    "id": 1,
+    "time_breakdown": {
+      "engrave_mins": 12.5,
+      "cut_mins": 8.2,
+      "setup_mins": 5.0,
+      "total_mins": 25.7
+    },
+    "cost_breakdown": {
+      "engrave": 3.29,
+      "cut": 2.43,
+      "setup": 0,
+      "base": 5.72
+    },
+    "factors": {
+      "material": 1.0,
+      "engrave": 1.0,
+      "uv_premium": 0.2,
+      "margin": 0.4,
+      "volume_discount": 0.05
+    },
+    "pricing": {
+      "hybrid_unit": 9.61,
+      "hybrid_total": 91.29,
+      "value_unit": 8.50,
+      "value_total": 80.75,
+      "final": 91.29
+    },
+    "status": "auto_approved",
+    "valid_until": "2026-03-04T...",
+    "technology": "Láser UV",
+    "material": "Madera / MDF",
+    "engrave_type": "Vectorial"
+  },
+  "message": "Cotización calculada correctamente"
+}
+```
+
+**Códigos de Error Quotes:**
+| Código | HTTP | Descripción |
+|--------|------|-------------|
+| `NO_FILE` | 400 | No se envió archivo SVG |
+| `INVALID_FILE_TYPE` | 400 | Archivo no es SVG |
+| `INVALID_SVG` | 400 | SVG mal formado |
+| `ANALYSIS_ERROR` | 400 | Error al analizar SVG |
+| `ANALYSIS_NOT_FOUND` | 404 | Análisis no existe |
+| `FORBIDDEN` | 403 | No tiene permiso |
+| `QUOTA_EXCEEDED` | 403 | Cuota de cotizaciones agotada |
+| `MISSING_FIELDS` | 400 | Faltan campos requeridos |
+
 **Respuesta `/verificar-cedula` (con GoMeta):**
 ```json
 {
