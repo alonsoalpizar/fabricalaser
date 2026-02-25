@@ -308,7 +308,7 @@ FABRICALASER_GOMETA_TIMEOUT=10                    # Timeout en segundos (default
 FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuando GoMeta offline
 ```
 
-## Fase Actual: 1 — Cotizador (Pendiente)
+## Fase Actual: 1 — Cotizador Backend (COMPLETADA)
 
 **Fases de Fundación:**
 | Fase | Nombre | Estado |
@@ -317,6 +317,7 @@ FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuan
 | 0B | Sistema de Autenticación | ✅ COMPLETADA |
 | 0C | API Config + Admin | ✅ COMPLETADA |
 | 0D | Landing Page + Auth UI | ✅ COMPLETADA |
+| 1 | Motor SVG + Pricing API | ✅ COMPLETADA |
 
 **Completado 0A:**
 - Proyecto Go con chi, gorm, pgx, bcrypt, jwt-go
@@ -364,7 +365,29 @@ FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuan
 - "COTIZAR ONLINE" verifica auth antes de redirigir
 - No se muestra "GoMeta" en UI - solo "Identidad verificada"
 
-**Siguiente:** Fase 1 — Motor SVG + Cotizador.
+**Completado Fase 1:**
+- Motor SVG (`internal/services/svgengine/`)
+  - Parser: XML con encoding/xml, extracción de elementos (path, rect, circle, ellipse, line, polyline, polygon)
+  - Classifier: Clasificación por color (rojo=corte, azul=vector, negro=raster) con tolerancia ±10%
+  - Geometry: Cálculos de Bézier con subdivisión adaptativa, Shoelace formula para áreas
+  - Analyzer: Orquestador que produce SVGAnalysis completo
+- Motor Pricing (`internal/services/pricing/`)
+  - ConfigLoader: Carga rates/materials/discounts de DB con cache 5min (NO hardcode)
+  - TimeEstimator: Calcula tiempos de grabado/corte basado en geometría
+  - Calculator: Implementa modelo híbrido + clasificación automática
+- API Quotes (`internal/handlers/quote/`)
+  - POST /api/v1/quotes/analyze — Subir y analizar SVG
+  - POST /api/v1/quotes/calculate — Calcular precio con opciones
+  - GET /api/v1/quotes/my — Mis cotizaciones
+  - GET /api/v1/quotes/analyses — Mis análisis SVG
+  - GET /api/v1/quotes/:id — Ver cotización específica
+- Repositorios: svg_analysis_repository.go, quote_repository.go
+- Migraciones: 009_svg_analyses.sql, 010_quotes.sql
+- QuotaMiddleware integrado en rutas POST
+
+**Principio clave:** Todos los parámetros de pricing vienen de DB (tech_rates, materials, engrave_types, volume_discounts). NO hay valores hardcodeados.
+
+**Siguiente:** Fase 1 Frontend — UI del Cotizador (wizard SVG upload → opciones → resultado).
 
 ## Notas para Claude Code
 - Monolito modular. NO crear microservicios.

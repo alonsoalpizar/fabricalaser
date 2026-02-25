@@ -10,6 +10,7 @@ import (
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/admin"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/auth"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/config"
+	"github.com/alonsoalpizar/fabricalaser/internal/handlers/quote"
 	"github.com/alonsoalpizar/fabricalaser/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
@@ -99,12 +100,23 @@ func NewRouter() *chi.Mux {
 		r.Put("/users/{id}/quota", adminHandler.UpdateUserQuota)
 	})
 
-	// TODO: Quote routes (Fase 1)
-	// r.Route("/api/v1/quotes", func(r chi.Router) {
-	//     r.Use(middleware.AuthMiddleware)
-	//     r.Use(middleware.QuotaMiddleware) // For POST endpoints
-	//     // Quote endpoints...
-	// })
+	// Quote routes (Fase 1 - Cotizador)
+	quoteHandler := quote.NewHandler()
+	r.Route("/api/v1/quotes", func(r chi.Router) {
+		r.Use(middleware.AuthMiddleware)
+
+		// GET endpoints (no quota check)
+		r.Get("/my", quoteHandler.GetMyQuotes)       // List user's quotes
+		r.Get("/analyses", quoteHandler.GetMyAnalyses) // List user's SVG analyses
+		r.Get("/{id}", quoteHandler.GetQuote)        // Get specific quote
+
+		// POST endpoints (with quota check)
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.QuotaMiddleware)
+			r.Post("/analyze", quoteHandler.AnalyzeSVG)      // Upload and analyze SVG
+			r.Post("/calculate", quoteHandler.CalculatePrice) // Calculate price for analysis
+		})
+	})
 
 	// Static file routes
 	webDir := "/opt/FabricaLaser/web"
