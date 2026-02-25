@@ -26,6 +26,10 @@ type Config struct {
 	// Uploads
 	UploadDir   string
 	MaxFileSize int64
+
+	// GoMeta API (Cedula Validation)
+	GoMetaTimeout          int  // Timeout in seconds for GoMeta API calls
+	GoMetaRequireValidation bool // If true, registration fails when GoMeta is offline
 }
 
 var cfg *Config
@@ -37,6 +41,8 @@ func Load() *Config {
 
 	redisDB, _ := strconv.Atoi(getEnv("FABRICALASER_REDIS_DB", "3"))
 	maxFileSize, _ := strconv.ParseInt(getEnv("FABRICALASER_MAX_FILE_SIZE", "10485760"), 10, 64)
+	goMetaTimeout, _ := strconv.Atoi(getEnv("FABRICALASER_GOMETA_TIMEOUT", "10"))
+	goMetaRequire := getEnv("FABRICALASER_GOMETA_REQUIRE_VALIDATION", "false") == "true"
 
 	cfg = &Config{
 		Port:        getEnv("FABRICALASER_PORT", "8083"),
@@ -55,6 +61,9 @@ func Load() *Config {
 
 		UploadDir:   getEnv("FABRICALASER_UPLOAD_DIR", "/opt/FabricaLaser/uploads"),
 		MaxFileSize: maxFileSize,
+
+		GoMetaTimeout:           goMetaTimeout,
+		GoMetaRequireValidation: goMetaRequire,
 	}
 
 	return cfg

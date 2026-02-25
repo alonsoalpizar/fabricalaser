@@ -79,10 +79,35 @@ Sistema centralizado de usuarios **idéntico al modelo de pagar.alonsoalpizar.co
 - Validación regex: `^[1-9]\d{8}$` (física) o `^[1-9]\d{9}$` (jurídica)
 - Limpieza automática: eliminar guiones, espacios, caracteres no numéricos
 
-**Integración GoMeta API (opcional pero recomendada):**
-- Validar cédulas contra Registro Civil / Hacienda de Costa Rica
-- Auto-completar nombre/apellido desde datos oficiales
-- Almacenar datos de Hacienda en `metadata` para facturación electrónica
+**Integración GoMeta API: ✅ IMPLEMENTADA**
+- **Endpoint:** `https://apis.gometa.org/cedulas/{cedula}`
+- **Timeout:** 10 segundos (configurable via `FABRICALASER_GOMETA_TIMEOUT`)
+- **Servicio:** `internal/services/cedula/cedula_service.go`
+- **Funcionalidad:**
+  - Validar cédulas contra Registro Civil de Costa Rica
+  - Auto-completar nombre/apellido desde datos oficiales
+  - Pre-llenar formulario de registro con datos reales
+  - Almacenar datos en `metadata.extras` para facturación electrónica
+  - Cache de 24 horas para datos ya consultados
+- **Respuesta enriquecida de `/verificar-cedula`:**
+  ```json
+  {
+    "existe": false,
+    "tienePassword": false,
+    "tipo": "fisica",
+    "cedula": "117520936",
+    "validadoRegistroCivil": true,
+    "datosRegistroCivil": {
+      "nombre": "Evelyn",
+      "apellido": "Carvajal Fernandez",
+      "nombreCompleto": "Carvajal Fernandez Evelyn",
+      "primerNombre": "Evelyn",
+      "primerApellido": "Carvajal",
+      "segundoApellido": "Fernandez",
+      "tipo": "fisica"
+    }
+  }
+  ```
 
 #### 1.5.3 Endpoints de Autenticación
 

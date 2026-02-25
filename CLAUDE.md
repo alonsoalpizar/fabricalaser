@@ -26,12 +26,15 @@
 │   ├── models/                 # Modelos GORM
 │   ├── handlers/               # HTTP handlers por dominio
 │   │   ├── auth/               # Registro, login, JWT
+│   │   ├── config/             # Endpoints públicos de configuración
+│   │   ├── admin/              # CRUD admin (protegido)
 │   │   ├── quotes/
 │   │   ├── materials/
 │   │   ├── orders/
-│   │   ├── users/              # Gestión usuarios (admin)
-│   │   └── admin/
+│   │   └── users/              # Gestión usuarios (admin)
 │   ├── services/
+│   │   ├── auth/               # Lógica autenticación
+│   │   ├── cedula/             # Validación GoMeta API (Registro Civil CR)
 │   │   ├── svgengine/          # Motor análisis SVG
 │   │   ├── pricing/            # Motor pricing híbrido
 │   │   └── validation/
@@ -99,14 +102,86 @@
 - Jurídica: 10 dígitos, no empieza con 0 (regex: `^[1-9]\d{9}$`)
 - Limpiar caracteres no numéricos antes de validar
 
+**Integración GoMeta API (Registro Civil CR): ✅ IMPLEMENTADA**
+- Servicio: `internal/services/cedula/cedula_service.go`
+- Endpoint externo: `https://apis.gometa.org/cedulas/{cedula}`
+- Timeout: 10 segundos (configurable)
+- Cache: 24 horas en metadata del usuario
+- Datos obtenidos: nombre oficial, apellidos, tipo (física/jurídica)
+- Uso: Pre-llenar registro, validar identidad, facturación electrónica
+
 **Endpoints Auth:**
 | Endpoint | Método | Auth | Descripción |
 |----------|--------|------|-------------|
-| `/api/v1/auth/verificar-cedula` | POST | No | `{identificacion}` → `{existe, tienePassword, tipo, cedula}` |
-| `/api/v1/auth/registro` | POST | No | `{identificacion, nombre, email, telefono, password}` → `{token, usuario}` |
+| `/api/v1/auth/verificar-cedula` | POST | No | `{identificacion}` → `{existe, tienePassword, tipo, cedula, validadoRegistroCivil, datosRegistroCivil}` |
+| `/api/v1/auth/registro` | POST | No | `{identificacion, nombre, email, telefono, password}` → `{token, usuario}` (valida GoMeta, guarda metadata) |
 | `/api/v1/auth/login` | POST | No | `{identificacion, password}` → `{token, usuario}` |
-| `/api/v1/auth/establecer-password` | POST | No | `{identificacion, password, email?, telefono?}` → `{token, usuario}` |
+| `/api/v1/auth/establecer-password` | POST | No | `{identificacion, password, email?, telefono?}` → `{token, usuario}` (valida GoMeta si no hay metadata) |
 | `/api/v1/auth/me` | GET | JWT | `→ {usuario}` |
+
+**Endpoints Config (públicos):**
+| Endpoint | Método | Auth | Descripción |
+|----------|--------|------|-------------|
+| `/api/v1/config` | GET | No | Toda la configuración en una llamada (frontend initial load) |
+| `/api/v1/config/technologies` | GET | No | Lista tecnologías activas (CO2, UV, Fibra, MOPA) |
+| `/api/v1/config/materials` | GET | No | Lista materiales con factores y espesores |
+| `/api/v1/config/engrave-types` | GET | No | Tipos de grabado con factores |
+| `/api/v1/config/tech-rates` | GET | No | Tarifas por tecnología |
+| `/api/v1/config/volume-discounts` | GET | No | Descuentos por cantidad |
+| `/api/v1/config/price-references` | GET | No | Referencias de precios por servicio |
+
+**Endpoints Admin (requieren JWT + role=admin):**
+| Endpoint | Método | Descripción |
+|----------|--------|-------------|
+| `/api/v1/admin/technologies` | POST | Crear tecnología |
+| `/api/v1/admin/technologies/{id}` | PUT | Actualizar tecnología |
+| `/api/v1/admin/technologies/{id}` | DELETE | Desactivar tecnología (soft delete) |
+| `/api/v1/admin/materials` | POST | Crear material |
+| `/api/v1/admin/materials/{id}` | PUT | Actualizar material |
+| `/api/v1/admin/materials/{id}` | DELETE | Desactivar material |
+| `/api/v1/admin/engrave-types` | POST | Crear tipo de grabado |
+| `/api/v1/admin/engrave-types/{id}` | PUT | Actualizar tipo de grabado |
+| `/api/v1/admin/engrave-types/{id}` | DELETE | Desactivar tipo de grabado |
+| `/api/v1/admin/tech-rates/{id}` | PUT | Actualizar tarifas por tecnología |
+| `/api/v1/admin/volume-discounts` | POST | Crear descuento por volumen |
+| `/api/v1/admin/volume-discounts/{id}` | PUT | Actualizar descuento |
+| `/api/v1/admin/volume-discounts/{id}` | DELETE | Desactivar descuento |
+| `/api/v1/admin/price-references` | POST | Crear referencia de precio |
+| `/api/v1/admin/price-references/{id}` | PUT | Actualizar referencia |
+| `/api/v1/admin/price-references/{id}` | DELETE | Desactivar referencia |
+| `/api/v1/admin/users` | GET | Listar usuarios (placeholder) |
+| `/api/v1/admin/users/{id}/quota` | PUT | Actualizar cuota de cotizaciones |
+
+**Respuesta `/verificar-cedula` (con GoMeta):**
+```json
+{
+  "existe": false,
+  "tienePassword": false,
+  "tipo": "fisica",
+  "cedula": "117520936",
+  "validadoRegistroCivil": true,
+  "datosRegistroCivil": {
+    "nombre": "Evelyn",
+    "apellido": "Carvajal Fernandez",
+    "nombreCompleto": "Carvajal Fernandez Evelyn",
+    "primerNombre": "Evelyn",
+    "primerApellido": "Carvajal",
+    "segundoApellido": "Fernandez",
+    "tipo": "fisica"
+  }
+}
+```
+
+**Códigos de Error Auth:**
+| Código | HTTP | Descripción |
+|--------|------|-------------|
+| `INVALID_CEDULA` | 400 | Formato de cédula inválido |
+| `CEDULA_NOT_VALID` | 400 | Cédula no existe en Registro Civil |
+| `VALIDATION_OFFLINE` | 503 | Servicio GoMeta no disponible |
+| `CEDULA_EXISTS` | 400 | Ya existe cuenta con esta cédula |
+| `EMAIL_EXISTS` | 400 | Email ya registrado |
+| `INVALID_PASSWORD` | 401 | Contraseña incorrecta |
+| `ACCOUNT_DISABLED` | 401 | Cuenta desactivada |
 
 **JWT:**
 - Algoritmo: HS256, Expiración: 24h
@@ -226,20 +301,56 @@ FABRICALASER_REDIS_DB=3
 FABRICALASER_UPLOAD_DIR=/opt/FabricaLaser/uploads
 FABRICALASER_MAX_FILE_SIZE=10485760
 FABRICALASER_ENV=development
+
+# GoMeta API (Validación Cédula CR)
+FABRICALASER_GOMETA_TIMEOUT=10                    # Timeout en segundos (default: 10)
+FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuando GoMeta offline
 ```
 
-## Fase Actual: 0A — Estructura y Base de Datos
+## Fase Actual: 0D — Landing Page
 
 **Fases de Fundación:**
 | Fase | Nombre | Estado |
 |------|--------|--------|
-| 0A | Estructura + DB + Seed | 🔄 EN PROGRESO |
-| 0B | Sistema de Autenticación | ⏳ Pendiente |
-| 0C | API Config + Servidor | ⏳ Pendiente |
+| 0A | Estructura + DB + Seed | ✅ COMPLETADA |
+| 0B | Sistema de Autenticación | ✅ COMPLETADA |
+| 0C | API Config + Admin | ✅ COMPLETADA |
 | 0D | Landing Page | ⏳ Pendiente |
 
-**Objetivo 0A:** Proyecto Go inicializado, DB PostgreSQL con migraciones, seed data del simulador v5.
-**Siguiente:** Fase 0B — Auth por cédula (replicar /opt/Payments).
+**Completado 0A:**
+- Proyecto Go con chi, gorm, pgx, bcrypt, jwt-go
+- DB `fabricalaser` con 7 tablas
+- Seed data: 4 techs, 7 materiales, 4 tipos grabado, tarifas, descuentos
+- Admin: cedula=999999999, password=admin123
+
+**Completado 0B:**
+- 5 endpoints de autenticación funcionando
+- Integración GoMeta API para validación de cédula CR
+- Validación contra Registro Civil con pre-llenado de datos oficiales
+- Metadata JSONB con datos de GoMeta para facturación electrónica
+- Cache de 24 horas para consultas GoMeta
+- Middleware de autenticación JWT
+- Middleware de roles (admin)
+- Tests del servicio de cédula
+
+**Completado 0C:**
+- 7 endpoints públicos de configuración (`/api/v1/config/*`)
+- Endpoint `/api/v1/config` retorna toda la config en una llamada (para initial load del frontend)
+- 18 endpoints admin para CRUD de configuración (`/api/v1/admin/*`)
+- Control de acceso: 401 sin token, 403 para no-admin
+- 6 repositorios de configuración (technology, material, engrave_type, tech_rate, volume_discount, price_reference)
+- Soft delete (is_active=false) en lugar de borrado físico
+
+**Archivos clave implementados:**
+- `internal/services/cedula/cedula_service.go` — Cliente HTTP GoMeta API
+- `internal/services/auth/auth_service.go` — Lógica con validación externa
+- `internal/handlers/auth/auth_handler.go` — 5 endpoints auth
+- `internal/handlers/config/config_handler.go` — 7 endpoints config públicos
+- `internal/handlers/admin/admin_handler.go` — 18 endpoints admin CRUD
+- `internal/repository/*_repository.go` — 7 repositorios (user + 6 config)
+- `internal/utils/cedula.go` — Validación formato local
+
+**Siguiente:** Fase 0D — Landing Page (HTML estático, Nginx).
 
 ## Notas para Claude Code
 - Monolito modular. NO crear microservicios.
@@ -253,3 +364,5 @@ FABRICALASER_ENV=development
 - Landing page: HTML estático servido por Nginx, estilo consistente con otros sitios del servidor.
 - Auth: cédula como identificador único, JWT para sesiones, bcrypt para passwords.
 - Cuota: quote_quota=5 por defecto, -1 para ilimitado. Middleware valida antes de cotizar.
+- **GoMeta API:** Validación de cédula contra Registro Civil CR. Usar nombre oficial para registro. Guardar en metadata.extras para facturación. Cache 24h. Timeout configurable (default 10s).
+- **Config API:** Endpoint `/api/v1/config` retorna toda la configuración del cotizador en una llamada. Usar para initial load del frontend. Los datos son read-only para usuarios, solo admin puede modificar via `/api/v1/admin/*`.
