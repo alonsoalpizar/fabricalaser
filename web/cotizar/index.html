@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotizador | FabricaLaser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <style>
+:root {
+  /* Paleta CLARA consistente con landing */
+  --bg: #F6F4F0;
+  --bg-warm: #EDEAE4;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8F6F2;
+  --border: #D8D4CC;
+  --border-light: #E8E5DF;
+  --text: #1C1C1E;
+  --text-secondary: #5A5754;
+  --text-muted: #8A8681;
+  --accent: #B8543E;
+  --accent-soft: rgba(184, 84, 62, 0.08);
+  --accent-hover: #9C4533;
+  --white: #FFFFFF;
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --warning: #eab308;
+  --warning-bg: rgba(234, 179, 8, 0.1);
+  --error: #ef4444;
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --info: #3b82f6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* NAV */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nav-logo span { color: var(--accent); }
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-quota {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  background: var(--bg-warm);
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+}
+
+.nav-quota strong { color: var(--accent); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nav-link {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: var(--accent);
+}
+
+.nav-link.active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.nav-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  position: relative;
+}
+
+.user-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  min-width: 180px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all 0.2s;
+  z-index: 150;
+}
+
+.nav-avatar:hover .user-menu,
+.user-menu:hover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.user-menu-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-menu-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+
+.user-menu-email {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.user-menu-item:hover {
+  background: var(--bg-warm);
+  color: var(--text);
+}
+
+.user-menu-item svg {
+  width: 16px;
+  height: 16px;
+}
+
+.user-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.25rem 0;
+}
+
+.user-menu-item.logout {
+  color: var(--error);
+}
+
+.user-menu-item.logout:hover {
+  background: var(--error-bg);
+}
+
+/* MAIN CONTAINER */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 6rem 1.5rem 3rem;
+}
+
+/* WIZARD HEADER */
+.wizard-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.wizard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.wizard-title em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.wizard-subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+/* PROGRESS STEPS */
+.progress-steps {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  position: relative;
+}
+
+.progress-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -1rem;
+  top: 50%;
+  width: 2rem;
+  height: 2px;
+  background: var(--border);
+  transform: translateY(-50%);
+}
+
+.progress-step.active:not(:last-child)::after,
+.progress-step.completed:not(:last-child)::after {
+  background: var(--accent);
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 2px solid var(--border);
+  background: var(--bg-warm);
+  color: var(--text-muted);
+  transition: all 0.3s;
+}
+
+.progress-step.active .step-number {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.progress-step.completed .step-number {
+  border-color: var(--success);
+  background: var(--success);
+  color: white;
+}
+
+.step-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.progress-step.active .step-label,
+.progress-step.completed .step-label {
+  color: var(--text);
+}
+
+/* WIZARD CONTENT */
+.wizard-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  min-height: 400px;
+}
+
+.wizard-step {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.wizard-step.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* STEP 1: DROPZONE */
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: transparent;
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dropzone-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  color: var(--text-muted);
+}
+
+.dropzone-text {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.dropzone-hint {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.dropzone-hint span {
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#fileInput {
+  display: none;
+}
+
+/* ANALYSIS RESULT */
+.analysis-result {
+  display: none;
+  margin-top: 2rem;
+}
+
+.analysis-result.show {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.analysis-card {
+  background: var(--bg-warm);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.analysis-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.analysis-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--success-bg);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--success);
+}
+
+.analysis-filename {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.analysis-status {
+  font-size: 0.875rem;
+  color: var(--success);
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .analysis-grid { grid-template-columns: 1fr; }
+}
+
+.analysis-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-card);
+  border-radius: 8px;
+}
+
+.analysis-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.analysis-item-icon.red { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.analysis-item-icon.blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.analysis-item-icon.black { background: rgba(255, 255, 255, 0.1); color: #a3a3a3; }
+.analysis-item-icon.dim { background: var(--bg-warm); color: var(--text-muted); }
+
+.analysis-item-content {
+  flex: 1;
+}
+
+.analysis-item-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.analysis-item-value {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* WARNINGS */
+.warnings {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--warning-bg);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: 8px;
+}
+
+.warnings-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--warning);
+  margin-bottom: 0.5rem;
+}
+
+.warnings-list {
+  list-style: none;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.warnings-list li {
+  padding: 0.25rem 0;
+}
+
+/* STEP 2: OPTIONS */
+.options-section {
+  margin-bottom: 2rem;
+}
+
+.options-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.option-card {
+  background: var(--bg-warm);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.option-card:hover {
+  border-color: var(--text-dim);
+}
+
+.option-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.option-card-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  margin-bottom: 0.25rem;
+}
+
+.option-card-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.option-card-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  background: var(--accent);
+  color: white;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.options-placeholder {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  background: var(--bg-warm);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+/* COMPATIBILITY INDICATORS */
+.option-card.compat-optimal {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.option-card.compat-possible {
+  border-color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.option-card.compat-incompatible {
+  border-color: var(--error);
+  background: var(--error-bg);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.compat-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.compat-indicator.optimal {
+  background: var(--success);
+  color: white;
+}
+
+.compat-indicator.possible {
+  background: var(--warning);
+  color: #000;
+}
+
+.compat-indicator.incompatible {
+  background: var(--error);
+  color: white;
+}
+
+/* INPUT ROW */
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .input-row { grid-template-columns: 1fr; }
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.input-group input,
+.input-group select {
+  padding: 0.875rem 1rem;
+  background: var(--bg-warm);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.input-group select option {
+  background: var(--bg-warm);
+  color: var(--text);
+}
+
+/* DISCOUNT PREVIEW */
+.discount-preview {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--info-bg);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.discount-preview-icon {
+  color: var(--info);
+}
+
+.discount-preview-text {
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.discount-preview-text strong {
+  color: var(--info);
+}
+
+/* STEP 3: RESULT */
+.result-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.result-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.result-status.approved {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.result-status.review {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.result-status.rejected {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.result-status.expired {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.result-price {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.result-price-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+.result-validity {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+/* RESULT BREAKDOWN */
+.result-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 600px) {
+  .result-breakdown { grid-template-columns: 1fr; }
+}
+
+.breakdown-card {
+  background: var(--bg-warm);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.breakdown-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.breakdown-title svg {
+  width: 16px;
+  height: 16px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.breakdown-row:last-child {
+  border-bottom: none;
+}
+
+.breakdown-row-label {
+  color: var(--text-muted);
+}
+
+.breakdown-row-value {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.breakdown-row.highlight {
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.breakdown-row.highlight .breakdown-row-value {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* SELECTED OPTIONS SUMMARY */
+.selected-summary {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--bg-warm);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.summary-item-label {
+  color: var(--text-muted);
+}
+
+.summary-item-value {
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* BUTTONS */
+.wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-card-hover);
+  color: var(--text);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* LOADING */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(246, 244, 240, 0.95);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.loading-overlay.show {
+  display: flex;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* HISTORY TAB */
+.tab-switcher {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 0.25rem;
+  background: var(--bg-card);
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.tab-btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.tab-btn:hover:not(.active) {
+  color: var(--text);
+}
+
+/* HISTORY LIST */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-warm);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.history-item:hover {
+  border-color: var(--text-dim);
+}
+
+.history-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.history-info {
+  flex: 1;
+}
+
+.history-filename {
+  font-weight: 500;
+  font-size: 0.9375rem;
+  margin-bottom: 0.25rem;
+}
+
+.history-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.history-price {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.history-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.history-status.approved { background: var(--success-bg); color: var(--success); }
+.history-status.review { background: var(--warning-bg); color: var(--warning); }
+.history-status.expired { background: var(--error-bg); color: var(--error); }
+
+.history-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+/* ERROR MESSAGE */
+.error-message {
+  padding: 1rem;
+  background: var(--error-bg);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: var(--error);
+  font-size: 0.875rem;
+  display: none;
+  margin-bottom: 1rem;
+}
+
+.error-message.show {
+  display: block;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .nav { padding: 1rem; }
+  .nav-links { display: none; }
+  .nav-quota { display: none; }
+  .container { padding: 5rem 1rem 2rem; }
+  .wizard-title { font-size: 1.5rem; }
+  .progress-step { padding: 0.5rem 0.75rem; }
+  .step-label { display: none; }
+  .wizard-content { padding: 1.5rem; }
+  .result-price { font-size: 2.5rem; }
+  .user-menu { right: -1rem; }
+}
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="/" class="nav-logo">FABRICA<span>LASER</span>.COM</a>
+
+  <div class="nav-links">
+    <a href="/" class="nav-link">Inicio</a>
+    <a href="/cotizar" class="nav-link active">Cotizador</a>
+    <a href="/mi-cuenta" class="nav-link">Mi Cuenta</a>
+  </div>
+
+  <div class="nav-user">
+    <div class="nav-quota" id="quotaDisplay">
+      <strong id="quotaRemaining">-</strong> cotizaciones
+    </div>
+    <div class="nav-avatar" id="userAvatar">
+      <span id="userInitial">?</span>
+      <!-- User Menu Dropdown -->
+      <div class="user-menu">
+        <div class="user-menu-header">
+          <div class="user-menu-name" id="menuUserName">Usuario</div>
+          <div class="user-menu-email" id="menuUserEmail">email@ejemplo.com</div>
+        </div>
+        <a href="/mi-cuenta" class="user-menu-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          Mi Perfil
+        </a>
+        <a href="/cotizar" class="user-menu-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+          </svg>
+          Mis Cotizaciones
+        </a>
+        <a href="/admin/" class="user-menu-item admin-only" id="adminMenuLink" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Panel Admin
+        </a>
+        <div class="user-menu-divider"></div>
+        <a href="#" class="user-menu-item logout" onclick="logout(); return false;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Cerrar Sesion
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-content">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Procesando...</div>
+  </div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+
+  <!-- TAB SWITCHER -->
+  <div class="tab-switcher">
+    <button class="tab-btn active" onclick="showTab('wizard')">Nueva Cotizacion</button>
+    <button class="tab-btn" onclick="showTab('history')">Historial</button>
+  </div>
+
+  <!-- WIZARD TAB -->
+  <div id="wizardTab">
+    <!-- WIZARD HEADER -->
+    <div class="wizard-header">
+      <h1 class="wizard-title">Cotiza tu proyecto <em>online</em></h1>
+      <p class="wizard-subtitle">Sube tu archivo SVG y obtiene un precio en segundos</p>
+    </div>
+
+    <!-- PROGRESS STEPS -->
+    <div class="progress-steps">
+      <div class="progress-step active" data-step="1">
+        <div class="step-number">1</div>
+        <span class="step-label">Subir SVG</span>
+      </div>
+      <div class="progress-step" data-step="2">
+        <div class="step-number">2</div>
+        <span class="step-label">Opciones</span>
+      </div>
+      <div class="progress-step" data-step="3">
+        <div class="step-number">3</div>
+        <span class="step-label">Resultado</span>
+      </div>
+    </div>
+
+    <!-- WIZARD CONTENT -->
+    <div class="wizard-content">
+      <!-- ERROR MESSAGE -->
+      <div class="error-message" id="errorMessage"></div>
+
+      <!-- STEP 1: UPLOAD SVG -->
+      <div class="wizard-step active" data-step="1">
+        <div class="dropzone" id="dropzone">
+          <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <div class="dropzone-text">Arrastra tu archivo SVG aqui</div>
+          <div class="dropzone-hint">o <span onclick="document.getElementById('fileInput').click()">selecciona un archivo</span></div>
+          <div class="dropzone-hint" style="margin-top: 0.5rem; font-size: 0.75rem;">Max 5MB - Solo archivos .svg</div>
+        </div>
+        <input type="file" id="fileInput" accept=".svg">
+
+        <!-- ANALYSIS RESULT (hidden initially) -->
+        <div class="analysis-result" id="analysisResult">
+          <div class="analysis-card">
+            <div class="analysis-header">
+              <div class="analysis-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+              <div>
+                <div class="analysis-filename" id="analysisFilename">archivo.svg</div>
+                <div class="analysis-status">Analizado correctamente</div>
+              </div>
+            </div>
+            <div class="analysis-grid">
+              <div class="analysis-item">
+                <div class="analysis-item-icon dim">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  </svg>
+                </div>
+                <div class="analysis-item-content">
+                  <div class="analysis-item-label">Dimensiones</div>
+                  <div class="analysis-item-value" id="analysisDimensions">- x - mm</div>
+                </div>
+              </div>
+              <div class="analysis-item">
+                <div class="analysis-item-icon red">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>
+                  </svg>
+                </div>
+                <div class="analysis-item-content">
+                  <div class="analysis-item-label">Corte (rojo)</div>
+                  <div class="analysis-item-value" id="analysisCut">- mm</div>
+                </div>
+              </div>
+              <div class="analysis-item">
+                <div class="analysis-item-icon blue">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                    <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                  </svg>
+                </div>
+                <div class="analysis-item-content">
+                  <div class="analysis-item-label">Vector (azul)</div>
+                  <div class="analysis-item-value" id="analysisVector">- mm</div>
+                </div>
+              </div>
+              <div class="analysis-item">
+                <div class="analysis-item-icon black">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <path d="M3 9h18M9 21V9"/>
+                  </svg>
+                </div>
+                <div class="analysis-item-content">
+                  <div class="analysis-item-label">Raster (negro)</div>
+                  <div class="analysis-item-value" id="analysisRaster">- mm2</div>
+                </div>
+              </div>
+            </div>
+            <!-- Warnings -->
+            <div class="warnings" id="analysisWarnings" style="display: none;">
+              <div class="warnings-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Advertencias
+              </div>
+              <ul class="warnings-list" id="warningsList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 1 ACTIONS -->
+        <div class="wizard-actions">
+          <div></div>
+          <button class="btn btn-primary" id="btnStep1Next" disabled onclick="goToStep(2)">
+            Continuar
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: OPTIONS -->
+      <div class="wizard-step" data-step="2">
+        <!-- Material (FIRST - triggers technology filtering) -->
+        <div class="options-section">
+          <label class="options-label">1. Selecciona el Material</label>
+          <div class="options-grid" id="materialOptions"></div>
+        </div>
+
+        <!-- Technology (SECOND - filtered by material compatibility) -->
+        <div class="options-section" id="techSection">
+          <label class="options-label">2. Selecciona la Tecnologia</label>
+          <div class="options-grid" id="techOptions">
+            <div class="options-placeholder">Selecciona un material primero</div>
+          </div>
+        </div>
+
+        <!-- Thickness (THIRD - based on tech+material combo) -->
+        <div class="options-section" id="thicknessSection" style="display: none;">
+          <label class="options-label">3. Selecciona el Grosor</label>
+          <div class="options-grid" id="thicknessOptions"></div>
+        </div>
+
+        <!-- Engrave Type (hidden if no engrave operations) -->
+        <div class="options-section" id="engraveSection">
+          <label class="options-label">4. Tipo de grabado</label>
+          <div class="options-grid" id="engraveOptions"></div>
+        </div>
+
+        <!-- Quantity -->
+        <div class="input-row">
+          <div class="input-group">
+            <label for="quantityInput">Cantidad</label>
+            <input type="number" id="quantityInput" value="1" min="1" max="10000" onchange="updateDiscountPreview()">
+          </div>
+          <div class="input-group">
+            <!-- Empty space for layout balance -->
+          </div>
+        </div>
+
+        <!-- Discount Preview -->
+        <div class="discount-preview" id="discountPreview" style="display: none;">
+          <svg class="discount-preview-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
+          </svg>
+          <div class="discount-preview-text">
+            Por <strong id="discountQty">10</strong> unidades obtenes <strong id="discountPct">5%</strong> de descuento
+          </div>
+        </div>
+
+        <!-- STEP 2 ACTIONS -->
+        <div class="wizard-actions">
+          <button class="btn btn-secondary" onclick="goToStep(1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Atras
+          </button>
+          <button class="btn btn-primary" id="btnCalculate" onclick="calculatePrice()">
+            Calcular precio
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: RESULT -->
+      <div class="wizard-step" data-step="3">
+        <div class="result-header">
+          <div class="result-status approved" id="resultStatus">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span id="resultStatusText">Cotizacion aprobada</span>
+          </div>
+          <div class="result-price">₡<span id="resultPrice">0</span></div>
+          <div class="result-price-label"><span id="resultQty">1</span> unidad(es) - Precio total</div>
+          <div class="result-validity">Valido hasta: <span id="resultValidity">-</span></div>
+        </div>
+
+        <!-- Selected Options Summary -->
+        <div class="selected-summary" id="selectedSummary">
+          <div class="summary-item">
+            <span class="summary-item-label">Material:</span>
+            <span class="summary-item-value" id="summaryMaterial">-</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-item-label">Tecnologia:</span>
+            <span class="summary-item-value" id="summaryTech">-</span>
+          </div>
+          <div class="summary-item" id="thicknessSummaryItem" style="display: none;">
+            <span class="summary-item-label">Grosor:</span>
+            <span class="summary-item-value" id="summaryThickness">-</span>
+          </div>
+          <div class="summary-item" id="engraveSummaryItem">
+            <span class="summary-item-label">Grabado:</span>
+            <span class="summary-item-value" id="summaryEngrave">-</span>
+          </div>
+        </div>
+
+        <!-- Breakdown -->
+        <div class="result-breakdown">
+          <!-- Time Breakdown -->
+          <div class="breakdown-card">
+            <div class="breakdown-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+              </svg>
+              Tiempo estimado
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-row-label">Grabado</span>
+              <span class="breakdown-row-value" id="timeEngrave">- min</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-row-label">Corte</span>
+              <span class="breakdown-row-value" id="timeCut">- min</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-row-label">Setup</span>
+              <span class="breakdown-row-value" id="timeSetup">- min</span>
+            </div>
+            <div class="breakdown-row highlight">
+              <span class="breakdown-row-label">Total</span>
+              <span class="breakdown-row-value" id="timeTotal">- min</span>
+            </div>
+          </div>
+
+          <!-- Factors -->
+          <div class="breakdown-card">
+            <div class="breakdown-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+              </svg>
+              Factores aplicados
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-row-label">Material</span>
+              <span class="breakdown-row-value" id="factorMaterial">1.0x</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-row-label">Tipo grabado</span>
+              <span class="breakdown-row-value" id="factorEngrave">1.0x</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-row-label">Premium UV</span>
+              <span class="breakdown-row-value" id="factorUV">+0%</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-row-label">Descuento volumen</span>
+              <span class="breakdown-row-value" id="factorDiscount">-0%</span>
+            </div>
+            <div class="breakdown-row highlight">
+              <span class="breakdown-row-label">Precio unitario</span>
+              <span class="breakdown-row-value" id="priceUnit">₡0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3 ACTIONS -->
+        <div class="wizard-actions">
+          <button class="btn btn-secondary" onclick="goToStep(2)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Modificar opciones
+          </button>
+          <button class="btn btn-primary" onclick="resetWizard()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Nueva cotizacion
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="historyTab" style="display: none;">
+    <div class="wizard-header">
+      <h1 class="wizard-title">Mis <em>cotizaciones</em></h1>
+      <p class="wizard-subtitle">Historial de cotizaciones anteriores</p>
+    </div>
+
+    <div class="history-list" id="historyList">
+      <div class="history-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; opacity: 0.5;">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+        </svg>
+        <div>No tienes cotizaciones todavia</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = '/api/v1';
+
+// STATE - Compatible options loaded from API (database-driven)
+let compatibleTechnologies = []; // Technologies compatible with selected material
+
+// STATE
+const state = {
+  token: localStorage.getItem('fl_token'),
+  user: null,
+  config: null,
+  currentStep: 1,
+  analysis: null,
+  hasEngraveOperations: false, // true if SVG has vector or raster engrave
+  options: {
+    technologyId: null,
+    materialId: null,
+    engraveTypeId: null,
+    quantity: 1,
+    thickness: null
+  },
+  quote: null
+};
+
+// INIT
+document.addEventListener('DOMContentLoaded', async () => {
+  // Check auth
+  if (!state.token) {
+    window.location.href = '/?login=1';
+    return;
+  }
+
+  try {
+    // Load user
+    await loadUser();
+
+    // Load config
+    await loadConfig();
+
+    // Setup dropzone
+    setupDropzone();
+
+    // Load history
+    loadHistory();
+  } catch (error) {
+    console.error('Init error:', error);
+    showError('Error al inicializar. Por favor recarga la pagina.');
+  }
+});
+
+// LOAD USER
+async function loadUser() {
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    headers: { 'Authorization': `Bearer ${state.token}` }
+  });
+
+  if (!res.ok) {
+    localStorage.removeItem('fl_token');
+    window.location.href = '/?login=1';
+    return;
+  }
+
+  const data = await res.json();
+  state.user = data.data || data.usuario;
+
+  // Update UI - Quota
+  const remaining = state.user.quote_quota === -1 ? '∞' :
+    Math.max(0, state.user.quote_quota - state.user.quotes_used);
+  document.getElementById('quotaRemaining').textContent = remaining;
+
+  // Update UI - Avatar and Menu
+  const initial = (state.user.nombre || '?')[0].toUpperCase();
+  document.getElementById('userInitial').textContent = initial;
+  document.getElementById('menuUserName').textContent = state.user.nombre || 'Usuario';
+  document.getElementById('menuUserEmail').textContent = state.user.email || '';
+
+  // Show admin link for admin users
+  if (state.user.role === 'admin') {
+    document.getElementById('adminMenuLink').style.display = 'flex';
+  }
+
+  // Check quota
+  if (state.user.quote_quota !== -1 && state.user.quotes_used >= state.user.quote_quota) {
+    showError('Has agotado tu cuota de cotizaciones. Contacta al administrador para obtener mas.');
+    document.getElementById('dropzone').style.pointerEvents = 'none';
+    document.getElementById('dropzone').style.opacity = '0.5';
+  }
+}
+
+// LOGOUT
+function logout() {
+  localStorage.removeItem('fl_token');
+  localStorage.removeItem('fl_user');
+  window.location.href = '/';
+}
+
+// LOAD CONFIG
+async function loadConfig() {
+  // Check cache
+  const cached = sessionStorage.getItem('fabricalaser_config');
+  if (cached) {
+    state.config = JSON.parse(cached);
+    renderOptions();
+    return;
+  }
+
+  const res = await fetch(`${API_BASE}/config`);
+  const data = await res.json();
+  state.config = data.data || data;
+
+  // Cache for session
+  sessionStorage.setItem('fabricalaser_config', JSON.stringify(state.config));
+
+  renderOptions();
+}
+
+// RENDER OPTIONS
+function renderOptions() {
+  // Materials (shown first - triggers technology filtering)
+  const matGrid = document.getElementById('materialOptions');
+  matGrid.innerHTML = state.config.materials.map(m => `
+    <div class="option-card" data-id="${m.id}" onclick="selectMaterial(${m.id}, this)">
+      <div class="option-card-name">${m.name}</div>
+      <div class="option-card-desc">Factor: ${m.factor}x</div>
+    </div>
+  `).join('');
+
+  // Technologies placeholder (will be populated when material is selected)
+  const techGrid = document.getElementById('techOptions');
+  techGrid.innerHTML = '<div class="options-placeholder">Selecciona un material primero</div>';
+
+  // Thickness placeholder (hidden until technology is selected)
+  document.getElementById('thicknessSection').style.display = 'none';
+
+  // Engrave Types
+  const engGrid = document.getElementById('engraveOptions');
+  engGrid.innerHTML = state.config.engrave_types.map(e => `
+    <div class="option-card" data-id="${e.id}" onclick="selectEngrave(${e.id}, this)">
+      <div class="option-card-name">${e.name}</div>
+      <div class="option-card-desc">${e.description || 'Factor: ' + e.factor + 'x'}</div>
+    </div>
+  `).join('');
+}
+
+// SELECT MATERIAL - Triggers API call to get compatible technologies
+async function selectMaterial(materialId, el) {
+  hideError();
+
+  // Update state
+  state.options.materialId = materialId;
+  state.options.technologyId = null;  // Reset tech selection
+  state.options.thickness = null;     // Reset thickness
+
+  // Update UI - mark selected
+  document.querySelectorAll('#materialOptions .option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  // Reset technology and thickness sections
+  document.getElementById('techOptions').innerHTML = '<div class="options-placeholder">Cargando tecnologias...</div>';
+  document.getElementById('thicknessSection').style.display = 'none';
+
+  try {
+    // Fetch compatible technologies from database
+    const res = await fetch(`${API_BASE}/config/compatible-options?material_id=${materialId}`);
+    const data = await res.json();
+
+    if (!data.success) {
+      throw new Error(data.error?.message || 'Error al cargar opciones');
+    }
+
+    compatibleTechnologies = data.data.technologies || [];
+
+    if (compatibleTechnologies.length === 0) {
+      document.getElementById('techOptions').innerHTML = `
+        <div class="options-placeholder" style="color: var(--warning);">
+          No hay tecnologias configuradas para este material.<br>
+          Contacta al administrador.
+        </div>
+      `;
+      return;
+    }
+
+    // Render compatible technologies with capabilities
+    const techGrid = document.getElementById('techOptions');
+    techGrid.innerHTML = compatibleTechnologies.map(t => {
+      const capabilities = [];
+      if (t.can_cut) capabilities.push('Corte');
+      if (t.can_engrave) capabilities.push('Grabado');
+      const capText = capabilities.join(' + ') || 'Solo marcado';
+
+      return `
+        <div class="option-card compat-optimal" data-id="${t.id}" onclick="selectTechnology(${t.id}, this)">
+          <div class="option-card-name">${t.name}</div>
+          <div class="option-card-desc">${t.code}</div>
+          <div class="compat-indicator optimal">✓ ${capText}</div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (error) {
+    console.error('Error loading compatible options:', error);
+    document.getElementById('techOptions').innerHTML = `
+      <div class="options-placeholder" style="color: var(--error);">
+        Error al cargar opciones: ${error.message}
+      </div>
+    `;
+  }
+}
+
+// SELECT TECHNOLOGY - Shows available thicknesses
+function selectTechnology(techId, el) {
+  hideError();
+
+  // Update state
+  state.options.technologyId = techId;
+  state.options.thickness = null; // Reset thickness
+
+  // Update UI - mark selected
+  document.querySelectorAll('#techOptions .option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  // Find selected technology from compatible list
+  const tech = compatibleTechnologies.find(t => t.id === techId);
+
+  if (!tech) {
+    console.error('Technology not found in compatible list');
+    return;
+  }
+
+  // Show thickness options if available
+  const thicknessSection = document.getElementById('thicknessSection');
+  const thicknessGrid = document.getElementById('thicknessOptions');
+
+  if (tech.thicknesses && tech.thicknesses.length > 0) {
+    // Filter out 0 thickness (used for materials without thickness)
+    const validThicknesses = tech.thicknesses.filter(t => t > 0);
+
+    if (validThicknesses.length > 0) {
+      thicknessGrid.innerHTML = validThicknesses.map(t => `
+        <div class="option-card" data-id="${t}" onclick="selectThickness(${t}, this)">
+          <div class="option-card-name">${t} mm</div>
+          <div class="option-card-desc">Grosor del material</div>
+        </div>
+      `).join('');
+      thicknessSection.style.display = 'block';
+    } else {
+      // Thickness 0 means no thickness needed
+      thicknessSection.style.display = 'none';
+      state.options.thickness = 0;
+    }
+  } else {
+    // No thickness options - hide section
+    thicknessSection.style.display = 'none';
+    state.options.thickness = 0;
+  }
+}
+
+// SELECT THICKNESS
+function selectThickness(thickness, el) {
+  hideError();
+
+  // Update state
+  state.options.thickness = thickness;
+
+  // Update UI - mark selected
+  document.querySelectorAll('#thicknessOptions .option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// SELECT ENGRAVE TYPE
+function selectEngrave(engraveId, el) {
+  hideError();
+
+  // Update state
+  state.options.engraveTypeId = engraveId;
+
+  // Update UI - mark selected
+  document.querySelectorAll('#engraveOptions .option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// UPDATE DISCOUNT PREVIEW
+function updateDiscountPreview() {
+  const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+  state.options.quantity = qty;
+
+  const discount = state.config.volume_discounts?.find(d =>
+    qty >= d.min_qty && (d.max_qty === null || qty <= d.max_qty)
+  );
+
+  const preview = document.getElementById('discountPreview');
+  if (discount && discount.discount_pct > 0) {
+    document.getElementById('discountQty').textContent = qty;
+    document.getElementById('discountPct').textContent = (discount.discount_pct * 100) + '%';
+    preview.style.display = 'flex';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+// SETUP DROPZONE
+function setupDropzone() {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('dragover');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  dropzone.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleFile(file);
+  });
+}
+
+// HANDLE FILE
+async function handleFile(file) {
+  // Validate
+  if (!file.name.toLowerCase().endsWith('.svg')) {
+    showError('Solo se permiten archivos SVG');
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    showError('El archivo excede el limite de 5MB');
+    return;
+  }
+
+  hideError();
+  showLoading('Analizando SVG...');
+
+  try {
+    const formData = new FormData();
+    formData.append('svg', file);
+
+    const res = await fetch(`${API_BASE}/quotes/analyze`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${state.token}` },
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || 'Error al analizar SVG');
+    }
+
+    state.analysis = data.data;
+    displayAnalysis(file.name, data.cached);
+    document.getElementById('btnStep1Next').disabled = false;
+
+  } catch (error) {
+    showError(error.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+// DISPLAY ANALYSIS
+function displayAnalysis(filename, cached) {
+  const a = state.analysis;
+
+  document.getElementById('analysisFilename').textContent = filename + (cached ? ' (cache)' : '');
+  document.getElementById('analysisDimensions').textContent = `${a.width_mm?.toFixed(1) || 0} x ${a.height_mm?.toFixed(1) || 0} mm`;
+  document.getElementById('analysisCut').textContent = `${(a.cut_length_mm || 0).toFixed(1)} mm`;
+  document.getElementById('analysisVector').textContent = `${(a.vector_length_mm || 0).toFixed(1)} mm`;
+  document.getElementById('analysisRaster').textContent = `${(a.raster_area_mm2 || 0).toFixed(1)} mm²`;
+
+  // Check if SVG has engrave operations (vector blue or raster black)
+  const vectorLength = a.vector_length_mm || 0;
+  const rasterArea = a.raster_area_mm2 || 0;
+  state.hasEngraveOperations = (vectorLength > 0 || rasterArea > 0);
+
+  // Show/hide engrave section based on analysis
+  const engraveSection = document.getElementById('engraveSection');
+  const engraveSummaryItem = document.getElementById('engraveSummaryItem');
+  if (state.hasEngraveOperations) {
+    engraveSection.style.display = 'block';
+    if (engraveSummaryItem) engraveSummaryItem.style.display = 'flex';
+  } else {
+    engraveSection.style.display = 'none';
+    if (engraveSummaryItem) engraveSummaryItem.style.display = 'none';
+    // Clear any previous engrave selection
+    state.options.engraveTypeId = null;
+  }
+
+  // Warnings
+  const warnings = a.warnings || [];
+  if (warnings.length > 0) {
+    document.getElementById('warningsList').innerHTML = warnings.map(w => `<li>• ${w}</li>`).join('');
+    document.getElementById('analysisWarnings').style.display = 'block';
+  } else {
+    document.getElementById('analysisWarnings').style.display = 'none';
+  }
+
+  document.getElementById('analysisResult').classList.add('show');
+}
+
+// CALCULATE PRICE
+async function calculatePrice() {
+  // Validate selections (in order of the new flow)
+  if (!state.options.materialId) {
+    showError('Selecciona un material');
+    return;
+  }
+  if (!state.options.technologyId) {
+    showError('Selecciona una tecnologia');
+    return;
+  }
+
+  // Check if thickness is required and selected
+  const tech = compatibleTechnologies.find(t => t.id === state.options.technologyId);
+  const validThicknesses = tech?.thicknesses?.filter(t => t > 0) || [];
+  if (validThicknesses.length > 0 && (state.options.thickness === null || state.options.thickness === undefined)) {
+    showError('Selecciona un grosor');
+    return;
+  }
+
+  // Only validate engrave type if SVG has engrave operations
+  if (state.hasEngraveOperations && !state.options.engraveTypeId) {
+    showError('Selecciona un tipo de grabado');
+    return;
+  }
+
+  state.options.quantity = parseInt(document.getElementById('quantityInput').value) || 1;
+
+  hideError();
+  showLoading('Calculando precio...');
+
+  // Use engrave type ID 1 (default) if no engrave operations
+  const engraveTypeId = state.hasEngraveOperations ? state.options.engraveTypeId : 1;
+
+  try {
+    const res = await fetch(`${API_BASE}/quotes/calculate`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${state.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        analysis_id: state.analysis.id,
+        technology_id: state.options.technologyId,
+        material_id: state.options.materialId,
+        engrave_type_id: engraveTypeId,
+        quantity: state.options.quantity,
+        thickness: state.options.thickness
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || 'Error al calcular precio');
+    }
+
+    state.quote = data.data;
+    displayResult();
+    goToStep(3);
+
+    // Update quota display
+    state.user.quotes_used++;
+    const remaining = state.user.quote_quota === -1 ? '∞' :
+      Math.max(0, state.user.quote_quota - state.user.quotes_used);
+    document.getElementById('quotaRemaining').textContent = remaining;
+
+  } catch (error) {
+    showError(error.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+// DISPLAY RESULT
+function displayResult() {
+  const q = state.quote;
+
+  // Status
+  const statusEl = document.getElementById('resultStatus');
+  const statusText = document.getElementById('resultStatusText');
+  const statusMap = {
+    'auto_approved': { class: 'approved', text: 'Aprobada automaticamente' },
+    'approved': { class: 'approved', text: 'Aprobada' },
+    'needs_review': { class: 'review', text: 'Requiere revision' },
+    'rejected': { class: 'rejected', text: 'Diseno complejo - Contactenos' },
+    'expired': { class: 'expired', text: 'Expirada' },
+    'converted': { class: 'approved', text: 'Convertida a pedido' },
+    'draft': { class: 'review', text: 'Borrador' }
+  };
+  const statusInfo = statusMap[q.status] || { class: 'review', text: q.status };
+  statusEl.className = `result-status ${statusInfo.class}`;
+  statusText.textContent = statusInfo.text;
+
+  // Price (en colones CRC)
+  const pricing = q.pricing || q;
+  document.getElementById('resultPrice').textContent = Math.round(pricing.final || pricing.price_final || 0).toLocaleString('es-CR');
+  document.getElementById('resultQty').textContent = q.quantity;
+
+  // Validity
+  const validity = new Date(q.valid_until);
+  document.getElementById('resultValidity').textContent = validity.toLocaleDateString('es-CR', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  });
+
+  // Summary
+  const tech = compatibleTechnologies.find(t => t.id === state.options.technologyId);
+  const mat = state.config.materials.find(m => m.id === state.options.materialId);
+  document.getElementById('summaryTech').textContent = tech?.name || '-';
+  document.getElementById('summaryMaterial').textContent = mat?.name || '-';
+
+  // Show thickness if applicable
+  const thicknessSummaryItem = document.getElementById('thicknessSummaryItem');
+  if (state.options.thickness && state.options.thickness > 0) {
+    document.getElementById('summaryThickness').textContent = state.options.thickness + ' mm';
+    thicknessSummaryItem.style.display = 'flex';
+  } else {
+    thicknessSummaryItem.style.display = 'none';
+  }
+
+  // Show engrave summary only if there are engrave operations
+  const engraveSummaryItem = document.getElementById('engraveSummaryItem');
+  if (state.hasEngraveOperations) {
+    const eng = state.config.engrave_types.find(e => e.id === state.options.engraveTypeId);
+    document.getElementById('summaryEngrave').textContent = eng?.name || '-';
+    engraveSummaryItem.style.display = 'flex';
+  } else {
+    engraveSummaryItem.style.display = 'none';
+  }
+
+  // Time breakdown
+  const time = q.time_breakdown || q;
+  document.getElementById('timeEngrave').textContent = `${(time.engrave_mins || time.time_engrave_mins || 0).toFixed(1)} min`;
+  document.getElementById('timeCut').textContent = `${(time.cut_mins || time.time_cut_mins || 0).toFixed(1)} min`;
+  document.getElementById('timeSetup').textContent = `${(time.setup_mins || time.time_setup_mins || 0).toFixed(1)} min`;
+  document.getElementById('timeTotal').textContent = `${(time.total_mins || time.time_total_mins || 0).toFixed(1)} min`;
+
+  // Factors
+  const factors = q.factors || q;
+  document.getElementById('factorMaterial').textContent = `${(factors.material || factors.factor_material || 1).toFixed(2)}x`;
+  document.getElementById('factorEngrave').textContent = `${(factors.engrave || factors.factor_engrave || 1).toFixed(2)}x`;
+  document.getElementById('factorUV').textContent = `+${((factors.uv_premium || factors.factor_uv_premium || 0) * 100).toFixed(0)}%`;
+  document.getElementById('factorDiscount').textContent = `-${((factors.volume_discount || factors.discount_volume_pct || 0) * 100).toFixed(0)}%`;
+  document.getElementById('priceUnit').textContent = `₡${Math.round(pricing.hybrid_unit || pricing.price_hybrid_unit || 0).toLocaleString('es-CR')}`;
+}
+
+// GO TO STEP
+function goToStep(step) {
+  state.currentStep = step;
+
+  // Update progress
+  document.querySelectorAll('.progress-step').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.remove('active', 'completed');
+    if (s < step) el.classList.add('completed');
+    if (s === step) el.classList.add('active');
+  });
+
+  // Update content
+  document.querySelectorAll('.wizard-step').forEach(el => {
+    el.classList.remove('active');
+    if (parseInt(el.dataset.step) === step) el.classList.add('active');
+  });
+
+  hideError();
+}
+
+// RESET WIZARD
+function resetWizard() {
+  state.analysis = null;
+  state.quote = null;
+  state.hasEngraveOperations = false;
+  state.options = {
+    technologyId: null,
+    materialId: null,
+    engraveTypeId: null,
+    quantity: 1,
+    thickness: null
+  };
+
+  // Reset compatible technologies cache
+  compatibleTechnologies = [];
+
+  // Reset UI
+  document.getElementById('analysisResult').classList.remove('show');
+  document.getElementById('btnStep1Next').disabled = true;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('quantityInput').value = '1';
+  document.getElementById('discountPreview').style.display = 'none';
+
+  // Reset technology section to placeholder
+  document.getElementById('techOptions').innerHTML = '<div class="options-placeholder">Selecciona un material primero</div>';
+
+  // Hide thickness section
+  document.getElementById('thicknessSection').style.display = 'none';
+  document.getElementById('thicknessOptions').innerHTML = '';
+
+  // Show engrave section again (will be hidden if needed after next analysis)
+  document.getElementById('engraveSection').style.display = 'block';
+
+  // Deselect all options
+  document.querySelectorAll('.option-card').forEach(c => {
+    c.classList.remove('selected', 'compat-optimal', 'compat-possible', 'compat-incompatible');
+    const indicator = c.querySelector('.compat-indicator');
+    if (indicator) indicator.remove();
+  });
+
+  goToStep(1);
+  loadHistory();
+}
+
+// TABS
+function showTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (tab === 'wizard') {
+    document.getElementById('wizardTab').style.display = 'block';
+    document.getElementById('historyTab').style.display = 'none';
+  } else {
+    document.getElementById('wizardTab').style.display = 'none';
+    document.getElementById('historyTab').style.display = 'block';
+    loadHistory();
+  }
+}
+
+// LOAD HISTORY
+async function loadHistory() {
+  try {
+    const res = await fetch(`${API_BASE}/quotes/my?limit=20`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    const data = await res.json();
+    const quotes = data.data || [];
+
+    const list = document.getElementById('historyList');
+
+    if (quotes.length === 0) {
+      list.innerHTML = `
+        <div class="history-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; opacity: 0.5;">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+          </svg>
+          <div>No tienes cotizaciones todavia</div>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = quotes.map(q => {
+      const date = new Date(q.created_at);
+      const statusMap = {
+        'auto_approved': { class: 'approved', text: 'Aprobado' },
+        'approved': { class: 'approved', text: 'Aprobado' },
+        'needs_review': { class: 'review', text: 'En revision' },
+        'rejected': { class: 'expired', text: 'Complejo' },
+        'expired': { class: 'expired', text: 'Expirado' },
+        'converted': { class: 'approved', text: 'Pedido' },
+        'draft': { class: 'review', text: 'Borrador' }
+      };
+      const statusInfo = statusMap[q.status] || { class: 'review', text: q.status };
+
+      return `
+        <div class="history-item">
+          <div class="history-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <path d="M14 2v6h6"/>
+            </svg>
+          </div>
+          <div class="history-info">
+            <div class="history-filename">Cotizacion #${q.id}</div>
+            <div class="history-meta">${date.toLocaleDateString('es-CR')} - ${q.quantity} unidad(es)</div>
+          </div>
+          <div class="history-price">₡${Math.round(q.price_final || q.price_hybrid_total || 0).toLocaleString('es-CR')}</div>
+          <div class="history-status ${statusInfo.class}">${statusInfo.text}</div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (error) {
+    console.error('Error loading history:', error);
+  }
+}
+
+// HELPERS
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text || 'Procesando...';
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('show');
+}
+
+function showError(message) {
+  const el = document.getElementById('errorMessage');
+  el.textContent = message;
+  el.classList.add('show');
+}
+
+function hideError() {
+  document.getElementById('errorMessage').classList.remove('show');
+}
+</script>
+
+</body>
+</html>

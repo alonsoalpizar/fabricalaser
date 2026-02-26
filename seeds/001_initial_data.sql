@@ -38,73 +38,74 @@ INSERT INTO engrave_types (name, factor, speed_multiplier, description, is_activ
 ON CONFLICT DO NOTHING;
 
 -- =====================================================
--- TECH RATES - Tarifas UV del simulador v5
--- Engrave: $12/hr, Cut: $14/hr, Design: $15/hr, Overhead: $3.78/hr
--- Cost/min engrave = (12 + 3.78) / 60 = $0.263
--- Cost/min cut = (14 + 3.78) / 60 = $0.296
+-- TECH RATES - Tarifas UV del simulador v5 (en COLONES CRC)
+-- Tipo de cambio: ₡515 por $1 USD
+-- Engrave: ₡6,180/hr, Cut: ₡7,210/hr, Design: ₡7,725/hr, Overhead: ₡1,947/hr
+-- Cost/min engrave = (6180 + 1947) / 60 = ₡135.45
+-- Cost/min cut = (7210 + 1947) / 60 = ₡152.62
 -- =====================================================
 INSERT INTO tech_rates (technology_id, engrave_rate_hour, cut_rate_hour, design_rate_hour, overhead_rate_hour, setup_fee, cost_per_min_engrave, cost_per_min_cut, margin_percent, is_active)
 SELECT
     t.id,
-    12.00,  -- engrave_rate_hour
-    14.00,  -- cut_rate_hour
-    15.00,  -- design_rate_hour
-    3.78,   -- overhead_rate_hour
-    0.00,   -- setup_fee
-    0.263,  -- cost_per_min_engrave
-    0.296,  -- cost_per_min_cut
-    0.40,   -- margin_percent (40%)
+    6180.00,  -- engrave_rate_hour (CRC)
+    7210.00,  -- cut_rate_hour (CRC)
+    7725.00,  -- design_rate_hour (CRC)
+    1947.00,  -- overhead_rate_hour (CRC)
+    0.00,     -- setup_fee (CRC)
+    135.45,   -- cost_per_min_engrave (CRC)
+    152.62,   -- cost_per_min_cut (CRC)
+    0.40,     -- margin_percent (40%)
     true
 FROM technologies t
 WHERE t.code = 'UV'
 ON CONFLICT DO NOTHING;
 
--- Rates for CO2 (similar to UV but no premium)
+-- Rates for CO2 (similar to UV but no premium) - en COLONES CRC
 INSERT INTO tech_rates (technology_id, engrave_rate_hour, cut_rate_hour, design_rate_hour, overhead_rate_hour, setup_fee, cost_per_min_engrave, cost_per_min_cut, margin_percent, is_active)
 SELECT
     t.id,
-    10.00,  -- engrave_rate_hour (slightly lower)
-    12.00,  -- cut_rate_hour
-    15.00,  -- design_rate_hour
-    3.78,   -- overhead_rate_hour
-    0.00,   -- setup_fee
-    0.230,  -- cost_per_min_engrave
-    0.263,  -- cost_per_min_cut
-    0.40,   -- margin_percent
+    5150.00,  -- engrave_rate_hour (CRC)
+    6180.00,  -- cut_rate_hour (CRC)
+    7725.00,  -- design_rate_hour (CRC)
+    1947.00,  -- overhead_rate_hour (CRC)
+    0.00,     -- setup_fee (CRC)
+    118.28,   -- cost_per_min_engrave (CRC)
+    135.45,   -- cost_per_min_cut (CRC)
+    0.40,     -- margin_percent
     true
 FROM technologies t
 WHERE t.code = 'CO2'
 ON CONFLICT DO NOTHING;
 
--- Rates for FIBRA (metal work, higher rates)
+-- Rates for FIBRA (metal work, higher rates) - en COLONES CRC
 INSERT INTO tech_rates (technology_id, engrave_rate_hour, cut_rate_hour, design_rate_hour, overhead_rate_hour, setup_fee, cost_per_min_engrave, cost_per_min_cut, margin_percent, is_active)
 SELECT
     t.id,
-    18.00,  -- engrave_rate_hour
-    20.00,  -- cut_rate_hour
-    15.00,  -- design_rate_hour
-    5.00,   -- overhead_rate_hour (higher for metal)
-    0.00,   -- setup_fee
-    0.383,  -- cost_per_min_engrave
-    0.417,  -- cost_per_min_cut
-    0.45,   -- margin_percent (45% for precision work)
+    9270.00,   -- engrave_rate_hour (CRC)
+    10300.00,  -- cut_rate_hour (CRC)
+    7725.00,   -- design_rate_hour (CRC)
+    2575.00,   -- overhead_rate_hour (CRC, higher for metal)
+    0.00,      -- setup_fee (CRC)
+    197.42,    -- cost_per_min_engrave (CRC)
+    214.58,    -- cost_per_min_cut (CRC)
+    0.45,      -- margin_percent (45% for precision work)
     true
 FROM technologies t
 WHERE t.code = 'FIBRA'
 ON CONFLICT DO NOTHING;
 
--- Rates for MOPA (similar to FIBRA)
+-- Rates for MOPA (similar to FIBRA) - en COLONES CRC
 INSERT INTO tech_rates (technology_id, engrave_rate_hour, cut_rate_hour, design_rate_hour, overhead_rate_hour, setup_fee, cost_per_min_engrave, cost_per_min_cut, margin_percent, is_active)
 SELECT
     t.id,
-    20.00,  -- engrave_rate_hour (highest for color marking)
-    20.00,  -- cut_rate_hour
-    15.00,  -- design_rate_hour
-    5.00,   -- overhead_rate_hour
-    0.00,   -- setup_fee
-    0.417,  -- cost_per_min_engrave
-    0.417,  -- cost_per_min_cut
-    0.45,   -- margin_percent
+    10300.00,  -- engrave_rate_hour (CRC, highest for color marking)
+    10300.00,  -- cut_rate_hour (CRC)
+    7725.00,   -- design_rate_hour (CRC)
+    2575.00,   -- overhead_rate_hour (CRC)
+    0.00,      -- setup_fee (CRC)
+    214.58,    -- cost_per_min_engrave (CRC)
+    214.58,    -- cost_per_min_cut (CRC)
+    0.45,      -- margin_percent
     true
 FROM technologies t
 WHERE t.code = 'MOPA'
@@ -122,16 +123,17 @@ INSERT INTO volume_discounts (min_qty, max_qty, discount_pct, is_active) VALUES
 ON CONFLICT DO NOTHING;
 
 -- =====================================================
--- PRICE REFERENCES (7) - Del simulador v5
+-- PRICE REFERENCES (7) - Del simulador v5 (en COLONES CRC)
+-- Tipo de cambio: ₡515 por $1 USD
 -- =====================================================
 INSERT INTO price_references (service_type, min_usd, max_usd, typical_time, description, is_active) VALUES
-('grabado_basico', 3.00, 10.00, '1-3 min', 'Grabado básico menor a 5cm². Texto simple, logos pequeños.', true),
-('grabado_estandar', 10.00, 25.00, '3-8 min', 'Grabado estándar 5-15cm². Logos medianos, texto detallado.', true),
-('grabado_complejo', 25.00, 50.00, '8-15 min', 'Grabado complejo 15-30cm². Diseños elaborados.', true),
-('fotograbado', 40.00, 100.00, '15-40 min', 'Fotograbado de imágenes. Requiere preparación especial.', true),
-('corte_simple', 2.00, 8.00, '0.5-2 min', 'Corte simple menor a 20cm de perímetro.', true),
-('corte_complejo', 8.00, 25.00, '2-8 min', 'Corte complejo mayor a 20cm. Formas intrincadas.', true),
-('corte_grabado', 8.00, 40.00, '3-15 min', 'Combinación de corte y grabado en una pieza.', true)
+('grabado_basico', 1545, 5150, '1-3 min', 'Grabado básico menor a 5cm². Texto simple, logos pequeños.', true),
+('grabado_estandar', 5150, 12875, '3-8 min', 'Grabado estándar 5-15cm². Logos medianos, texto detallado.', true),
+('grabado_complejo', 12875, 25750, '8-15 min', 'Grabado complejo 15-30cm². Diseños elaborados.', true),
+('fotograbado', 20600, 51500, '15-40 min', 'Fotograbado de imágenes. Requiere preparación especial.', true),
+('corte_simple', 1030, 4120, '0.5-2 min', 'Corte simple menor a 20cm de perímetro.', true),
+('corte_complejo', 4120, 12875, '2-8 min', 'Corte complejo mayor a 20cm. Formas intrincadas.', true),
+('corte_grabado', 4120, 20600, '3-15 min', 'Combinación de corte y grabado en una pieza.', true)
 ON CONFLICT DO NOTHING;
 
 -- =====================================================

@@ -4,15 +4,8 @@ import (
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
 )
 
-// Base speeds for time estimation (these are defaults, actual values come from calculations)
-// Speed values depend on material and engrave type
-const (
-	// Base engrave speed: mm² per minute for raster, mm per minute for vector
-	baseEngraveAreaSpeed  = 500.0 // mm²/min for raster engrave (base)
-	baseEngraveLineSpeed  = 100.0 // mm/min for vector engrave (base)
-	baseCutSpeed          = 20.0  // mm/min for cutting (base)
-	setupTimeMinutes      = 5.0   // Base setup time
-)
+// NOTE: Base speeds are now loaded from system_config table
+// No more hardcoded constants - all values from database
 
 // TimeEstimate contains calculated time estimates
 type TimeEstimate struct {
@@ -33,11 +26,13 @@ func NewTimeEstimator(config *PricingConfig) *TimeEstimator {
 }
 
 // Estimate calculates processing time for an analysis with given options
+// thickness parameter is used to look up specific speeds from tech_material_speeds table
 func (e *TimeEstimator) Estimate(
 	analysis *models.SVGAnalysis,
 	techID uint,
 	materialID uint,
 	engraveTypeID uint,
+	thickness float64,
 	quantity int,
 ) TimeEstimate {
 	estimate := TimeEstimate{}
@@ -54,26 +49,53 @@ func (e *TimeEstimator) Estimate(
 		materialFactor = 1.0
 	}
 
+	// Try to get specific speeds from tech_material_speeds table
+	specificSpeed := e.config.GetMaterialSpeed(techID, materialID, thickness)
+
+	// Get base speeds from system_config (used as fallback)
+	baseEngraveAreaSpeed := e.config.GetBaseEngraveAreaSpeed()
+	baseEngraveLineSpeed := e.config.GetBaseEngraveLineSpeed()
+	baseCutSpeed := e.config.GetBaseCutSpeed()
+	setupTimeMinutes := e.config.GetSetupTimeMinutes()
+
 	// Calculate engrave time
-	// Raster area engrave: area / (base_speed × speed_multiplier / material_factor)
+	// If specific engrave speed exists, use it; otherwise use base with multipliers
 	if analysis.RasterAreaMM2 > 0 {
-		effectiveRasterSpeed := baseEngraveAreaSpeed * speedMult / materialFactor
+		var effectiveRasterSpeed float64
+		if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
+			// Use specific speed (already calibrated for this combination)
+			effectiveRasterSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
+		} else {
+			// Fallback to base speed with material factor
+			effectiveRasterSpeed = baseEngraveAreaSpeed * speedMult / materialFactor
+		}
 		rasterTime := analysis.RasterAreaMM2 / effectiveRasterSpeed
 		estimate.EngraveMins += rasterTime
 	}
 
-	// Vector line engrave: length / (base_speed × speed_multiplier / material_factor)
+	// Vector line engrave
 	if analysis.VectorLengthMM > 0 {
-		effectiveVectorSpeed := baseEngraveLineSpeed * speedMult / materialFactor
+		var effectiveVectorSpeed float64
+		if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
+			effectiveVectorSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
+		} else {
+			effectiveVectorSpeed = baseEngraveLineSpeed * speedMult / materialFactor
+		}
 		vectorTime := analysis.VectorLengthMM / effectiveVectorSpeed
 		estimate.EngraveMins += vectorTime
 	}
 
 	// Calculate cut time
-	// Cut: length / (base_speed / material_factor)
-	// Cutting is also affected by material hardness
+	// If specific cut speed exists, use it; otherwise use base with material factor
 	if analysis.CutLengthMM > 0 {
-		effectiveCutSpeed := baseCutSpeed / materialFactor
+		var effectiveCutSpeed float64
+		if specificSpeed.Found && specificSpeed.CutSpeedMmMin != nil && *specificSpeed.CutSpeedMmMin > 0 {
+			// Use specific speed (already calibrated for thickness)
+			effectiveCutSpeed = *specificSpeed.CutSpeedMmMin
+		} else {
+			// Fallback to base speed with material factor
+			effectiveCutSpeed = baseCutSpeed / materialFactor
+		}
 		estimate.CutMins = analysis.CutLengthMM / effectiveCutSpeed
 	}
 
@@ -97,24 +119,28 @@ func (e *TimeEstimator) EstimatePerUnit(
 	techID uint,
 	materialID uint,
 	engraveTypeID uint,
+	thickness float64,
 ) TimeEstimate {
-	return e.Estimate(analysis, techID, materialID, engraveTypeID, 1)
+	return e.Estimate(analysis, techID, materialID, engraveTypeID, thickness, 1)
 }
 
-// GetSpeedInfo returns speed information for display/debugging
+// SpeedInfo returns speed information for display/debugging
 type SpeedInfo struct {
-	BaseEngraveAreaSpeed  float64 // mm²/min
-	BaseEngraveLineSpeed  float64 // mm/min
-	BaseCutSpeed          float64 // mm/min
-	EffectiveRasterSpeed  float64 // After multipliers
-	EffectiveVectorSpeed  float64 // After multipliers
-	EffectiveCutSpeed     float64 // After multipliers
-	SpeedMultiplier       float64 // From engrave type
-	MaterialFactor        float64 // From material
+	BaseEngraveAreaSpeed  float64  // mm²/min from system_config
+	BaseEngraveLineSpeed  float64  // mm/min from system_config
+	BaseCutSpeed          float64  // mm/min from system_config
+	SpecificCutSpeed      *float64 // From tech_material_speeds (if exists)
+	SpecificEngraveSpeed  *float64 // From tech_material_speeds (if exists)
+	EffectiveRasterSpeed  float64  // After multipliers
+	EffectiveVectorSpeed  float64  // After multipliers
+	EffectiveCutSpeed     float64  // After multipliers
+	SpeedMultiplier       float64  // From engrave type
+	MaterialFactor        float64  // From material
+	HasSpecificSpeed      bool     // True if specific speed found in tech_material_speeds
 }
 
 // GetSpeedInfo returns detailed speed information for debugging
-func (e *TimeEstimator) GetSpeedInfo(materialID, engraveTypeID uint) SpeedInfo {
+func (e *TimeEstimator) GetSpeedInfo(techID, materialID, engraveTypeID uint, thickness float64) SpeedInfo {
 	speedMult := e.config.GetEngraveTypeSpeedMultiplier(engraveTypeID)
 	if speedMult <= 0 {
 		speedMult = 1.0
@@ -125,14 +151,39 @@ func (e *TimeEstimator) GetSpeedInfo(materialID, engraveTypeID uint) SpeedInfo {
 		materialFactor = 1.0
 	}
 
-	return SpeedInfo{
-		BaseEngraveAreaSpeed:  baseEngraveAreaSpeed,
-		BaseEngraveLineSpeed:  baseEngraveLineSpeed,
-		BaseCutSpeed:          baseCutSpeed,
-		EffectiveRasterSpeed:  baseEngraveAreaSpeed * speedMult / materialFactor,
-		EffectiveVectorSpeed:  baseEngraveLineSpeed * speedMult / materialFactor,
-		EffectiveCutSpeed:     baseCutSpeed / materialFactor,
-		SpeedMultiplier:       speedMult,
-		MaterialFactor:        materialFactor,
+	// Get base speeds from system_config
+	baseEngraveAreaSpeed := e.config.GetBaseEngraveAreaSpeed()
+	baseEngraveLineSpeed := e.config.GetBaseEngraveLineSpeed()
+	baseCutSpeed := e.config.GetBaseCutSpeed()
+
+	// Try to get specific speeds
+	specificSpeed := e.config.GetMaterialSpeed(techID, materialID, thickness)
+
+	info := SpeedInfo{
+		BaseEngraveAreaSpeed: baseEngraveAreaSpeed,
+		BaseEngraveLineSpeed: baseEngraveLineSpeed,
+		BaseCutSpeed:         baseCutSpeed,
+		SpeedMultiplier:      speedMult,
+		MaterialFactor:       materialFactor,
+		HasSpecificSpeed:     specificSpeed.Found,
 	}
+
+	// Calculate effective speeds
+	if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil {
+		info.SpecificEngraveSpeed = specificSpeed.EngraveSpeedMmMin
+		info.EffectiveRasterSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
+		info.EffectiveVectorSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
+	} else {
+		info.EffectiveRasterSpeed = baseEngraveAreaSpeed * speedMult / materialFactor
+		info.EffectiveVectorSpeed = baseEngraveLineSpeed * speedMult / materialFactor
+	}
+
+	if specificSpeed.Found && specificSpeed.CutSpeedMmMin != nil {
+		info.SpecificCutSpeed = specificSpeed.CutSpeedMmMin
+		info.EffectiveCutSpeed = *specificSpeed.CutSpeedMmMin
+	} else {
+		info.EffectiveCutSpeed = baseCutSpeed / materialFactor
+	}
+
+	return info
 }

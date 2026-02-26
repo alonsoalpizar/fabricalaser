@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 )
@@ -14,6 +15,7 @@ type ConfigHandler struct {
 	rateRepo      *repository.TechRateRepository
 	discountRepo  *repository.VolumeDiscountRepository
 	priceRefRepo  *repository.PriceReferenceRepository
+	speedRepo     *repository.TechMaterialSpeedRepository
 }
 
 func NewConfigHandler() *ConfigHandler {
@@ -24,6 +26,7 @@ func NewConfigHandler() *ConfigHandler {
 		rateRepo:      repository.NewTechRateRepository(),
 		discountRepo:  repository.NewVolumeDiscountRepository(),
 		priceRefRepo:  repository.NewPriceReferenceRepository(),
+		speedRepo:     repository.NewTechMaterialSpeedRepository(),
 	}
 }
 
@@ -168,6 +171,106 @@ func respondError(w http.ResponseWriter, status int, code, message string) {
 		"error": map[string]string{
 			"code":    code,
 			"message": message,
+		},
+	})
+}
+
+// GetCompatibleOptions returns compatible technologies for a material with available thicknesses
+// Query params:
+//   - material_id (required): ID of the material
+//   - thickness (optional): Filter by specific thickness
+func (h *ConfigHandler) GetCompatibleOptions(w http.ResponseWriter, r *http.Request) {
+	// Parse material_id (required)
+	materialIDStr := r.URL.Query().Get("material_id")
+	if materialIDStr == "" {
+		respondError(w, http.StatusBadRequest, "MISSING_PARAM", "material_id es requerido")
+		return
+	}
+	materialID, err := strconv.ParseUint(materialIDStr, 10, 32)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_PARAM", "material_id invalido")
+		return
+	}
+
+	// Parse thickness (optional)
+	var thickness float64
+	if thicknessStr := r.URL.Query().Get("thickness"); thicknessStr != "" {
+		thickness, err = strconv.ParseFloat(thicknessStr, 64)
+		if err != nil {
+			respondError(w, http.StatusBadRequest, "INVALID_PARAM", "thickness invalido")
+			return
+		}
+	}
+
+	// Get compatible speeds
+	speeds, err := h.speedRepo.FindCompatibleTechnologies(uint(materialID), thickness)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "FETCH_ERROR", "Error al obtener opciones compatibles")
+		return
+	}
+
+	// Group by technology
+	techMap := make(map[uint]*struct {
+		ID          uint      `json:"id"`
+		Name        string    `json:"name"`
+		Code        string    `json:"code"`
+		Thicknesses []float64 `json:"thicknesses"`
+		CanCut      bool      `json:"can_cut"`
+		CanEngrave  bool      `json:"can_engrave"`
+	})
+
+	for _, s := range speeds {
+		tech, exists := techMap[s.TechnologyID]
+		if !exists {
+			tech = &struct {
+				ID          uint      `json:"id"`
+				Name        string    `json:"name"`
+				Code        string    `json:"code"`
+				Thicknesses []float64 `json:"thicknesses"`
+				CanCut      bool      `json:"can_cut"`
+				CanEngrave  bool      `json:"can_engrave"`
+			}{
+				ID:          s.TechnologyID,
+				Name:        s.Technology.Name,
+				Code:        s.Technology.Code,
+				Thicknesses: []float64{},
+				CanCut:      false,
+				CanEngrave:  false,
+			}
+			techMap[s.TechnologyID] = tech
+		}
+
+		// Add thickness to list (avoid duplicates)
+		found := false
+		for _, t := range tech.Thicknesses {
+			if t == s.Thickness {
+				found = true
+				break
+			}
+		}
+		if !found {
+			tech.Thicknesses = append(tech.Thicknesses, s.Thickness)
+		}
+
+		// Update capabilities
+		if s.CutSpeedMmMin != nil && *s.CutSpeedMmMin > 0 {
+			tech.CanCut = true
+		}
+		if s.EngraveSpeedMmMin != nil && *s.EngraveSpeedMmMin > 0 {
+			tech.CanEngrave = true
+		}
+	}
+
+	// Convert map to slice
+	technologies := make([]interface{}, 0, len(techMap))
+	for _, tech := range techMap {
+		technologies = append(technologies, tech)
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"technologies": technologies,
 		},
 	})
 }

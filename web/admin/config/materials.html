@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Materiales | Admin FabricaLaser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="content-header">
+        <div>
+          <h1 class="content-title">Materiales</h1>
+          <div class="content-breadcrumb">
+            <a href="/admin/">Dashboard</a>
+            <span>/</span>
+            <span>Configuracion</span>
+            <span>/</span>
+            <span>Materiales</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Nuevo Material
+        </button>
+      </header>
+
+      <div class="content-body">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Catalogo de Materiales</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-muted" style="padding: 0 1.5rem; margin-bottom: 1rem; font-size: 0.875rem;">
+              El factor de cada material multiplica el costo base. Ej: Factor 1.2 = 20% mas caro que madera (factor 1.0).
+            </p>
+            <div id="dataTable">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create/Edit Modal -->
+  <div class="modal-overlay" id="itemModal">
+    <div class="modal large">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Nuevo Material</h3>
+        <button class="modal-close" onclick="closeModal('itemModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form id="itemForm" onsubmit="saveItem(event)">
+        <div class="modal-body">
+          <input type="hidden" id="itemId" value="">
+
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Nombre *</label>
+              <input type="text" class="form-input" id="itemName" required placeholder="Ej: Acrilico transparente">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Categoria</label>
+              <select class="form-select" id="itemCategory">
+                <option value="madera">Madera</option>
+                <option value="acrilico">Acrilico</option>
+                <option value="plastico">Plastico</option>
+                <option value="cuero">Cuero</option>
+                <option value="vidrio">Vidrio</option>
+                <option value="ceramica">Ceramica</option>
+                <option value="metal">Metal</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Factor de Costo *</label>
+              <input type="number" class="form-input" id="itemFactor" required min="0.1" max="10" step="0.1" value="1.0" placeholder="Ej: 1.2">
+              <span class="form-hint">1.0 = precio base (madera). 1.2 = 20% mas caro</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Espesores Disponibles (mm)</label>
+              <input type="text" class="form-input" id="itemThicknesses" placeholder="Ej: 3, 5, 6, 8, 10">
+              <span class="form-hint">Separados por coma</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notas</label>
+            <textarea class="form-textarea" id="itemNotes" placeholder="Notas sobre el material, cuidados especiales..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Estado</label>
+            <select class="form-select" id="itemActive">
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('itemModal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirmar eliminacion</h3>
+        <button class="modal-close" onclick="closeModal('deleteModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Esta seguro de eliminar <strong id="deleteItemName"></strong>?</p>
+        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta accion no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancelar</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../admin.js"></script>
+  <script>
+    const ENDPOINT = '/admin/materials';
+    let items = [];
+    let deleteItemId = null;
+
+    async function loadItems() {
+      const container = document.getElementById('dataTable');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      try {
+        const data = await apiGet(ENDPOINT);
+        items = data.data || [];
+        renderTable();
+      } catch (err) {
+        console.error('Failed to load items:', err);
+        container.innerHTML = `<div class="empty-state"><p class="text-error">Error: ${err.message}</p></div>`;
+      }
+    }
+
+    function formatThicknesses(arr) {
+      if (!arr || !Array.isArray(arr) || arr.length === 0) return '-';
+      return arr.join(', ') + ' mm';
+    }
+
+    function renderTable() {
+      const container = document.getElementById('dataTable');
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            </svg>
+            <p>No hay materiales configurados</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Categoria</th>
+              <th>Factor</th>
+              <th>Espesores</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => `
+              <tr>
+                <td>
+                  <div class="font-semibold">${item.name || '-'}</div>
+                  <div class="text-muted" style="font-size: 0.75rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.notes || ''}</div>
+                </td>
+                <td class="text-secondary">${item.category || '-'}</td>
+                <td>
+                  <span class="font-mono text-accent font-semibold">${(item.factor || 1).toFixed(2)}x</span>
+                </td>
+                <td class="text-muted" style="font-size: 0.875rem;">${formatThicknesses(item.thicknesses)}</td>
+                <td>
+                  <span class="status-badge ${item.is_active ? 'approved' : 'rejected'}" style="font-size: 0.6875rem;">
+                    ${item.is_active ? 'Activo' : 'Inactivo'}
+                  </span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.25rem;">
+                    <button class="btn btn-ghost btn-sm" onclick="editItem(${item.id})" title="Editar">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="deleteItem(${item.id}, '${(item.name || '').replace(/'/g, "\\'")}')" title="Eliminar">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function openCreateModal() {
+      document.getElementById('modalTitle').textContent = 'Nuevo Material';
+      document.getElementById('itemForm').reset();
+      document.getElementById('itemId').value = '';
+      document.getElementById('itemFactor').value = '1.0';
+      document.getElementById('itemCategory').value = 'madera';
+      openModal('itemModal');
+    }
+
+    function editItem(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+
+      document.getElementById('modalTitle').textContent = 'Editar Material';
+      document.getElementById('itemId').value = item.id;
+      document.getElementById('itemName').value = item.name || '';
+      document.getElementById('itemCategory').value = item.category || 'otro';
+      document.getElementById('itemFactor').value = item.factor || 1.0;
+      document.getElementById('itemThicknesses').value = item.thicknesses ? item.thicknesses.join(', ') : '';
+      document.getElementById('itemNotes').value = item.notes || '';
+      document.getElementById('itemActive').value = item.is_active ? 'true' : 'false';
+      openModal('itemModal');
+    }
+
+    async function saveItem(e) {
+      e.preventDefault();
+
+      const id = document.getElementById('itemId').value;
+      const isNew = !id;
+
+      // Parse thicknesses string to array of numbers
+      const thicknessStr = document.getElementById('itemThicknesses').value;
+      let thicknesses = [];
+      if (thicknessStr.trim()) {
+        thicknesses = thicknessStr.split(',')
+          .map(s => parseFloat(s.trim()))
+          .filter(n => !isNaN(n) && n > 0);
+      }
+
+      const body = {
+        name: document.getElementById('itemName').value,
+        category: document.getElementById('itemCategory').value,
+        factor: parseFloat(document.getElementById('itemFactor').value) || 1.0,
+        thicknesses: thicknesses.length > 0 ? thicknesses : null,
+        notes: document.getElementById('itemNotes').value || null,
+        is_active: document.getElementById('itemActive').value === 'true'
+      };
+
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+
+      try {
+        if (isNew) {
+          await apiPost(ENDPOINT, body);
+          showToast('Material creado', 'success');
+        } else {
+          await apiPut(`${ENDPOINT}/${id}`, body);
+          showToast('Material actualizado', 'success');
+        }
+
+        closeModal('itemModal');
+        loadItems();
+      } catch (err) {
+        console.error('Failed to save:', err);
+        showToast(err.message || 'Error al guardar', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar';
+      }
+    }
+
+    function deleteItem(id, name) {
+      deleteItemId = id;
+      document.getElementById('deleteItemName').textContent = name || 'este material';
+      openModal('deleteModal');
+    }
+
+    async function confirmDelete() {
+      if (!deleteItemId) return;
+
+      try {
+        await apiDelete(`${ENDPOINT}/${deleteItemId}`);
+        showToast('Material eliminado', 'success');
+        closeModal('deleteModal');
+        loadItems();
+      } catch (err) {
+        console.error('Failed to delete:', err);
+        showToast(err.message || 'Error al eliminar', 'error');
+      }
+
+      deleteItemId = null;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const ready = await initAdmin('materials');
+      if (ready) loadItems();
+    });
+  </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package pricing
 
 import (
+	"strconv"
 	"sync"
 	"time"
 
@@ -11,11 +12,13 @@ import (
 // PricingConfig holds all configuration needed for pricing calculations
 // All values are loaded from the database - NO hardcoded values
 type PricingConfig struct {
-	TechRates       map[uint]*models.TechRate       // tech_id → rates
-	Technologies    map[uint]*models.Technology     // tech_id → tech info
-	Materials       map[uint]*models.Material       // material_id → material info
-	EngraveTypes    map[uint]*models.EngraveType    // engrave_type_id → engrave info
-	VolumeDiscounts []models.VolumeDiscount         // Sorted by min_qty
+	TechRates          map[uint]*models.TechRate          // tech_id → rates
+	Technologies       map[uint]*models.Technology        // tech_id → tech info
+	Materials          map[uint]*models.Material          // material_id → material info
+	EngraveTypes       map[uint]*models.EngraveType       // engrave_type_id → engrave info
+	VolumeDiscounts    []models.VolumeDiscount            // Sorted by min_qty
+	SystemConfigs      map[string]*models.SystemConfig    // config_key → config
+	TechMaterialSpeeds []models.TechMaterialSpeed         // All speed configurations
 
 	LoadedAt time.Time
 }
@@ -59,12 +62,14 @@ func (l *ConfigLoader) Refresh() (*PricingConfig, error) {
 // refresh loads all config from database
 func (l *ConfigLoader) refresh() (*PricingConfig, error) {
 	config := &PricingConfig{
-		TechRates:       make(map[uint]*models.TechRate),
-		Technologies:    make(map[uint]*models.Technology),
-		Materials:       make(map[uint]*models.Material),
-		EngraveTypes:    make(map[uint]*models.EngraveType),
-		VolumeDiscounts: make([]models.VolumeDiscount, 0),
-		LoadedAt:        time.Now(),
+		TechRates:          make(map[uint]*models.TechRate),
+		Technologies:       make(map[uint]*models.Technology),
+		Materials:          make(map[uint]*models.Material),
+		EngraveTypes:       make(map[uint]*models.EngraveType),
+		VolumeDiscounts:    make([]models.VolumeDiscount, 0),
+		SystemConfigs:      make(map[string]*models.SystemConfig),
+		TechMaterialSpeeds: make([]models.TechMaterialSpeed, 0),
+		LoadedAt:           time.Now(),
 	}
 
 	// Load technologies
@@ -109,6 +114,22 @@ func (l *ConfigLoader) refresh() (*PricingConfig, error) {
 		return nil, err
 	}
 	config.VolumeDiscounts = volumeDiscounts
+
+	// Load system configs
+	var systemConfigs []models.SystemConfig
+	if err := l.db.Where("is_active = ?", true).Find(&systemConfigs).Error; err != nil {
+		return nil, err
+	}
+	for i := range systemConfigs {
+		config.SystemConfigs[systemConfigs[i].ConfigKey] = &systemConfigs[i]
+	}
+
+	// Load tech material speeds (for specific speed lookups)
+	var techMaterialSpeeds []models.TechMaterialSpeed
+	if err := l.db.Where("is_active = ? AND is_compatible = ?", true, true).Find(&techMaterialSpeeds).Error; err != nil {
+		return nil, err
+	}
+	config.TechMaterialSpeeds = techMaterialSpeeds
 
 	// Update cache
 	l.mu.Lock()
@@ -211,4 +232,128 @@ func (c *PricingConfig) GetUVPremiumFactor(techID uint) float64 {
 		return tech.UVPremiumFactor
 	}
 	return 0 // Default no premium
+}
+
+// =============================================================
+// System Config Methods
+// =============================================================
+
+// GetSystemConfigString returns a string value from system_config
+func (c *PricingConfig) GetSystemConfigString(key string) string {
+	if cfg := c.SystemConfigs[key]; cfg != nil {
+		return cfg.ConfigValue
+	}
+	return ""
+}
+
+// GetSystemConfigFloat returns a float64 value from system_config
+func (c *PricingConfig) GetSystemConfigFloat(key string, defaultVal float64) float64 {
+	if cfg := c.SystemConfigs[key]; cfg != nil {
+		if val, err := strconv.ParseFloat(cfg.ConfigValue, 64); err == nil {
+			return val
+		}
+	}
+	return defaultVal
+}
+
+// GetSystemConfigInt returns an int value from system_config
+func (c *PricingConfig) GetSystemConfigInt(key string, defaultVal int) int {
+	if cfg := c.SystemConfigs[key]; cfg != nil {
+		if val, err := strconv.Atoi(cfg.ConfigValue); err == nil {
+			return val
+		}
+	}
+	return defaultVal
+}
+
+// =============================================================
+// Base Speeds from System Config
+// =============================================================
+
+// GetBaseEngraveAreaSpeed returns base engrave area speed from system_config
+func (c *PricingConfig) GetBaseEngraveAreaSpeed() float64 {
+	return c.GetSystemConfigFloat("base_engrave_area_speed", 500.0)
+}
+
+// GetBaseEngraveLineSpeed returns base engrave line speed from system_config
+func (c *PricingConfig) GetBaseEngraveLineSpeed() float64 {
+	return c.GetSystemConfigFloat("base_engrave_line_speed", 100.0)
+}
+
+// GetBaseCutSpeed returns base cut speed from system_config
+func (c *PricingConfig) GetBaseCutSpeed() float64 {
+	return c.GetSystemConfigFloat("base_cut_speed", 20.0)
+}
+
+// GetSetupTimeMinutes returns setup time from system_config
+func (c *PricingConfig) GetSetupTimeMinutes() float64 {
+	return c.GetSystemConfigFloat("setup_time_minutes", 5.0)
+}
+
+// GetComplexityAutoApprove returns complexity threshold for auto-approval
+func (c *PricingConfig) GetComplexityAutoApprove() float64 {
+	return c.GetSystemConfigFloat("complexity_auto_approve", 6.0)
+}
+
+// GetComplexityNeedsReview returns complexity threshold for review
+func (c *PricingConfig) GetComplexityNeedsReview() float64 {
+	return c.GetSystemConfigFloat("complexity_needs_review", 12.0)
+}
+
+// GetQuoteValidityDays returns quote validity in days
+func (c *PricingConfig) GetQuoteValidityDays() int {
+	return c.GetSystemConfigInt("quote_validity_days", 7)
+}
+
+// GetMinValueBase returns minimum value base price in CRC
+func (c *PricingConfig) GetMinValueBase() float64 {
+	return c.GetSystemConfigFloat("min_value_base", 2575.0)
+}
+
+// GetPricePerMM2 returns price per mm² in CRC
+func (c *PricingConfig) GetPricePerMM2() float64 {
+	return c.GetSystemConfigFloat("price_per_mm2", 0.515)
+}
+
+// GetMinAreaMM2 returns minimum area for pricing
+func (c *PricingConfig) GetMinAreaMM2() float64 {
+	return c.GetSystemConfigFloat("min_area_mm2", 100.0)
+}
+
+// =============================================================
+// Tech Material Speed Methods
+// =============================================================
+
+// TechMaterialSpeedResult holds speed info for a specific combination
+type TechMaterialSpeedResult struct {
+	CutSpeedMmMin     *float64
+	EngraveSpeedMmMin *float64
+	Found             bool
+}
+
+// GetMaterialSpeed returns the specific speed for a tech/material/thickness combination
+// Returns nil speeds if no specific configuration exists (use base speeds as fallback)
+func (c *PricingConfig) GetMaterialSpeed(techID, materialID uint, thickness float64) TechMaterialSpeedResult {
+	for _, s := range c.TechMaterialSpeeds {
+		if s.TechnologyID == techID && s.MaterialID == materialID && s.Thickness == thickness {
+			return TechMaterialSpeedResult{
+				CutSpeedMmMin:     s.CutSpeedMmMin,
+				EngraveSpeedMmMin: s.EngraveSpeedMmMin,
+				Found:             true,
+			}
+		}
+	}
+	// Try with thickness 0 (for materials without specific thickness)
+	if thickness != 0 {
+		for _, s := range c.TechMaterialSpeeds {
+			if s.TechnologyID == techID && s.MaterialID == materialID && s.Thickness == 0 {
+				return TechMaterialSpeedResult{
+					CutSpeedMmMin:     s.CutSpeedMmMin,
+					EngraveSpeedMmMin: s.EngraveSpeedMmMin,
+					Found:             true,
+				}
+			}
+		}
+	}
+	return TechMaterialSpeedResult{Found: false}
 }

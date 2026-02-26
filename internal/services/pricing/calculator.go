@@ -7,14 +7,8 @@ import (
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
 )
 
-// Complexity thresholds for auto-approval classification
-const (
-	complexityAutoApprove = 1.5 // factor ≤ 1.5: auto-approved
-	complexityNeedsReview = 2.5 // factor ≤ 2.5: needs review, > 2.5: rejected
-)
-
-// Quote validity duration
-const quoteValidityDays = 7
+// NOTE: Complexity thresholds and quote validity are now loaded from system_config table
+// No more hardcoded constants - all values from database
 
 // PriceResult contains all calculated pricing information
 type PriceResult struct {
@@ -64,11 +58,13 @@ func NewCalculator(configLoader *ConfigLoader) *Calculator {
 }
 
 // Calculate computes full pricing for an SVG analysis with given options
+// thickness is used to look up specific speeds from tech_material_speeds
 func (c *Calculator) Calculate(
 	analysis *models.SVGAnalysis,
 	techID uint,
 	materialID uint,
 	engraveTypeID uint,
+	thickness float64,
 	quantity int,
 ) (*PriceResult, error) {
 	// Load current config from DB
@@ -82,8 +78,8 @@ func (c *Calculator) Calculate(
 	// Create time estimator with fresh config
 	timeEstimator := NewTimeEstimator(config)
 
-	// Calculate time estimates
-	timeEst := timeEstimator.Estimate(analysis, techID, materialID, engraveTypeID, quantity)
+	// Calculate time estimates (now includes thickness for specific speed lookup)
+	timeEst := timeEstimator.Estimate(analysis, techID, materialID, engraveTypeID, thickness, quantity)
 	result.TimeEngraveMins = timeEst.EngraveMins
 	result.TimeCutMins = timeEst.CutMins
 	result.TimeSetupMins = timeEst.SetupMins
@@ -147,12 +143,15 @@ func (c *Calculator) Calculate(
 
 	// Value model uses area-based pricing with complexity factor
 	totalArea := analysis.TotalArea()
-	if totalArea < 100 {
-		totalArea = 100 // Minimum 100mm² for pricing
+	minAreaMM2 := config.GetMinAreaMM2()
+	if totalArea < minAreaMM2 {
+		totalArea = minAreaMM2 // Minimum area for pricing (from system_config)
 	}
 
-	// Base value price: area-based with minimum
-	valueBase := math.Max(5.0, totalArea/1000) // $5 minimum or $1 per 1000mm²
+	// Base value price: area-based with minimum (valores en colones from system_config)
+	minValueBase := config.GetMinValueBase()
+	pricePerMM2 := config.GetPricePerMM2()
+	valueBase := math.Max(minValueBase, totalArea*pricePerMM2)
 
 	// Apply same factors as hybrid
 	valueUnit := valueBase
@@ -171,10 +170,12 @@ func (c *Calculator) Calculate(
 
 	// =============================================================
 	// AUTO-APPROVAL CLASSIFICATION
-	// Based on design complexity factor
+	// Based on design complexity factor (thresholds from system_config)
 	// =============================================================
 
 	complexityFactor := analysis.ComplexityFactor()
+	complexityAutoApprove := config.GetComplexityAutoApprove()
+	complexityNeedsReview := config.GetComplexityNeedsReview()
 
 	if complexityFactor <= complexityAutoApprove {
 		result.Status = models.QuoteStatusAutoApproved
@@ -202,7 +203,13 @@ func (c *Calculator) ToQuoteModel(
 	thickness float64,
 ) *models.Quote {
 	now := time.Now()
-	validUntil := now.AddDate(0, 0, quoteValidityDays)
+
+	// Get quote validity days from config (with fallback)
+	validityDays := 7
+	if config, err := c.configLoader.Load(); err == nil {
+		validityDays = config.GetQuoteValidityDays()
+	}
+	validUntil := now.AddDate(0, 0, validityDays)
 
 	return &models.Quote{
 		UserID:        userID,

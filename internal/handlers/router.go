@@ -59,28 +59,52 @@ func NewRouter() *chi.Mux {
 		r.Get("/tech-rates", configHandler.GetTechRates)        // Tech rates with technology
 		r.Get("/volume-discounts", configHandler.GetVolumeDiscounts)
 		r.Get("/price-references", configHandler.GetPriceReferences)
+		r.Get("/compatible-options", configHandler.GetCompatibleOptions) // Compatible tech/material options
 	})
 
 	// Admin routes (protected)
 	adminHandler := admin.NewAdminHandler()
+	systemConfigHandler := admin.NewSystemConfigHandler()
+	techMaterialSpeedHandler := admin.NewTechMaterialSpeedHandler()
 	r.Route("/api/v1/admin", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
 		r.Use(middleware.AdminOnly)
 
+		// System Config CRUD
+		r.Get("/system-config", systemConfigHandler.GetSystemConfigs)
+		r.Get("/system-config/{id}", systemConfigHandler.GetSystemConfig)
+		r.Post("/system-config", systemConfigHandler.CreateSystemConfig)
+		r.Put("/system-config/{id}", systemConfigHandler.UpdateSystemConfig)
+		r.Delete("/system-config/{id}", systemConfigHandler.DeleteSystemConfig)
+
+		// Tech Material Speeds CRUD
+		r.Get("/tech-material-speeds", techMaterialSpeedHandler.GetTechMaterialSpeeds)
+		r.Get("/tech-material-speeds/{id}", techMaterialSpeedHandler.GetTechMaterialSpeed)
+		r.Post("/tech-material-speeds", techMaterialSpeedHandler.CreateTechMaterialSpeed)
+		r.Post("/tech-material-speeds/bulk", techMaterialSpeedHandler.BulkCreateTechMaterialSpeeds)
+		r.Put("/tech-material-speeds/{id}", techMaterialSpeedHandler.UpdateTechMaterialSpeed)
+		r.Delete("/tech-material-speeds/{id}", techMaterialSpeedHandler.DeleteTechMaterialSpeed)
+
 		// Technologies CRUD
+		r.Get("/technologies", configHandler.GetTechnologies)
 		r.Post("/technologies", adminHandler.CreateTechnology)
 		r.Put("/technologies/{id}", adminHandler.UpdateTechnology)
 		r.Delete("/technologies/{id}", adminHandler.DeleteTechnology)
 
 		// Materials CRUD
+		r.Get("/materials", configHandler.GetMaterials)
 		r.Post("/materials", adminHandler.CreateMaterial)
 		r.Put("/materials/{id}", adminHandler.UpdateMaterial)
 		r.Delete("/materials/{id}", adminHandler.DeleteMaterial)
 
 		// Engrave Types CRUD
+		r.Get("/engrave-types", configHandler.GetEngraveTypes)
 		r.Post("/engrave-types", adminHandler.CreateEngraveType)
 		r.Put("/engrave-types/{id}", adminHandler.UpdateEngraveType)
 		r.Delete("/engrave-types/{id}", adminHandler.DeleteEngraveType)
+
+		// Volume Discounts CRUD
+		r.Get("/volume-discounts", configHandler.GetVolumeDiscounts)
 
 		// Tech Rates (update only - created via seed)
 		r.Put("/tech-rates/{id}", adminHandler.UpdateTechRate)
@@ -95,9 +119,21 @@ func NewRouter() *chi.Mux {
 		r.Put("/price-references/{id}", adminHandler.UpdatePriceReference)
 		r.Delete("/price-references/{id}", adminHandler.DeletePriceReference)
 
-		// User management
+		// User management (full CRUD)
 		r.Get("/users", adminHandler.GetUsers)
-		r.Put("/users/{id}/quota", adminHandler.UpdateUserQuota)
+		r.Post("/users", adminHandler.CreateUser)
+		r.Put("/users/{id}", adminHandler.UpdateUser)
+		r.Delete("/users/{id}", adminHandler.DeleteUser)
+
+		// Quotes management
+		r.Get("/quotes", adminHandler.GetQuotes)
+		r.Get("/quotes/{id}", adminHandler.GetQuote)
+		r.Put("/quotes/{id}", adminHandler.UpdateQuote)
+
+		// Tech rates (full CRUD)
+		r.Get("/tech-rates", adminHandler.GetTechRates)
+		r.Post("/tech-rates", adminHandler.CreateTechRate)
+		r.Delete("/tech-rates/{id}", adminHandler.DeleteTechRate)
 	})
 
 	// Quote routes (Fase 1 - Cotizador)
@@ -125,16 +161,30 @@ func NewRouter() *chi.Mux {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "landing", "index.html"))
 	})
+	r.Get("/landing", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "landing", "index.html"))
+	})
+	r.Get("/landing/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "landing", "index.html"))
+	})
+
+	// Admin pages (redirect /admin to /admin/ for correct relative paths)
+	r.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/", http.StatusMovedPermanently)
+	})
+	r.Get("/admin/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "admin", "index.html"))
+	})
+	r.Handle("/admin/*", http.StripPrefix("/admin/", http.FileServer(http.Dir(filepath.Join(webDir, "admin")))))
 
 	// Mi cuenta page
 	r.Get("/mi-cuenta", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "mi-cuenta", "index.html"))
 	})
 
-	// Cotizar page (placeholder until Phase 1)
+	// Cotizar page (Phase 1 - requires auth via JS)
 	r.Get("/cotizar", func(w http.ResponseWriter, r *http.Request) {
-		// For now, redirect to landing
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.ServeFile(w, r, filepath.Join(webDir, "cotizar", "index.html"))
 	})
 
 	// Static assets (if needed in future)

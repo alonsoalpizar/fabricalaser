@@ -65,6 +65,8 @@ migrate-down: ## Rollback (drop all tables - DANGEROUS)
 	@echo "WARNING: This will drop all tables!"
 	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
 	PGPASSWORD=fabricalaser_password psql -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER) -d $(DB_NAME) -c "\
+		DROP TABLE IF EXISTS tech_material_speeds CASCADE; \
+		DROP TABLE IF EXISTS system_config CASCADE; \
 		DROP TABLE IF EXISTS price_references CASCADE; \
 		DROP TABLE IF EXISTS volume_discounts CASCADE; \
 		DROP TABLE IF EXISTS tech_rates CASCADE; \
@@ -73,9 +75,12 @@ migrate-down: ## Rollback (drop all tables - DANGEROUS)
 		DROP TABLE IF EXISTS technologies CASCADE; \
 		DROP TABLE IF EXISTS users CASCADE;"
 
-seed: ## Load seed data
+seed: ## Load seed data (all seed files in order)
 	@echo "Loading seed data..."
-	PGPASSWORD=fabricalaser_password psql -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER) -d $(DB_NAME) -f seeds/001_initial_data.sql
+	@for file in seeds/*.sql; do \
+		echo "Running $$file..."; \
+		PGPASSWORD=fabricalaser_password psql -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER) -d $(DB_NAME) -f $$file; \
+	done
 	@echo "Seed data loaded"
 
 db-reset: migrate-down migrate-up seed ## Reset database (drop + migrate + seed)
@@ -90,7 +95,9 @@ db-status: ## Show database tables and counts
 		SELECT 'engrave_types', COUNT(*) FROM engrave_types UNION ALL \
 		SELECT 'tech_rates', COUNT(*) FROM tech_rates UNION ALL \
 		SELECT 'volume_discounts', COUNT(*) FROM volume_discounts UNION ALL \
-		SELECT 'price_references', COUNT(*) FROM price_references;"
+		SELECT 'price_references', COUNT(*) FROM price_references UNION ALL \
+		SELECT 'system_config', COUNT(*) FROM system_config UNION ALL \
+		SELECT 'tech_material_speeds', COUNT(*) FROM tech_material_speeds;"
 
 # Deployment
 deploy: build ## Build and restart service

@@ -159,7 +159,8 @@ func (h *Handler) CalculatePrice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Calculate pricing (uses DB config, NO hardcode)
-	priceResult, err := h.calculator.Calculate(analysis, req.TechnologyID, req.MaterialID, req.EngraveTypeID, req.Quantity)
+	// Now includes thickness for specific speed lookups from tech_material_speeds
+	priceResult, err := h.calculator.Calculate(analysis, req.TechnologyID, req.MaterialID, req.EngraveTypeID, req.Thickness, req.Quantity)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "CALC_ERROR", "Error calculating price: "+err.Error())
 		return

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | FabricaLaser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar (rendered by JS) -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="content-header">
+        <div>
+          <h1 class="content-title">Panel de Control</h1>
+          <div class="content-breadcrumb">
+            <span>Dashboard</span>
+          </div>
+        </div>
+        <div>
+          <span class="text-muted" id="currentDate"></span>
+        </div>
+      </header>
+
+      <div class="content-body">
+        <!-- Metrics -->
+        <div class="metrics-grid" id="metricsGrid">
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-icon pending">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-value" id="metricPending">-</div>
+            <div class="metric-label">Pendientes</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-icon success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-value" id="metricApproved">-</div>
+            <div class="metric-label">Aprobadas</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-icon info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-value" id="metricUsers">-</div>
+            <div class="metric-label">Usuarios</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-icon accent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23"></line>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-value" id="metricTotal">-</div>
+            <div class="metric-label">Total Cotizado (mes)</div>
+          </div>
+        </div>
+
+        <!-- Recent Quotes -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Cotizaciones Recientes</h2>
+            <a href="/admin/quotes.html" class="btn btn-secondary btn-sm">
+              Ver todas
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </a>
+          </div>
+          <div class="card-body">
+            <div id="recentQuotes">
+              <div class="loading">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    // ================================================
+    // DASHBOARD LOGIC
+    // ================================================
+
+    async function loadDashboard() {
+      await loadMetrics();
+      await loadRecentQuotes();
+    }
+
+    async function loadMetrics() {
+      try {
+        // Load quotes counts
+        const [pendingData, approvedData, usersData] = await Promise.all([
+          apiGet('/admin/quotes?status=pending&limit=1'),
+          apiGet('/admin/quotes?status=approved&limit=1'),
+          apiGet('/admin/users?limit=1')
+        ]);
+
+        document.getElementById('metricPending').textContent = pendingData.data?.total || 0;
+        document.getElementById('metricApproved').textContent = approvedData.data?.total || 0;
+        document.getElementById('metricUsers').textContent = usersData.data?.total || 0;
+
+        // Calculate total quoted this month
+        // For now show placeholder - would need aggregation endpoint
+        document.getElementById('metricTotal').textContent = '-';
+
+      } catch (err) {
+        console.error('Failed to load metrics:', err);
+        showToast('Error al cargar metricas', 'error');
+      }
+    }
+
+    async function loadRecentQuotes() {
+      const container = document.getElementById('recentQuotes');
+
+      try {
+        const data = await apiGet('/admin/quotes?limit=10');
+        const quotes = data.data?.quotes || [];
+
+        if (quotes.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <p>No hay cotizaciones aun</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Archivo</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${quotes.map(q => `
+                <tr>
+                  <td class="font-mono">${q.id}</td>
+                  <td>
+                    <div class="font-semibold">${truncate(q.user_name || 'Sin nombre', 20)}</div>
+                    <div class="text-muted" style="font-size: 0.75rem">${q.cedula || '-'}</div>
+                  </td>
+                  <td class="truncate" style="max-width: 150px" title="${q.filename || '-'}">${q.filename || '-'}</td>
+                  <td class="font-semibold">${formatCurrency(q.total_price || 0)}</td>
+                  <td>
+                    <span class="status-badge ${q.status}">${getStatusLabel(q.status)}</span>
+                  </td>
+                  <td class="text-muted">${formatDateShort(q.created_at)}</td>
+                  <td>
+                    <a href="/admin/quotes.html?id=${q.id}" class="btn btn-ghost btn-sm" title="Ver detalle">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </a>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+
+      } catch (err) {
+        console.error('Failed to load quotes:', err);
+        container.innerHTML = `
+          <div class="empty-state">
+            <p class="text-error">Error al cargar cotizaciones</p>
+          </div>
+        `;
+      }
+    }
+
+    function getStatusLabel(status) {
+      const labels = {
+        pending: 'Pendiente',
+        reviewed: 'Revisada',
+        approved: 'Aprobada',
+        rejected: 'Rechazada'
+      };
+      return labels[status] || status;
+    }
+
+    // Set current date
+    function setCurrentDate() {
+      const dateEl = document.getElementById('currentDate');
+      if (dateEl) {
+        dateEl.textContent = new Intl.DateTimeFormat('es-CR', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }).format(new Date());
+      }
+    }
+
+    // ================================================
+    // INIT
+    // ================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      const ready = await initAdmin('dashboard');
+      if (ready) {
+        setCurrentDate();
+        loadDashboard();
+      }
+    });
+  </script>
+</body>
+</html>

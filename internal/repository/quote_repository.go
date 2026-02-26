@@ -39,6 +39,7 @@ func (r *QuoteRepository) FindByID(id uint) (*models.Quote, error) {
 func (r *QuoteRepository) FindByIDWithRelations(id uint) (*models.Quote, error) {
 	var quote models.Quote
 	err := r.db.
+		Preload("User").
 		Preload("Technology").
 		Preload("Material").
 		Preload("EngraveType").
@@ -171,4 +172,53 @@ func (r *QuoteRepository) CountByUser(userID uint) (int64, error) {
 	var count int64
 	err := r.db.Model(&models.Quote{}).Where("user_id = ?", userID).Count(&count).Error
 	return count, err
+}
+
+// ListAllAdmin lists all quotes with filtering for admin panel
+func (r *QuoteRepository) ListAllAdmin(limit, offset int, status string, sortOrder string) ([]models.Quote, int64, error) {
+	var quotes []models.Quote
+	var total int64
+
+	query := r.db.Model(&models.Quote{}).
+		Preload("User").
+		Preload("Technology").
+		Preload("Material").
+		Preload("EngraveType").
+		Preload("SVGAnalysis")
+
+	// Apply status filter
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	// Get total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply sorting
+	if sortOrder == "asc" {
+		query = query.Order("created_at ASC")
+	} else {
+		query = query.Order("created_at DESC")
+	}
+
+	// Get paginated results
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	if err := query.Find(&quotes).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return quotes, total, nil
+}
+
+// Update updates a quote
+func (r *QuoteRepository) Update(quote *models.Quote) error {
+	return r.db.Save(quote).Error
 }

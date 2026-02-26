@@ -7,6 +7,7 @@ import (
 
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
 	"github.com/alonsoalpizar/fabricalaser/internal/repository"
+	"github.com/alonsoalpizar/fabricalaser/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"gorm.io/datatypes"
 )
@@ -19,6 +20,7 @@ type AdminHandler struct {
 	discountRepo  *repository.VolumeDiscountRepository
 	priceRefRepo  *repository.PriceReferenceRepository
 	userRepo      *repository.UserRepository
+	quoteRepo     *repository.QuoteRepository
 }
 
 func NewAdminHandler() *AdminHandler {
@@ -30,6 +32,7 @@ func NewAdminHandler() *AdminHandler {
 		discountRepo:  repository.NewVolumeDiscountRepository(),
 		priceRefRepo:  repository.NewPriceReferenceRepository(),
 		userRepo:      repository.NewUserRepository(),
+		quoteRepo:     repository.NewQuoteRepository(),
 	}
 }
 
@@ -648,13 +651,131 @@ func (h *AdminHandler) DeletePriceReference(w http.ResponseWriter, r *http.Reque
 // ==================== USERS (Admin) ====================
 
 func (h *AdminHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
+	// Parse query params
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit < 1 || limit > 100 {
+		limit = 15
+	}
+	offset := (page - 1) * limit
+
+	search := r.URL.Query().Get("search")
+	role := r.URL.Query().Get("role")
+	var isActive *bool
+	if activeStr := r.URL.Query().Get("is_active"); activeStr != "" {
+		val := activeStr == "true"
+		isActive = &val
+	}
+
+	users, total, err := h.userRepo.ListAll(limit, offset, search, role, isActive)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "LIST_ERROR", "Error al listar usuarios")
+		return
+	}
+
+	// Map to response format
+	usersResp := make([]map[string]interface{}, len(users))
+	for i, u := range users {
+		usersResp[i] = map[string]interface{}{
+			"id":          u.ID,
+			"cedula":      u.Cedula,
+			"nombre":      u.Nombre,
+			"email":       u.Email,
+			"telefono":    u.Telefono,
+			"role":        u.Role,
+			"is_active":   u.Activo,
+			"quote_limit": u.QuoteQuota,
+			"quotes_used": u.QuotesUsed,
+			"created_at":  u.CreatedAt,
+		}
+	}
+
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"success": true,
-		"message": "User management coming in Phase 2",
+		"data": map[string]interface{}{
+			"users": usersResp,
+			"total": total,
+			"page":  page,
+			"limit": limit,
+		},
 	})
 }
 
-func (h *AdminHandler) UpdateUserQuota(w http.ResponseWriter, r *http.Request) {
+func (h *AdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Cedula     string `json:"cedula"`
+		Nombre     string `json:"nombre"`
+		Email      string `json:"email"`
+		Telefono   string `json:"telefono"`
+		Password   string `json:"password"`
+		Role       string `json:"role"`
+		IsActive   bool   `json:"is_active"`
+		QuoteLimit int    `json:"quote_limit"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
+		return
+	}
+
+	if req.Cedula == "" || req.Nombre == "" {
+		respondError(w, http.StatusBadRequest, "MISSING_FIELDS", "Cédula y nombre son requeridos")
+		return
+	}
+
+	// Check if user exists
+	existing, _ := h.userRepo.FindByCedula(req.Cedula)
+	if existing != nil {
+		respondError(w, http.StatusConflict, "USER_EXISTS", "Ya existe un usuario con esta cédula")
+		return
+	}
+
+	user := &models.User{
+		Cedula:     req.Cedula,
+		Nombre:     req.Nombre,
+		Role:       req.Role,
+		Activo:     req.IsActive,
+		QuoteQuota: req.QuoteLimit,
+	}
+	if user.Role == "" {
+		user.Role = "user"
+	}
+	if user.QuoteQuota == 0 {
+		user.QuoteQuota = 3
+	}
+	if req.Email != "" {
+		user.Email = req.Email
+	}
+	if req.Telefono != "" {
+		user.Telefono = &req.Telefono
+	}
+	if req.Password != "" {
+		hash, err := utils.HashPassword(req.Password)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "HASH_ERROR", "Error al procesar contraseña")
+			return
+		}
+		user.PasswordHash = &hash
+	}
+
+	if err := h.userRepo.Create(user); err != nil {
+		respondError(w, http.StatusInternalServerError, "CREATE_ERROR", "Error al crear usuario")
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"id":     user.ID,
+			"cedula": user.Cedula,
+			"nombre": user.Nombre,
+		},
+	})
+}
+
+func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 32)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "INVALID_ID", "ID inválido")
@@ -668,28 +789,337 @@ func (h *AdminHandler) UpdateUserQuota(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		QuoteQuota int `json:"quote_quota"`
+		Nombre     string `json:"nombre"`
+		Email      string `json:"email"`
+		Telefono   string `json:"telefono"`
+		Password   string `json:"password"`
+		Role       string `json:"role"`
+		IsActive   bool   `json:"is_active"`
+		QuoteLimit int    `json:"quote_limit"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
 		return
 	}
 
-	user.QuoteQuota = req.QuoteQuota
+	if req.Nombre != "" {
+		user.Nombre = req.Nombre
+	}
+	if req.Email != "" {
+		user.Email = req.Email
+	}
+	if req.Telefono != "" {
+		user.Telefono = &req.Telefono
+	}
+	if req.Role != "" {
+		user.Role = req.Role
+	}
+	user.Activo = req.IsActive
+	if req.QuoteLimit > 0 {
+		user.QuoteQuota = req.QuoteLimit
+	}
+	if req.Password != "" {
+		hash, err := utils.HashPassword(req.Password)
+		if err != nil {
+			respondError(w, http.StatusInternalServerError, "HASH_ERROR", "Error al procesar contraseña")
+			return
+		}
+		user.PasswordHash = &hash
+	}
+
 	if err := h.userRepo.Update(user); err != nil {
-		respondError(w, http.StatusInternalServerError, "UPDATE_ERROR", "Error al actualizar cuota")
+		respondError(w, http.StatusInternalServerError, "UPDATE_ERROR", "Error al actualizar usuario")
 		return
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"success": true,
 		"data": map[string]interface{}{
-			"id":          user.ID,
-			"cedula":      user.Cedula,
-			"nombre":      user.Nombre,
-			"quote_quota": user.QuoteQuota,
-			"quotes_used": user.QuotesUsed,
+			"id":     user.ID,
+			"cedula": user.Cedula,
+			"nombre": user.Nombre,
 		},
+	})
+}
+
+func (h *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 32)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_ID", "ID inválido")
+		return
+	}
+
+	if err := h.userRepo.Delete(uint(id)); err != nil {
+		respondError(w, http.StatusInternalServerError, "DELETE_ERROR", "Error al eliminar usuario")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "Usuario eliminado",
+	})
+}
+
+// ==================== QUOTES (Admin) ====================
+
+func (h *AdminHandler) GetQuotes(w http.ResponseWriter, r *http.Request) {
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit < 1 || limit > 100 {
+		limit = 15
+	}
+	offset := (page - 1) * limit
+
+	status := r.URL.Query().Get("status")
+	sortOrder := r.URL.Query().Get("sort")
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+
+	quotes, total, err := h.quoteRepo.ListAllAdmin(limit, offset, status, sortOrder)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "LIST_ERROR", "Error al listar cotizaciones")
+		return
+	}
+
+	// Map to response format
+	quotesResp := make([]map[string]interface{}, len(quotes))
+	for i, q := range quotes {
+		resp := map[string]interface{}{
+			"id":          q.ID,
+			"status":      q.Status,
+			"total_price": q.PriceFinal,
+			"quantity":    q.Quantity,
+			"created_at":  q.CreatedAt,
+		}
+		if q.User != nil && q.User.ID > 0 {
+			resp["user_name"] = q.User.Nombre
+			resp["cedula"] = q.User.Cedula
+		}
+		if q.Technology != nil && q.Technology.ID > 0 {
+			resp["technology_name"] = q.Technology.Name
+		}
+		if q.Material != nil && q.Material.ID > 0 {
+			resp["material_name"] = q.Material.Name
+		}
+		if q.SVGAnalysis != nil {
+			resp["filename"] = q.SVGAnalysis.Filename
+		}
+		quotesResp[i] = resp
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"quotes": quotesResp,
+			"total":  total,
+			"page":   page,
+			"limit":  limit,
+		},
+	})
+}
+
+func (h *AdminHandler) GetQuote(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 32)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_ID", "ID inválido")
+		return
+	}
+
+	quote, err := h.quoteRepo.FindByIDWithRelations(uint(id))
+	if err != nil {
+		respondError(w, http.StatusNotFound, "NOT_FOUND", "Cotización no encontrada")
+		return
+	}
+
+	resp := map[string]interface{}{
+		"id":               quote.ID,
+		"status":           quote.Status,
+		"quantity":         quote.Quantity,
+		"cut_price":        quote.CostCut,
+		"engrave_price":    quote.CostEngrave,
+		"subtotal":         quote.CostBase,
+		"discount_percent": quote.DiscountVolumePct,
+		"discount_amount":  0, // Calculate if needed
+		"total_price":      quote.PriceFinal,
+		"admin_notes":      quote.ReviewNotes,
+		"created_at":       quote.CreatedAt,
+		"updated_at":       quote.UpdatedAt,
+	}
+
+	if quote.User != nil && quote.User.ID > 0 {
+		resp["user_name"] = quote.User.Nombre
+		resp["cedula"] = quote.User.Cedula
+		resp["user_email"] = quote.User.Email
+		resp["user_phone"] = quote.User.Telefono
+	}
+	if quote.Technology != nil && quote.Technology.ID > 0 {
+		resp["technology_name"] = quote.Technology.Name
+	}
+	if quote.Material != nil && quote.Material.ID > 0 {
+		resp["material_name"] = quote.Material.Name
+	}
+	if quote.EngraveType != nil && quote.EngraveType.ID > 0 {
+		resp["engrave_type_name"] = quote.EngraveType.Name
+	}
+	if quote.SVGAnalysis != nil {
+		resp["filename"] = quote.SVGAnalysis.Filename
+		resp["svg_analysis"] = map[string]interface{}{
+			"width_mm":         quote.SVGAnalysis.Width,
+			"height_mm":        quote.SVGAnalysis.Height,
+			"cut_length_mm":    quote.SVGAnalysis.CutLengthMM,
+			"vector_length_mm": quote.SVGAnalysis.VectorLengthMM,
+			"raster_area_mm2":  quote.SVGAnalysis.RasterAreaMM2,
+		}
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data":    resp,
+	})
+}
+
+func (h *AdminHandler) UpdateQuote(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 32)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_ID", "ID inválido")
+		return
+	}
+
+	quote, err := h.quoteRepo.FindByID(uint(id))
+	if err != nil {
+		respondError(w, http.StatusNotFound, "NOT_FOUND", "Cotización no encontrada")
+		return
+	}
+
+	var req struct {
+		Status     string `json:"status"`
+		AdminNotes string `json:"admin_notes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
+		return
+	}
+
+	if req.Status != "" {
+		quote.Status = models.QuoteStatus(req.Status)
+	}
+	if req.AdminNotes != "" {
+		quote.ReviewNotes = &req.AdminNotes
+	}
+
+	if err := h.quoteRepo.Update(quote); err != nil {
+		respondError(w, http.StatusInternalServerError, "UPDATE_ERROR", "Error al actualizar cotización")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"id":     quote.ID,
+			"status": quote.Status,
+		},
+	})
+}
+
+// ==================== TECH RATES (Admin) ====================
+
+func (h *AdminHandler) GetTechRates(w http.ResponseWriter, r *http.Request) {
+	rates, err := h.rateRepo.FindAll()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "LIST_ERROR", "Error al listar tarifas")
+		return
+	}
+
+	ratesResp := make([]map[string]interface{}, len(rates))
+	for i, rate := range rates {
+		ratesResp[i] = map[string]interface{}{
+			"id":                  rate.ID,
+			"technology_id":       rate.TechnologyID,
+			"technology_name":     rate.Technology.Name,
+			"engrave_rate_hour":   rate.EngraveRateHour,
+			"cut_rate_hour":       rate.CutRateHour,
+			"design_rate_hour":    rate.DesignRateHour,
+			"overhead_rate_hour":  rate.OverheadRateHour,
+			"setup_fee":           rate.SetupFee,
+			"cost_per_min_engrave": rate.CostPerMinEngrave,
+			"cost_per_min_cut":    rate.CostPerMinCut,
+			"margin_percent":      rate.MarginPercent,
+			"is_active":           rate.IsActive,
+		}
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data":    ratesResp,
+	})
+}
+
+func (h *AdminHandler) CreateTechRate(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		TechnologyID      uint    `json:"technology_id"`
+		EngraveRateHour   float64 `json:"engrave_rate_hour"`
+		CutRateHour       float64 `json:"cut_rate_hour"`
+		DesignRateHour    float64 `json:"design_rate_hour"`
+		OverheadRateHour  float64 `json:"overhead_rate_hour"`
+		SetupFee          float64 `json:"setup_fee"`
+		MarginPercent     float64 `json:"margin_percent"`
+		IsActive          bool    `json:"is_active"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
+		return
+	}
+
+	if req.TechnologyID == 0 {
+		respondError(w, http.StatusBadRequest, "MISSING_FIELDS", "Technology es requerido")
+		return
+	}
+
+	rate := &models.TechRate{
+		TechnologyID:      req.TechnologyID,
+		EngraveRateHour:   req.EngraveRateHour,
+		CutRateHour:       req.CutRateHour,
+		DesignRateHour:    req.DesignRateHour,
+		OverheadRateHour:  req.OverheadRateHour,
+		SetupFee:          req.SetupFee,
+		MarginPercent:     req.MarginPercent,
+		CostPerMinEngrave: (req.EngraveRateHour + req.OverheadRateHour) / 60,
+		CostPerMinCut:     (req.CutRateHour + req.OverheadRateHour) / 60,
+		IsActive:          req.IsActive,
+	}
+
+	if err := h.rateRepo.Create(rate); err != nil {
+		respondError(w, http.StatusInternalServerError, "CREATE_ERROR", "Error al crear tarifa")
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"id": rate.ID,
+		},
+	})
+}
+
+func (h *AdminHandler) DeleteTechRate(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 32)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_ID", "ID inválido")
+		return
+	}
+
+	if err := h.rateRepo.Delete(uint(id)); err != nil {
+		respondError(w, http.StatusInternalServerError, "DELETE_ERROR", "Error al eliminar tarifa")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "Tarifa eliminada",
 	})
 }
 

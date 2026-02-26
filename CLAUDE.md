@@ -412,9 +412,9 @@ FABRICALASER_GOMETA_TIMEOUT=10                    # Timeout en segundos (default
 FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuando GoMeta offline
 ```
 
-## Fase Actual: 1 — Cotizador Backend (COMPLETADA)
+## Fase Actual: 3 — Órdenes y Operaciones (PENDIENTE)
 
-**Fases de Fundación:**
+**Estado del Proyecto (Actualizado: 2026-02-26):**
 | Fase | Nombre | Estado |
 |------|--------|--------|
 | 0A | Estructura + DB + Seed | ✅ COMPLETADA |
@@ -422,6 +422,12 @@ FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuan
 | 0C | API Config + Admin | ✅ COMPLETADA |
 | 0D | Landing Page + Auth UI | ✅ COMPLETADA |
 | 1 | Motor SVG + Pricing API | ✅ COMPLETADA |
+| 2A | Wizard del Cliente | ✅ COMPLETADA |
+| 2B | Panel Admin | ✅ COMPLETADA |
+| 3 | Órdenes y Operaciones | ⏳ PENDIENTE |
+| 4 | Pagos y Lanzamiento | ⏳ PENDIENTE |
+
+**MVP Funcional: ✅ ALCANZADO** — Sistema de cotización operativo end-to-end.
 
 **Completado 0A:**
 - Proyecto Go con chi, gorm, pgx, bcrypt, jwt-go
@@ -491,7 +497,23 @@ FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuan
 
 **Principio clave:** Todos los parámetros de pricing vienen de DB (tech_rates, materials, engrave_types, volume_discounts). NO hay valores hardcodeados.
 
-**Siguiente:** Fase 1 Frontend — UI del Cotizador (wizard SVG upload → opciones → resultado).
+**Completado Fase 2A — Wizard del Cliente:**
+- `web/cotizar/index.html` (2161 líneas) — Wizard 3 pasos completo
+- Paso 1: Upload SVG con drag & drop, análisis automático
+- Paso 2: Selección tecnología/material con matriz de compatibilidad
+- Paso 3: Resultado con desglose completo (tiempos, factores, precios en CRC)
+- Tab historial de cotizaciones anteriores
+- Auth guard: redirige a landing si no autenticado
+
+**Completado Fase 2B — Panel Admin:**
+- `web/admin/index.html` — Dashboard con 4 métricas
+- `web/admin/users.html` — CRUD usuarios con búsqueda/filtros/paginación
+- `web/admin/quotes.html` — Gestión cotizaciones con modal detalle
+- `web/admin/config/*.html` — 5 páginas CRUD configuración
+- `web/admin/admin.js` (519 líneas) — Lógica compartida
+- `web/admin/admin.css` (937 líneas) — Design system completo
+
+**Siguiente:** Fase 3 — Órdenes y Flujo Operativo (tabla orders, estados, cola de producción).
 
 ## Notas para Claude Code
 - Monolito modular. NO crear microservicios.
@@ -507,3 +529,75 @@ FABRICALASER_GOMETA_REQUIRE_VALIDATION=false      # Si true, falla registro cuan
 - Cuota: quote_quota=5 por defecto, -1 para ilimitado. Middleware valida antes de cotizar.
 - **GoMeta API:** Validación de cédula contra Registro Civil CR. Usar nombre oficial para registro. Guardar en metadata.extras para facturación. Cache 24h. Timeout configurable (default 10s).
 - **Config API:** Endpoint `/api/v1/config` retorna toda la configuración del cotizador en una llamada. Usar para initial load del frontend. Los datos son read-only para usuarios, solo admin puede modificar via `/api/v1/admin/*`.
+
+## Reglas de Subagentes y Paralelismo
+
+### Cuándo usar subagentes
+Usar subagentes en paralelo siempre que una tarea tenga componentes independientes que toquen capas distintas (BD, API, Frontend, Tests). No hacer secuencial lo que puede ser paralelo.
+
+### Regla del Contrato (OBLIGATORIO)
+Antes de lanzar cualquier subagente:
+
+1. **LEER** el código existente relacionado (modelos, handlers, rutas, migraciones)
+2. **CREAR o ACTUALIZAR** el archivo `docs/CONTRACTS.md` con:
+   - Esquema SQL exacto (tabla, columnas, tipos, constraints)
+   - Struct Go exacto (campos, json tags, gorm tags)
+   - Endpoints exactos (método, ruta, request body, response body)
+   - Campos que consume el frontend (mapeo API → JS)
+3. **GUARDAR** el contrato en disco ANTES de lanzar subagentes
+4. Cada subagente recibe el contrato como contexto obligatorio
+5. Ningún subagente puede inventar, renombrar o agregar campos fuera del contrato
+6. Si un subagente necesita algo no definido → reportar, NO improvisar
+7. Al terminar cada subagente → el orquestador VERIFICA consistencia vs contrato
+
+### Qué va en el contrato
+El contrato es la fuente de verdad. Define nombres exactos que deben coincidir entre BD ↔ Go struct ↔ JSON response ↔ Frontend. Ejemplo de consistencia:
+
+| Capa | Nombre | Ejemplo |
+|------|--------|---------|
+| Columna SQL | `cut_speed` | `cut_speed DECIMAL(10,2)` |
+| Go struct | `CutSpeed` | `CutSpeed float64 \`json:"cut_speed" gorm:"column:cut_speed"\`` |
+| JSON response | `cut_speed` | `{ "cut_speed": 25.0 }` |
+| Frontend JS | `cut_speed` | `speed.cut_speed` |
+
+**Si alguna capa usa un nombre diferente, es un bug.**
+
+### Ejemplo de contrato (docs/CONTRACTS.md)
+```markdown
+## Order (Fase 3)
+
+### SQL
+\`\`\`sql
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    quote_id INTEGER NOT NULL REFERENCES quotes(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    status VARCHAR(20) DEFAULT 'pending',
+    operator_notes TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+\`\`\`
+
+### Go Struct
+\`\`\`go
+type Order struct {
+    ID            uint      `json:"id" gorm:"primaryKey"`
+    QuoteID       uint      `json:"quote_id" gorm:"not null"`
+    UserID        uint      `json:"user_id" gorm:"not null"`
+    Status        string    `json:"status" gorm:"default:pending"`
+    OperatorNotes string    `json:"operator_notes"`
+    CreatedAt     time.Time `json:"created_at"`
+    UpdatedAt     time.Time `json:"updated_at"`
+}
+\`\`\`
+
+### Endpoints
+- POST /api/v1/orders - Crear orden desde cotización
+- GET /api/v1/orders/my - Mis órdenes
+- PUT /api/v1/admin/orders/{id}/status - Cambiar estado (admin)
+
+### Frontend consume
+- order.id, order.status, order.quote_id
+- No usar: order_id (incorrecto), order.quoteId (incorrecto)
+```

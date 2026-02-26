@@ -43,3 +43,7 @@ logs/
 # Temporary files
 tmp/
 temp/
+
+# Build artifacts at root
+fabricaLaser
+fabricaLaser-api

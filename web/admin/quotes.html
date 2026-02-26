@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotizaciones | Admin FabricaLaser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    .quote-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .quote-section {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .quote-section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.75rem;
+    }
+    .quote-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .quote-row:last-child { border-bottom: none; }
+    .quote-label { color: var(--text-secondary); font-size: 0.875rem; }
+    .quote-value { font-weight: 500; color: var(--text); font-size: 0.875rem; }
+    .quote-total {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .status-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 768px) {
+      .quote-detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="content-header">
+        <div>
+          <h1 class="content-title">Gestion de Cotizaciones</h1>
+          <div class="content-breadcrumb">
+            <a href="/admin/">Dashboard</a>
+            <span>/</span>
+            <span>Cotizaciones</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Buscar por cliente o archivo..." oninput="handleSearch()">
+        </div>
+        <select class="filter-select" id="statusFilter" onchange="loadQuotes()">
+          <option value="">Todos los estados</option>
+          <option value="pending">Pendiente</option>
+          <option value="reviewed">Revisada</option>
+          <option value="approved">Aprobada</option>
+          <option value="rejected">Rechazada</option>
+        </select>
+        <select class="filter-select" id="sortFilter" onchange="loadQuotes()">
+          <option value="desc">Mas recientes</option>
+          <option value="asc">Mas antiguas</option>
+        </select>
+      </div>
+
+      <div class="content-body">
+        <div class="card">
+          <div class="card-body">
+            <div id="quotesTable">
+              <div class="loading">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Quote Detail Modal -->
+  <div class="modal-overlay" id="quoteModal">
+    <div class="modal large">
+      <div class="modal-header">
+        <h3 class="modal-title">Cotizacion <span id="quoteNumber">#0</span></h3>
+        <button class="modal-close" onclick="closeModal('quoteModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" id="quoteDetail">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    // ================================================
+    // STATE
+    // ================================================
+    let quotesData = { quotes: [], total: 0, page: 1, limit: 15 };
+    let currentQuote = null;
+    let searchTimeout = null;
+
+    // ================================================
+    // LOAD QUOTES
+    // ================================================
+    async function loadQuotes(page = 1) {
+      const container = document.getElementById('quotesTable');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      try {
+        const search = document.getElementById('searchInput').value;
+        const status = document.getElementById('statusFilter').value;
+        const sort = document.getElementById('sortFilter').value;
+
+        let url = `/admin/quotes?page=${page}&limit=${quotesData.limit}&sort=${sort}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (status) url += `&status=${status}`;
+
+        const data = await apiGet(url);
+        quotesData = {
+          quotes: data.data?.quotes || [],
+          total: data.data?.total || 0,
+          page: page,
+          limit: quotesData.limit
+        };
+
+        renderQuotesTable();
+      } catch (err) {
+        console.error('Failed to load quotes:', err);
+        container.innerHTML = `
+          <div class="empty-state">
+            <p class="text-error">Error al cargar cotizaciones: ${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function handleSearch() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => loadQuotes(1), 300);
+    }
+
+    function renderQuotesTable() {
+      const container = document.getElementById('quotesTable');
+      const { quotes, total, page, limit } = quotesData;
+
+      if (quotes.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <p>No se encontraron cotizaciones</p>
+          </div>
+        `;
+        return;
+      }
+
+      const totalPages = Math.ceil(total / limit);
+
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Archivo</th>
+              <th>Tecnologia</th>
+              <th>Material</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${quotes.map(q => `
+              <tr>
+                <td class="font-mono font-semibold">${q.id}</td>
+                <td>
+                  <div class="font-semibold">${truncate(q.user_name || 'Sin nombre', 20)}</div>
+                  <div class="text-muted" style="font-size: 0.75rem">${q.cedula || '-'}</div>
+                </td>
+                <td class="truncate" style="max-width: 150px" title="${q.filename || '-'}">${q.filename || '-'}</td>
+                <td>${q.technology_name || '-'}</td>
+                <td>${q.material_name || '-'}</td>
+                <td class="font-semibold">${formatCurrency(q.total_price || 0)}</td>
+                <td>
+                  <span class="status-badge ${q.status}">${getStatusLabel(q.status)}</span>
+                </td>
+                <td class="text-muted">${formatDateShort(q.created_at)}</td>
+                <td>
+                  <button class="btn btn-ghost btn-sm" onclick="viewQuote(${q.id})" title="Ver detalle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ${totalPages > 1 ? renderPaginationHTML(page, totalPages) : ''}
+      `;
+    }
+
+    function renderPaginationHTML(current, total) {
+      let buttons = [];
+
+      buttons.push(`<button class="pagination-btn" ${current === 1 ? 'disabled' : ''} onclick="loadQuotes(${current - 1})">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>`);
+
+      const maxVisible = 5;
+      let start = Math.max(1, current - Math.floor(maxVisible / 2));
+      let end = Math.min(total, start + maxVisible - 1);
+      if (end - start + 1 < maxVisible) start = Math.max(1, end - maxVisible + 1);
+
+      for (let i = start; i <= end; i++) {
+        buttons.push(`<button class="pagination-btn ${i === current ? 'active' : ''}" onclick="loadQuotes(${i})">${i}</button>`);
+      }
+
+      buttons.push(`<button class="pagination-btn" ${current === total ? 'disabled' : ''} onclick="loadQuotes(${current + 1})">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>`);
+
+      return `
+        <div class="pagination">
+          ${buttons.join('')}
+          <span class="pagination-info">Pagina ${current} de ${total}</span>
+        </div>
+      `;
+    }
+
+    function getStatusLabel(status) {
+      const labels = {
+        pending: 'Pendiente',
+        reviewed: 'Revisada',
+        approved: 'Aprobada',
+        rejected: 'Rechazada'
+      };
+      return labels[status] || status;
+    }
+
+    // ================================================
+    // VIEW QUOTE DETAIL
+    // ================================================
+    async function viewQuote(id) {
+      document.getElementById('quoteNumber').textContent = `#${id}`;
+      document.getElementById('quoteDetail').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      openModal('quoteModal');
+
+      try {
+        const data = await apiGet(`/admin/quotes/${id}`);
+        currentQuote = data.data;
+        renderQuoteDetail();
+      } catch (err) {
+        console.error('Failed to load quote:', err);
+        document.getElementById('quoteDetail').innerHTML = `
+          <div class="empty-state">
+            <p class="text-error">Error al cargar cotizacion: ${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderQuoteDetail() {
+      const q = currentQuote;
+      if (!q) return;
+
+      const container = document.getElementById('quoteDetail');
+
+      // Get analysis data from the quote
+      const analysis = q.svg_analysis || {};
+
+      container.innerHTML = `
+        <div class="quote-detail-grid">
+          <!-- Cliente Info -->
+          <div class="quote-section">
+            <div class="quote-section-title">Cliente</div>
+            <div class="quote-row">
+              <span class="quote-label">Nombre</span>
+              <span class="quote-value">${q.user_name || '-'}</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Cedula</span>
+              <span class="quote-value font-mono">${q.cedula || '-'}</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Email</span>
+              <span class="quote-value">${q.user_email || '-'}</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Telefono</span>
+              <span class="quote-value">${q.user_phone || '-'}</span>
+            </div>
+          </div>
+
+          <!-- Archivo Info -->
+          <div class="quote-section">
+            <div class="quote-section-title">Archivo</div>
+            <div class="quote-row">
+              <span class="quote-label">Nombre</span>
+              <span class="quote-value">${q.filename || '-'}</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Dimensiones</span>
+              <span class="quote-value">${analysis.width_mm || 0}mm x ${analysis.height_mm || 0}mm</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Longitud corte</span>
+              <span class="quote-value">${(analysis.cut_length_mm || 0).toFixed(2)} mm</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Longitud grabado</span>
+              <span class="quote-value">${(analysis.vector_length_mm || 0).toFixed(2)} mm</span>
+            </div>
+          </div>
+
+          <!-- Opciones -->
+          <div class="quote-section">
+            <div class="quote-section-title">Opciones Seleccionadas</div>
+            <div class="quote-row">
+              <span class="quote-label">Tecnologia</span>
+              <span class="quote-value">${q.technology_name || '-'}</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Material</span>
+              <span class="quote-value">${q.material_name || '-'}</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Tipo de grabado</span>
+              <span class="quote-value">${q.engrave_type_name || '-'}</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Cantidad</span>
+              <span class="quote-value">${q.quantity || 1} unidad(es)</span>
+            </div>
+          </div>
+
+          <!-- Precios -->
+          <div class="quote-section">
+            <div class="quote-section-title">Desglose de Precios</div>
+            <div class="quote-row">
+              <span class="quote-label">Corte</span>
+              <span class="quote-value">${formatCurrency(q.cut_price || 0)}</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Grabado</span>
+              <span class="quote-value">${formatCurrency(q.engrave_price || 0)}</span>
+            </div>
+            <div class="quote-row">
+              <span class="quote-label">Subtotal</span>
+              <span class="quote-value">${formatCurrency(q.subtotal || 0)}</span>
+            </div>
+            ${q.discount_percent > 0 ? `
+            <div class="quote-row">
+              <span class="quote-label">Descuento (${q.discount_percent}%)</span>
+              <span class="quote-value text-success">-${formatCurrency(q.discount_amount || 0)}</span>
+            </div>
+            ` : ''}
+            <div class="quote-row" style="border-top: 2px solid var(--border); padding-top: 0.75rem; margin-top: 0.25rem;">
+              <span class="quote-label font-semibold">TOTAL</span>
+              <span class="quote-total">${formatCurrency(q.total_price || 0)}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status & Actions -->
+        <div class="quote-section" style="margin-top: 1.5rem;">
+          <div class="quote-section-title">Estado y Acciones</div>
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <span class="text-muted">Estado actual:</span>
+              <span class="status-badge ${q.status}" style="margin-left: 0.5rem;">${getStatusLabel(q.status)}</span>
+            </div>
+            <div>
+              <span class="text-muted">Fecha:</span>
+              <span style="margin-left: 0.5rem;">${formatDate(q.created_at)}</span>
+            </div>
+          </div>
+
+          ${q.admin_notes ? `
+          <div style="margin-top: 1rem;">
+            <span class="text-muted">Notas:</span>
+            <p style="margin-top: 0.25rem;">${q.admin_notes}</p>
+          </div>
+          ` : ''}
+
+          <div class="status-actions">
+            ${q.status !== 'approved' ? `
+              <button class="btn btn-primary" onclick="updateQuoteStatus(${q.id}, 'approved')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Aprobar
+              </button>
+            ` : ''}
+            ${q.status !== 'rejected' ? `
+              <button class="btn btn-danger" onclick="showRejectDialog(${q.id})">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Rechazar
+              </button>
+            ` : ''}
+            ${q.status === 'pending' ? `
+              <button class="btn btn-secondary" onclick="updateQuoteStatus(${q.id}, 'reviewed')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Marcar como revisada
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // ================================================
+    // UPDATE STATUS
+    // ================================================
+    async function updateQuoteStatus(id, status, notes = null) {
+      try {
+        const body = { status };
+        if (notes) body.admin_notes = notes;
+
+        await apiPut(`/admin/quotes/${id}`, body);
+        showToast(`Cotizacion ${getStatusLabel(status).toLowerCase()}`, 'success');
+
+        // Reload detail if open
+        if (currentQuote && currentQuote.id === id) {
+          currentQuote.status = status;
+          if (notes) currentQuote.admin_notes = notes;
+          renderQuoteDetail();
+        }
+
+        // Reload list
+        loadQuotes(quotesData.page);
+      } catch (err) {
+        console.error('Failed to update status:', err);
+        showToast(err.message || 'Error al actualizar estado', 'error');
+      }
+    }
+
+    function showRejectDialog(id) {
+      const reason = prompt('Motivo del rechazo (opcional):');
+      if (reason !== null) {
+        updateQuoteStatus(id, 'rejected', reason || null);
+      }
+    }
+
+    // ================================================
+    // CHECK URL PARAMS
+    // ================================================
+    function checkUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      if (id) {
+        viewQuote(parseInt(id));
+      }
+    }
+
+    // ================================================
+    // INIT
+    // ================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      const ready = await initAdmin('quotes');
+      if (ready) {
+        loadQuotes();
+        checkUrlParams();
+      }
+    });
+  </script>
+</body>
+</html>

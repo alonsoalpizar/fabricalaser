@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Velocidades | Admin FabricaLaser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="content-header">
+        <div>
+          <h1 class="content-title">Matriz de Velocidades</h1>
+          <div class="content-breadcrumb">
+            <a href="/admin/">Dashboard</a>
+            <span>/</span>
+            <a href="/admin/config/technologies.html">Configuracion</a>
+            <span>/</span>
+            <span>Velocidades</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn btn-secondary" onclick="openBulkModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Carga Masiva
+          </button>
+          <button class="btn btn-primary" onclick="openCreateModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Nueva Velocidad
+          </button>
+        </div>
+      </header>
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <select class="filter-select" id="techFilter" onchange="loadSpeeds()">
+          <option value="">Todas las tecnologias</option>
+        </select>
+        <select class="filter-select" id="materialFilter" onchange="loadSpeeds()">
+          <option value="">Todos los materiales</option>
+        </select>
+      </div>
+
+      <div class="content-body">
+        <div class="card">
+          <div class="card-body">
+            <div id="speedsTable">
+              <div class="loading">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create/Edit Speed Modal -->
+  <div class="modal-overlay" id="speedModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Nueva Configuracion de Velocidad</h3>
+        <button class="modal-close" onclick="closeModal('speedModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form id="speedForm" onsubmit="saveSpeed(event)">
+        <div class="modal-body">
+          <input type="hidden" id="speedId" value="">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Tecnologia *</label>
+              <select class="form-select" id="speedTechId" required>
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Material *</label>
+              <select class="form-select" id="speedMaterialId" required>
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Grosor (mm) *</label>
+            <input type="number" class="form-input" id="speedThickness" required
+                   min="0" step="0.5" value="0" placeholder="0 para sin grosor">
+            <span class="form-hint">Usar 0 para materiales sin grosor definido (ej: metal, cuero)</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Velocidad Corte (mm/min)</label>
+              <input type="number" class="form-input" id="speedCut"
+                     min="0" step="0.1" placeholder="Dejar vacio si no corta">
+              <span class="form-hint">NULL = no soporta corte</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Velocidad Grabado (mm/min)</label>
+              <input type="number" class="form-input" id="speedEngrave"
+                     min="0" step="0.1" placeholder="Dejar vacio si no graba">
+              <span class="form-hint">NULL = no soporta grabado</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <input type="checkbox" id="speedCompatible" checked style="margin-right: 0.5rem;">
+              Combinacion compatible
+            </label>
+            <span class="form-hint" style="display: block; margin-top: 0.25rem;">
+              Desmarcar para indicar que esta combinacion NO es posible
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notas</label>
+            <textarea class="form-textarea" id="speedNotes" rows="2"
+                      placeholder="Notas adicionales (calibracion, advertencias, etc.)"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('speedModal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bulk Create Modal -->
+  <div class="modal-overlay" id="bulkModal">
+    <div class="modal large">
+      <div class="modal-header">
+        <h3 class="modal-title">Carga Masiva de Velocidades</h3>
+        <button class="modal-close" onclick="closeModal('bulkModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form id="bulkForm" onsubmit="saveBulk(event)">
+        <div class="modal-body">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Tecnologia *</label>
+              <select class="form-select" id="bulkTechId" required>
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Material *</label>
+              <select class="form-select" id="bulkMaterialId" required>
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Grosores separados por coma (mm) *</label>
+            <input type="text" class="form-input" id="bulkThicknesses" required
+                   placeholder="Ej: 3, 5, 6, 10">
+            <span class="form-hint">Se creara un registro para cada grosor</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Velocidad Corte (mm/min)</label>
+              <input type="number" class="form-input" id="bulkCut"
+                     min="0" step="0.1" placeholder="Igual para todos">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Velocidad Grabado (mm/min)</label>
+              <input type="number" class="form-input" id="bulkEngrave"
+                     min="0" step="0.1" placeholder="Igual para todos">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notas</label>
+            <textarea class="form-textarea" id="bulkNotes" rows="2"
+                      placeholder="Notas para todos los registros"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('bulkModal')">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="bulkSaveBtn">Crear Registros</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirmar eliminacion</h3>
+        <button class="modal-close" onclick="closeModal('deleteModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Esta seguro de eliminar esta configuracion de velocidad?</p>
+        <p id="deleteInfo" class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;"></p>
+        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta accion no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancelar</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../admin.js"></script>
+  <script>
+    // ================================================
+    // STATE
+    // ================================================
+    let speedsData = [];
+    let technologiesData = [];
+    let materialsData = [];
+    let deleteSpeedId = null;
+
+    // ================================================
+    // LOAD DATA
+    // ================================================
+    async function loadFilters() {
+      try {
+        // Load technologies
+        const techRes = await apiGet('/config/technologies');
+        technologiesData = techRes.data || [];
+
+        // Load materials
+        const matRes = await apiGet('/config/materials');
+        materialsData = matRes.data || [];
+
+        // Populate filter dropdowns
+        const techFilter = document.getElementById('techFilter');
+        const matFilter = document.getElementById('materialFilter');
+
+        technologiesData.forEach(t => {
+          techFilter.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+        });
+
+        materialsData.forEach(m => {
+          matFilter.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+        });
+
+        // Populate modal dropdowns
+        populateModalSelects();
+      } catch (err) {
+        console.error('Failed to load filters:', err);
+        showToast('Error al cargar filtros', 'error');
+      }
+    }
+
+    function populateModalSelects() {
+      const selects = ['speedTechId', 'bulkTechId'];
+      selects.forEach(id => {
+        const el = document.getElementById(id);
+        el.innerHTML = '<option value="">Seleccionar...</option>';
+        technologiesData.forEach(t => {
+          el.innerHTML += `<option value="${t.id}">${t.name} (${t.code})</option>`;
+        });
+      });
+
+      const matSelects = ['speedMaterialId', 'bulkMaterialId'];
+      matSelects.forEach(id => {
+        const el = document.getElementById(id);
+        el.innerHTML = '<option value="">Seleccionar...</option>';
+        materialsData.forEach(m => {
+          el.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+        });
+      });
+    }
+
+    async function loadSpeeds() {
+      const container = document.getElementById('speedsTable');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      try {
+        const techId = document.getElementById('techFilter').value;
+        const matId = document.getElementById('materialFilter').value;
+
+        let url = '/admin/tech-material-speeds';
+        const params = [];
+        if (techId) params.push(`technology_id=${techId}`);
+        if (matId) params.push(`material_id=${matId}`);
+        if (params.length) url += '?' + params.join('&');
+
+        const data = await apiGet(url);
+        speedsData = data.data || [];
+
+        renderSpeedsTable();
+      } catch (err) {
+        console.error('Failed to load speeds:', err);
+        container.innerHTML = `
+          <div class="empty-state">
+            <p class="text-error">Error al cargar velocidades: ${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderSpeedsTable() {
+      const container = document.getElementById('speedsTable');
+
+      if (speedsData.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+            <p>No hay configuraciones de velocidad</p>
+            <p class="text-muted" style="font-size: 0.875rem;">Cree una nueva configuracion o use la carga masiva</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Tecnologia</th>
+              <th>Material</th>
+              <th>Grosor</th>
+              <th>Corte mm/min</th>
+              <th>Grabado mm/min</th>
+              <th>Compatible</th>
+              <th>Notas</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${speedsData.map(s => `
+              <tr>
+                <td>
+                  <span class="status-badge reviewed" style="font-size: 0.6875rem;">
+                    ${s.technology?.code || '-'}
+                  </span>
+                  <span style="margin-left: 0.5rem;">${s.technology?.name || '-'}</span>
+                </td>
+                <td>${s.material?.name || '-'}</td>
+                <td class="font-mono">${s.thickness === 0 ? 'N/A' : s.thickness + ' mm'}</td>
+                <td class="font-mono ${s.cut_speed_mm_min == null ? 'text-muted' : ''}">${s.cut_speed_mm_min != null ? s.cut_speed_mm_min : '-'}</td>
+                <td class="font-mono ${s.engrave_speed_mm_min == null ? 'text-muted' : ''}">${s.engrave_speed_mm_min != null ? s.engrave_speed_mm_min : '-'}</td>
+                <td>
+                  <span class="status-badge ${s.is_compatible ? 'approved' : 'rejected'}" style="font-size: 0.6875rem;">
+                    ${s.is_compatible ? 'Si' : 'No'}
+                  </span>
+                </td>
+                <td class="text-muted" style="max-width: 150px;">
+                  <span class="truncate" title="${(s.notes || '').replace(/"/g, '&quot;')}">${truncate(s.notes || '', 20)}</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.25rem;">
+                    <button class="btn btn-ghost btn-sm" onclick="editSpeed(${s.id})" title="Editar">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="deleteSpeed(${s.id})" title="Eliminar">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // ================================================
+    // CREATE / EDIT
+    // ================================================
+    function openCreateModal() {
+      document.getElementById('modalTitle').textContent = 'Nueva Configuracion de Velocidad';
+      document.getElementById('speedForm').reset();
+      document.getElementById('speedId').value = '';
+      document.getElementById('speedThickness').value = '0';
+      document.getElementById('speedCompatible').checked = true;
+      document.getElementById('speedTechId').disabled = false;
+      document.getElementById('speedMaterialId').disabled = false;
+      openModal('speedModal');
+    }
+
+    function openBulkModal() {
+      document.getElementById('bulkForm').reset();
+      openModal('bulkModal');
+    }
+
+    function editSpeed(id) {
+      const speed = speedsData.find(s => s.id === id);
+      if (!speed) {
+        showToast('Configuracion no encontrada', 'error');
+        return;
+      }
+
+      document.getElementById('modalTitle').textContent = 'Editar Configuracion de Velocidad';
+      document.getElementById('speedId').value = speed.id;
+      document.getElementById('speedTechId').value = speed.technology_id;
+      document.getElementById('speedTechId').disabled = true;
+      document.getElementById('speedMaterialId').value = speed.material_id;
+      document.getElementById('speedMaterialId').disabled = true;
+      document.getElementById('speedThickness').value = speed.thickness;
+      document.getElementById('speedCut').value = speed.cut_speed_mm_min != null ? speed.cut_speed_mm_min : '';
+      document.getElementById('speedEngrave').value = speed.engrave_speed_mm_min != null ? speed.engrave_speed_mm_min : '';
+      document.getElementById('speedCompatible').checked = speed.is_compatible;
+      document.getElementById('speedNotes').value = speed.notes || '';
+
+      openModal('speedModal');
+    }
+
+    async function saveSpeed(e) {
+      e.preventDefault();
+
+      const id = document.getElementById('speedId').value;
+      const isNew = !id;
+
+      const cutVal = document.getElementById('speedCut').value;
+      const engraveVal = document.getElementById('speedEngrave').value;
+
+      const body = {
+        technology_id: parseInt(document.getElementById('speedTechId').value),
+        material_id: parseInt(document.getElementById('speedMaterialId').value),
+        thickness: parseFloat(document.getElementById('speedThickness').value) || 0,
+        cut_speed_mm_min: cutVal !== '' ? parseFloat(cutVal) : null,
+        engrave_speed_mm_min: engraveVal !== '' ? parseFloat(engraveVal) : null,
+        is_compatible: document.getElementById('speedCompatible').checked,
+        notes: document.getElementById('speedNotes').value || null
+      };
+
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+
+      try {
+        if (isNew) {
+          await apiPost('/admin/tech-material-speeds', body);
+          showToast('Configuracion creada exitosamente', 'success');
+        } else {
+          await apiPut(`/admin/tech-material-speeds/${id}`, body);
+          showToast('Configuracion actualizada exitosamente', 'success');
+        }
+
+        closeModal('speedModal');
+        loadSpeeds();
+      } catch (err) {
+        console.error('Failed to save speed:', err);
+        showToast(err.message || 'Error al guardar configuracion', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar';
+      }
+    }
+
+    async function saveBulk(e) {
+      e.preventDefault();
+
+      const techId = parseInt(document.getElementById('bulkTechId').value);
+      const matId = parseInt(document.getElementById('bulkMaterialId').value);
+      const thicknessStr = document.getElementById('bulkThicknesses').value;
+      const cutVal = document.getElementById('bulkCut').value;
+      const engraveVal = document.getElementById('bulkEngrave').value;
+      const notes = document.getElementById('bulkNotes').value || null;
+
+      // Parse thicknesses
+      const thicknesses = thicknessStr.split(',')
+        .map(t => parseFloat(t.trim()))
+        .filter(t => !isNaN(t));
+
+      if (thicknesses.length === 0) {
+        showToast('Ingrese al menos un grosor valido', 'error');
+        return;
+      }
+
+      const speeds = thicknesses.map(thickness => ({
+        technology_id: techId,
+        material_id: matId,
+        thickness: thickness,
+        cut_speed_mm_min: cutVal !== '' ? parseFloat(cutVal) : null,
+        engrave_speed_mm_min: engraveVal !== '' ? parseFloat(engraveVal) : null,
+        is_compatible: true,
+        notes: notes
+      }));
+
+      const saveBtn = document.getElementById('bulkSaveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Creando...';
+
+      try {
+        await apiPost('/admin/tech-material-speeds/bulk', { speeds });
+        showToast(`${speeds.length} configuraciones creadas exitosamente`, 'success');
+
+        closeModal('bulkModal');
+        loadSpeeds();
+      } catch (err) {
+        console.error('Failed to bulk create:', err);
+        showToast(err.message || 'Error al crear configuraciones', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Crear Registros';
+      }
+    }
+
+    // ================================================
+    // DELETE
+    // ================================================
+    function deleteSpeed(id) {
+      const speed = speedsData.find(s => s.id === id);
+      if (!speed) return;
+
+      deleteSpeedId = id;
+      document.getElementById('deleteInfo').textContent =
+        `${speed.technology?.name || 'Tech'} + ${speed.material?.name || 'Material'} (${speed.thickness}mm)`;
+      openModal('deleteModal');
+    }
+
+    async function confirmDelete() {
+      if (!deleteSpeedId) return;
+
+      try {
+        await apiDelete(`/admin/tech-material-speeds/${deleteSpeedId}`);
+        showToast('Configuracion eliminada', 'success');
+        closeModal('deleteModal');
+        loadSpeeds();
+      } catch (err) {
+        console.error('Failed to delete speed:', err);
+        showToast(err.message || 'Error al eliminar configuracion', 'error');
+      }
+
+      deleteSpeedId = null;
+    }
+
+    // ================================================
+    // INIT
+    // ================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      const ready = await initAdmin('speeds');
+      if (ready) {
+        await loadFilters();
+        loadSpeeds();
+      }
+    });
+  </script>
+</body>
+</html>

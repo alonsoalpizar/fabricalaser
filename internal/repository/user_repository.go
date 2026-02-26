@@ -166,3 +166,40 @@ func (r *UserRepository) UpdateProfile(id uint, email, telefono, direccion, prov
 
 	return r.db.Model(&models.User{}).Where("id = ?", id).Updates(updates).Error
 }
+
+// ListAll returns all users with pagination and filters (for admin)
+func (r *UserRepository) ListAll(limit, offset int, search, role string, isActive *bool) ([]models.User, int64, error) {
+	var users []models.User
+	var total int64
+
+	query := r.db.Model(&models.User{})
+
+	// Apply filters
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		query = query.Where("nombre ILIKE ? OR cedula ILIKE ? OR email ILIKE ?", searchPattern, searchPattern, searchPattern)
+	}
+	if role != "" {
+		query = query.Where("role = ?", role)
+	}
+	if isActive != nil {
+		query = query.Where("activo = ?", *isActive)
+	}
+
+	// Get total count
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	if err := query.Order("id DESC").Limit(limit).Offset(offset).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
+}
+
+// Delete soft deletes a user (or hard delete if needed)
+func (r *UserRepository) Delete(id uint) error {
+	return r.db.Delete(&models.User{}, id).Error
+}
