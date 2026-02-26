@@ -419,7 +419,7 @@ function renderSidebar(activePage = 'dashboard') {
   const sidebarEl = document.getElementById('sidebar');
   if (!sidebarEl) return;
 
-  const configPages = ['technologies', 'materials', 'engrave-types', 'rates', 'discounts', 'general', 'speeds'];
+  const configPages = ['technologies', 'materials', 'material-costs', 'engrave-types', 'rates', 'discounts', 'general', 'speeds'];
   const isConfigActive = configPages.includes(activePage);
 
   sidebarEl.innerHTML = `
@@ -460,6 +460,10 @@ function renderSidebar(activePage = 'dashboard') {
         <a href="/admin/config/materials.html" class="nav-item ${activePage === 'materials' ? 'active' : ''}" data-page="materials">
           ${icons.materials}
           <span>Materiales</span>
+        </a>
+        <a href="/admin/config/material-costs.html" class="nav-item ${activePage === 'material-costs' ? 'active' : ''}" data-page="material-costs">
+          ${icons.rates}
+          <span>Costos Material</span>
         </a>
         <a href="/admin/config/engrave-types.html" class="nav-item ${activePage === 'engrave-types' ? 'active' : ''}" data-page="engrave-types">
           ${icons.engrave}

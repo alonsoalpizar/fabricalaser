@@ -116,12 +116,13 @@ func (h *Handler) AnalyzeSVG(w http.ResponseWriter, r *http.Request) {
 
 // CalculateRequest represents the request body for price calculation
 type CalculateRequest struct {
-	AnalysisID    uint    `json:"analysis_id"`
-	TechnologyID  uint    `json:"technology_id"`
-	MaterialID    uint    `json:"material_id"`
-	EngraveTypeID uint    `json:"engrave_type_id"`
-	Quantity      int     `json:"quantity"`
-	Thickness     float64 `json:"thickness,omitempty"`
+	AnalysisID       uint    `json:"analysis_id"`
+	TechnologyID     uint    `json:"technology_id"`
+	MaterialID       uint    `json:"material_id"`
+	EngraveTypeID    uint    `json:"engrave_type_id"`
+	Quantity         int     `json:"quantity"`
+	Thickness        float64 `json:"thickness,omitempty"`
+	MaterialIncluded *bool   `json:"material_included,omitempty"` // default true if not specified
 }
 
 // CalculatePrice handles POST /api/v1/quotes/calculate
@@ -145,6 +146,12 @@ func (h *Handler) CalculatePrice(w http.ResponseWriter, r *http.Request) {
 		req.Quantity = 1
 	}
 
+	// Default material_included to true if not specified
+	materialIncluded := true
+	if req.MaterialIncluded != nil {
+		materialIncluded = *req.MaterialIncluded
+	}
+
 	// Get the analysis
 	analysis, err := h.svgAnalysisRepo.FindByID(req.AnalysisID)
 	if err != nil {
@@ -158,9 +165,23 @@ func (h *Handler) CalculatePrice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate tech×material compatibility BEFORE calculating
+	// This prevents calculating prices for impossible combinations (e.g., CO2 + Metal)
+	config, err := h.configLoader.Load()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "CONFIG_ERROR", "Error loading configuration")
+		return
+	}
+	compatible, reason := config.IsCompatible(req.TechnologyID, req.MaterialID, req.Thickness)
+	if !compatible {
+		respondError(w, http.StatusBadRequest, "INCOMPATIBLE_COMBINATION", reason)
+		return
+	}
+
 	// Calculate pricing (uses DB config, NO hardcode)
 	// Now includes thickness for specific speed lookups from tech_material_speeds
-	priceResult, err := h.calculator.Calculate(analysis, req.TechnologyID, req.MaterialID, req.EngraveTypeID, req.Thickness, req.Quantity)
+	// and materialIncluded for raw material cost calculation
+	priceResult, err := h.calculator.Calculate(analysis, req.TechnologyID, req.MaterialID, req.EngraveTypeID, req.Thickness, req.Quantity, materialIncluded)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "CALC_ERROR", "Error calculating price: "+err.Error())
 		return

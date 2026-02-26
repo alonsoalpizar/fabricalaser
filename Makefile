@@ -65,6 +65,9 @@ migrate-down: ## Rollback (drop all tables - DANGEROUS)
 	@echo "WARNING: This will drop all tables!"
 	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
 	PGPASSWORD=fabricalaser_password psql -h $(DB_HOST) -p $(DB_PORT) -U $(DB_USER) -d $(DB_NAME) -c "\
+		DROP TABLE IF EXISTS quotes CASCADE; \
+		DROP TABLE IF EXISTS svg_analyses CASCADE; \
+		DROP TABLE IF EXISTS material_costs CASCADE; \
 		DROP TABLE IF EXISTS tech_material_speeds CASCADE; \
 		DROP TABLE IF EXISTS system_config CASCADE; \
 		DROP TABLE IF EXISTS price_references CASCADE; \
@@ -92,12 +95,15 @@ db-status: ## Show database tables and counts
 		SELECT 'users' as table_name, COUNT(*) as count FROM users UNION ALL \
 		SELECT 'technologies', COUNT(*) FROM technologies UNION ALL \
 		SELECT 'materials', COUNT(*) FROM materials UNION ALL \
+		SELECT 'material_costs', COUNT(*) FROM material_costs UNION ALL \
 		SELECT 'engrave_types', COUNT(*) FROM engrave_types UNION ALL \
 		SELECT 'tech_rates', COUNT(*) FROM tech_rates UNION ALL \
 		SELECT 'volume_discounts', COUNT(*) FROM volume_discounts UNION ALL \
 		SELECT 'price_references', COUNT(*) FROM price_references UNION ALL \
 		SELECT 'system_config', COUNT(*) FROM system_config UNION ALL \
-		SELECT 'tech_material_speeds', COUNT(*) FROM tech_material_speeds;"
+		SELECT 'tech_material_speeds', COUNT(*) FROM tech_material_speeds UNION ALL \
+		SELECT 'svg_analyses', COUNT(*) FROM svg_analyses UNION ALL \
+		SELECT 'quotes', COUNT(*) FROM quotes;"
 
 # Deployment
 deploy: build ## Build and restart service

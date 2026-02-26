@@ -19,6 +19,7 @@ type PricingConfig struct {
 	VolumeDiscounts    []models.VolumeDiscount            // Sorted by min_qty
 	SystemConfigs      map[string]*models.SystemConfig    // config_key → config
 	TechMaterialSpeeds []models.TechMaterialSpeed         // All speed configurations
+	MaterialCosts      []models.MaterialCost              // Material costs by thickness
 
 	LoadedAt time.Time
 }
@@ -69,6 +70,7 @@ func (l *ConfigLoader) refresh() (*PricingConfig, error) {
 		VolumeDiscounts:    make([]models.VolumeDiscount, 0),
 		SystemConfigs:      make(map[string]*models.SystemConfig),
 		TechMaterialSpeeds: make([]models.TechMaterialSpeed, 0),
+		MaterialCosts:      make([]models.MaterialCost, 0),
 		LoadedAt:           time.Now(),
 	}
 
@@ -124,12 +126,21 @@ func (l *ConfigLoader) refresh() (*PricingConfig, error) {
 		config.SystemConfigs[systemConfigs[i].ConfigKey] = &systemConfigs[i]
 	}
 
-	// Load tech material speeds (for specific speed lookups)
+	// Load tech material speeds (for specific speed lookups AND compatibility checks)
+	// NOTE: Changed to load ALL active records (not just compatible ones)
+	// This enables IsCompatible() to check and return proper error messages
 	var techMaterialSpeeds []models.TechMaterialSpeed
-	if err := l.db.Where("is_active = ? AND is_compatible = ?", true, true).Find(&techMaterialSpeeds).Error; err != nil {
+	if err := l.db.Where("is_active = ?", true).Find(&techMaterialSpeeds).Error; err != nil {
 		return nil, err
 	}
 	config.TechMaterialSpeeds = techMaterialSpeeds
+
+	// Load material costs (for raw material pricing)
+	var materialCosts []models.MaterialCost
+	if err := l.db.Where("is_active = ?", true).Find(&materialCosts).Error; err != nil {
+		return nil, err
+	}
+	config.MaterialCosts = materialCosts
 
 	// Update cache
 	l.mu.Lock()
@@ -191,7 +202,8 @@ func (c *PricingConfig) GetMarginPercent(techID uint) float64 {
 	if rate := c.TechRates[techID]; rate != nil {
 		return rate.MarginPercent
 	}
-	return 0.40 // Default 40%
+	// Fallback from system_config instead of hardcoded value
+	return c.GetSystemConfigFloat("default_margin_percent", 0.40)
 }
 
 // GetSetupFee returns the setup fee for a technology
@@ -327,7 +339,7 @@ func (c *PricingConfig) GetMinAreaMM2() float64 {
 // TechMaterialSpeedResult holds speed info for a specific combination
 type TechMaterialSpeedResult struct {
 	CutSpeedMmMin     *float64
-	EngraveSpeedMmMin *float64
+	EngraveSpeedMmMin *float64 // Velocidad cabezal (mm/min) - para raster se multiplica por spot_size
 	Found             bool
 }
 
@@ -356,4 +368,101 @@ func (c *PricingConfig) GetMaterialSpeed(techID, materialID uint, thickness floa
 		}
 	}
 	return TechMaterialSpeedResult{Found: false}
+}
+
+// GetSpotSize returns the laser spot size for a technology
+// Used to convert head speed (mm/min) to raster area speed (mm²/min)
+func (c *PricingConfig) GetSpotSize(techID uint) float64 {
+	if tech := c.Technologies[techID]; tech != nil && tech.SpotSizeMM > 0 {
+		return tech.SpotSizeMM
+	}
+	return 0.1 // Default CO2 spot size
+}
+
+// =============================================================
+// Material Cost Methods
+// =============================================================
+
+// MaterialCostResult holds material cost info for a specific combination
+type MaterialCostResult struct {
+	CostPerMm2 float64
+	WastePct   float64
+	Found      bool
+}
+
+// GetMaterialCost returns the material cost for a material/thickness combination
+// Returns zero cost if no specific configuration exists (client provides material)
+func (c *PricingConfig) GetMaterialCost(materialID uint, thickness float64) MaterialCostResult {
+	for _, mc := range c.MaterialCosts {
+		if mc.MaterialID == materialID && mc.Thickness == thickness {
+			return MaterialCostResult{
+				CostPerMm2: mc.CostPerMm2,
+				WastePct:   mc.WastePct,
+				Found:      true,
+			}
+		}
+	}
+	// Try with thickness 0 (for materials without specific thickness)
+	if thickness != 0 {
+		for _, mc := range c.MaterialCosts {
+			if mc.MaterialID == materialID && mc.Thickness == 0 {
+				return MaterialCostResult{
+					CostPerMm2: mc.CostPerMm2,
+					WastePct:   mc.WastePct,
+					Found:      true,
+				}
+			}
+		}
+	}
+	// Default: no material cost (client provides)
+	return MaterialCostResult{
+		CostPerMm2: 0,
+		WastePct:   0,
+		Found:      false,
+	}
+}
+
+// GetDefaultWastePct returns the default waste percentage from system_config
+func (c *PricingConfig) GetDefaultWastePct() float64 {
+	return c.GetSystemConfigFloat("default_waste_pct", 0.15)
+}
+
+// =============================================================
+// Tech×Material Compatibility Methods
+// =============================================================
+
+// IsCompatible checks if a technology can work with a material
+// Returns: compatible bool, reason string (from notes field if incompatible)
+// If no specific record exists, assumes compatible (will use fallback speeds)
+func (c *PricingConfig) IsCompatible(techID, materialID uint, thickness float64) (bool, string) {
+	// First try exact thickness match
+	for _, s := range c.TechMaterialSpeeds {
+		if s.TechnologyID == techID && s.MaterialID == materialID && s.Thickness == thickness {
+			if !s.IsCompatible {
+				reason := "Combinación tecnología/material no compatible"
+				if s.Notes != nil && *s.Notes != "" {
+					reason = *s.Notes
+				}
+				return false, reason
+			}
+			return true, ""
+		}
+	}
+
+	// Try thickness 0 (generic material entry)
+	for _, s := range c.TechMaterialSpeeds {
+		if s.TechnologyID == techID && s.MaterialID == materialID && s.Thickness == 0 {
+			if !s.IsCompatible {
+				reason := "Combinación tecnología/material no compatible"
+				if s.Notes != nil && *s.Notes != "" {
+					reason = *s.Notes
+				}
+				return false, reason
+			}
+			return true, ""
+		}
+	}
+
+	// No specific record found - assume compatible (uses fallback speeds)
+	return true, ""
 }

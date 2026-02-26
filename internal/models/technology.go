@@ -10,6 +10,7 @@ type Technology struct {
 	Name            string  `gorm:"type:varchar(100);not null" json:"name"`
 	Description     *string `gorm:"type:text" json:"description,omitempty"`
 	UVPremiumFactor float64 `gorm:"type:decimal(5,4);default:0" json:"uv_premium_factor"` // 0.15-0.25 for UV
+	SpotSizeMM      float64 `gorm:"type:float;not null;default:0.1" json:"spot_size_mm"`  // Laser spot diameter in mm
 	IsActive        bool    `gorm:"default:true" json:"is_active"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`

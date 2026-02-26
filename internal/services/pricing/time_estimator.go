@@ -9,10 +9,11 @@ import (
 
 // TimeEstimate contains calculated time estimates
 type TimeEstimate struct {
-	EngraveMins float64 // Time for raster + vector engraving
-	CutMins     float64 // Time for cutting
-	SetupMins   float64 // Setup time (one-time)
-	TotalMins   float64 // Total time
+	EngraveMins  float64 // Time for raster + vector engraving
+	CutMins      float64 // Time for cutting
+	SetupMins    float64 // Setup time (one-time)
+	TotalMins    float64 // Total time
+	UsedFallback bool    // true if specific speed not found
 }
 
 // TimeEstimator calculates processing time based on geometry and config
@@ -49,39 +50,38 @@ func (e *TimeEstimator) Estimate(
 		materialFactor = 1.0
 	}
 
+	// Get spot size for the technology (used to convert head speed to raster area speed)
+	spotSize := e.config.GetSpotSize(techID)
+
 	// Try to get specific speeds from tech_material_speeds table
 	specificSpeed := e.config.GetMaterialSpeed(techID, materialID, thickness)
 
 	// Get base speeds from system_config (used as fallback)
-	baseEngraveAreaSpeed := e.config.GetBaseEngraveAreaSpeed()
 	baseEngraveLineSpeed := e.config.GetBaseEngraveLineSpeed()
 	baseCutSpeed := e.config.GetBaseCutSpeed()
 	setupTimeMinutes := e.config.GetSetupTimeMinutes()
 
-	// Calculate engrave time
-	// If specific engrave speed exists, use it; otherwise use base with multipliers
+	// Calculate head engrave speed (mm/min) - same for both raster and vector
+	var engraveSpeedMmMin float64
+	if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
+		engraveSpeedMmMin = *specificSpeed.EngraveSpeedMmMin * speedMult
+	} else {
+		engraveSpeedMmMin = baseEngraveLineSpeed * speedMult / materialFactor
+	}
+
+	// Calculate raster engrave time (area-based)
+	// Raster speed = head speed × spot_size (mm²/min)
+	// Each pass of the head covers a width equal to the spot size
 	if analysis.RasterAreaMM2 > 0 {
-		var effectiveRasterSpeed float64
-		if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
-			// Use specific speed (already calibrated for this combination)
-			effectiveRasterSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
-		} else {
-			// Fallback to base speed with material factor
-			effectiveRasterSpeed = baseEngraveAreaSpeed * speedMult / materialFactor
-		}
+		effectiveRasterSpeed := engraveSpeedMmMin * spotSize // mm/min × mm = mm²/min
 		rasterTime := analysis.RasterAreaMM2 / effectiveRasterSpeed
 		estimate.EngraveMins += rasterTime
 	}
 
-	// Vector line engrave
+	// Calculate vector engrave time (line-based)
+	// Vector uses head speed directly (mm/min)
 	if analysis.VectorLengthMM > 0 {
-		var effectiveVectorSpeed float64
-		if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
-			effectiveVectorSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
-		} else {
-			effectiveVectorSpeed = baseEngraveLineSpeed * speedMult / materialFactor
-		}
-		vectorTime := analysis.VectorLengthMM / effectiveVectorSpeed
+		vectorTime := analysis.VectorLengthMM / engraveSpeedMmMin
 		estimate.EngraveMins += vectorTime
 	}
 
@@ -110,6 +110,9 @@ func (e *TimeEstimator) Estimate(
 	estimate.EngraveMins *= float64(quantity)
 	estimate.CutMins *= float64(quantity)
 
+	// Set fallback flag
+	estimate.UsedFallback = !specificSpeed.Found
+
 	return estimate
 }
 
@@ -124,15 +127,89 @@ func (e *TimeEstimator) EstimatePerUnit(
 	return e.Estimate(analysis, techID, materialID, engraveTypeID, thickness, 1)
 }
 
+// EstimateWithGeometry calcula tiempo con geometría explícita (ya escalada por qty)
+// Usa spot_size para convertir velocidad cabezal a velocidad raster automáticamente
+func (e *TimeEstimator) EstimateWithGeometry(
+	rasterAreaMM2 float64,
+	vectorLengthMM float64,
+	cutLengthMM float64,
+	techID uint,
+	materialID uint,
+	engraveTypeID uint,
+	thickness float64,
+) TimeEstimate {
+	estimate := TimeEstimate{}
+
+	speedMult := e.config.GetEngraveTypeSpeedMultiplier(engraveTypeID)
+	if speedMult <= 0 {
+		speedMult = 1.0
+	}
+
+	materialFactor := e.config.GetMaterialFactor(materialID)
+	if materialFactor <= 0 {
+		materialFactor = 1.0
+	}
+
+	spotSize := e.config.GetSpotSize(techID)
+	specificSpeed := e.config.GetMaterialSpeed(techID, materialID, thickness)
+
+	baseEngraveLineSpeed := e.config.GetBaseEngraveLineSpeed()
+	baseCutSpeed := e.config.GetBaseCutSpeed()
+	setupTimeMinutes := e.config.GetSetupTimeMinutes()
+
+	// Raster (área): convertir velocidad cabezal a mm²/min con spot_size
+	if rasterAreaMM2 > 0 {
+		var engraveSpeedMmMin float64
+		if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
+			engraveSpeedMmMin = *specificSpeed.EngraveSpeedMmMin * speedMult
+		} else {
+			engraveSpeedMmMin = baseEngraveLineSpeed * speedMult / materialFactor
+			estimate.UsedFallback = true
+		}
+		effectiveRasterSpeed := engraveSpeedMmMin * spotSize
+		estimate.EngraveMins += rasterAreaMM2 / effectiveRasterSpeed
+	}
+
+	// Vector (líneas): velocidad cabezal directa en mm/min
+	if vectorLengthMM > 0 {
+		var effectiveVectorSpeed float64
+		if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
+			effectiveVectorSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
+		} else {
+			effectiveVectorSpeed = baseEngraveLineSpeed * speedMult / materialFactor
+			estimate.UsedFallback = true
+		}
+		estimate.EngraveMins += vectorLengthMM / effectiveVectorSpeed
+	}
+
+	// Corte
+	if cutLengthMM > 0 {
+		var effectiveCutSpeed float64
+		if specificSpeed.Found && specificSpeed.CutSpeedMmMin != nil && *specificSpeed.CutSpeedMmMin > 0 {
+			effectiveCutSpeed = *specificSpeed.CutSpeedMmMin
+		} else {
+			effectiveCutSpeed = baseCutSpeed / materialFactor
+			estimate.UsedFallback = true
+		}
+		estimate.CutMins = cutLengthMM / effectiveCutSpeed
+	}
+
+	// Setup UNA vez (no se multiplica)
+	estimate.SetupMins = setupTimeMinutes
+	estimate.TotalMins = estimate.SetupMins + estimate.EngraveMins + estimate.CutMins
+
+	return estimate
+}
+
 // SpeedInfo returns speed information for display/debugging
 type SpeedInfo struct {
-	BaseEngraveAreaSpeed  float64  // mm²/min from system_config
 	BaseEngraveLineSpeed  float64  // mm/min from system_config
 	BaseCutSpeed          float64  // mm/min from system_config
+	SpecificEngraveSpeed  *float64 // From tech_material_speeds - head speed (mm/min)
 	SpecificCutSpeed      *float64 // From tech_material_speeds (if exists)
-	SpecificEngraveSpeed  *float64 // From tech_material_speeds (if exists)
-	EffectiveRasterSpeed  float64  // After multipliers
-	EffectiveVectorSpeed  float64  // After multipliers
+	SpotSizeMM            float64  // From technology - laser spot diameter
+	EffectiveRasterSpeed  float64  // engraveSpeed × spotSize (mm²/min)
+	EffectiveVectorSpeed  float64  // engraveSpeed directly (mm/min)
 	EffectiveCutSpeed     float64  // After multipliers
 	SpeedMultiplier       float64  // From engrave type
 	MaterialFactor        float64  // From material
@@ -151,8 +228,10 @@ func (e *TimeEstimator) GetSpeedInfo(techID, materialID, engraveTypeID uint, thi
 		materialFactor = 1.0
 	}
 
+	// Get spot size for the technology
+	spotSize := e.config.GetSpotSize(techID)
+
 	// Get base speeds from system_config
-	baseEngraveAreaSpeed := e.config.GetBaseEngraveAreaSpeed()
 	baseEngraveLineSpeed := e.config.GetBaseEngraveLineSpeed()
 	baseCutSpeed := e.config.GetBaseCutSpeed()
 
@@ -160,23 +239,27 @@ func (e *TimeEstimator) GetSpeedInfo(techID, materialID, engraveTypeID uint, thi
 	specificSpeed := e.config.GetMaterialSpeed(techID, materialID, thickness)
 
 	info := SpeedInfo{
-		BaseEngraveAreaSpeed: baseEngraveAreaSpeed,
 		BaseEngraveLineSpeed: baseEngraveLineSpeed,
 		BaseCutSpeed:         baseCutSpeed,
+		SpotSizeMM:           spotSize,
 		SpeedMultiplier:      speedMult,
 		MaterialFactor:       materialFactor,
 		HasSpecificSpeed:     specificSpeed.Found,
 	}
 
-	// Calculate effective speeds
+	// Calculate effective engrave speed (head speed in mm/min)
+	var engraveSpeedMmMin float64
 	if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil {
 		info.SpecificEngraveSpeed = specificSpeed.EngraveSpeedMmMin
-		info.EffectiveRasterSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
-		info.EffectiveVectorSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
+		engraveSpeedMmMin = *specificSpeed.EngraveSpeedMmMin * speedMult
 	} else {
-		info.EffectiveRasterSpeed = baseEngraveAreaSpeed * speedMult / materialFactor
-		info.EffectiveVectorSpeed = baseEngraveLineSpeed * speedMult / materialFactor
+		engraveSpeedMmMin = baseEngraveLineSpeed * speedMult / materialFactor
 	}
+
+	// Raster = head speed × spot size (mm²/min)
+	info.EffectiveRasterSpeed = engraveSpeedMmMin * spotSize
+	// Vector = head speed directly (mm/min)
+	info.EffectiveVectorSpeed = engraveSpeedMmMin
 
 	if specificSpeed.Found && specificSpeed.CutSpeedMmMin != nil {
 		info.SpecificCutSpeed = specificSpeed.CutSpeedMmMin
