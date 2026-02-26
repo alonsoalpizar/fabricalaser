@@ -1056,6 +1056,50 @@ body {
   display: block;
 }
 
+/* TOGGLE BUTTONS */
+.toggle-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  background: var(--bg-warm);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-muted);
+  font-family: inherit;
+  text-align: center;
+}
+
+.toggle-btn:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+.toggle-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* MATERIAL COST BREAKDOWN */
+.material-cost-row {
+  background: var(--accent-soft);
+  border-radius: 4px;
+  padding: 0.25rem 0;
+  margin: 0.25rem 0;
+}
+
+.material-cost-row .breakdown-row-value {
+  color: var(--accent);
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   .nav { padding: 1rem; }
@@ -1305,14 +1349,25 @@ body {
           <div class="options-grid" id="engraveOptions"></div>
         </div>
 
-        <!-- Quantity -->
+        <!-- Quantity and Material Toggle -->
         <div class="input-row">
           <div class="input-group">
             <label for="quantityInput">Cantidad</label>
             <input type="number" id="quantityInput" value="1" min="1" max="10000" onchange="updateDiscountPreview()">
           </div>
           <div class="input-group">
-            <!-- Empty space for layout balance -->
+            <label>Material incluido</label>
+            <div class="toggle-group" style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+              <button type="button" class="toggle-btn active" id="materialYes" onclick="setMaterialIncluded(true)">
+                Si, nosotros lo proveemos
+              </button>
+              <button type="button" class="toggle-btn" id="materialNo" onclick="setMaterialIncluded(false)">
+                No, cliente provee
+              </button>
+            </div>
+            <span class="form-hint" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">
+              Si seleccionas "No", el costo del material no se incluye en la cotizacion
+            </span>
           </div>
         </div>
 
@@ -1407,20 +1462,28 @@ body {
             </div>
           </div>
 
-          <!-- Factors -->
+          <!-- Price Breakdown -->
           <div class="breakdown-card">
             <div class="breakdown-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
               </svg>
-              Factores aplicados
+              Desglose de costos
             </div>
             <div class="breakdown-row">
-              <span class="breakdown-row-label">Material</span>
+              <span class="breakdown-row-label">Costo maquina (tiempo)</span>
+              <span class="breakdown-row-value" id="costMachine">₡0</span>
+            </div>
+            <div class="breakdown-row material-cost-row" id="materialCostRow">
+              <span class="breakdown-row-label">Costo material</span>
+              <span class="breakdown-row-value" id="costMaterial">₡0</span>
+            </div>
+            <div class="breakdown-row">
+              <span class="breakdown-row-label">Factor material</span>
               <span class="breakdown-row-value" id="factorMaterial">1.0x</span>
             </div>
             <div class="breakdown-row">
-              <span class="breakdown-row-label">Tipo grabado</span>
+              <span class="breakdown-row-label">Factor grabado</span>
               <span class="breakdown-row-value" id="factorEngrave">1.0x</span>
             </div>
             <div class="breakdown-row">
@@ -1496,7 +1559,8 @@ const state = {
     materialId: null,
     engraveTypeId: null,
     quantity: 1,
-    thickness: null
+    thickness: null,
+    materialIncluded: true
   },
   quote: null
 };
@@ -1777,6 +1841,15 @@ function updateDiscountPreview() {
   }
 }
 
+// SET MATERIAL INCLUDED TOGGLE
+function setMaterialIncluded(included) {
+  state.options.materialIncluded = included;
+
+  // Update button states
+  document.getElementById('materialYes').classList.toggle('active', included);
+  document.getElementById('materialNo').classList.toggle('active', !included);
+}
+
 // SETUP DROPZONE
 function setupDropzone() {
   const dropzone = document.getElementById('dropzone');
@@ -1938,7 +2011,8 @@ async function calculatePrice() {
         material_id: state.options.materialId,
         engrave_type_id: engraveTypeId,
         quantity: state.options.quantity,
-        thickness: state.options.thickness
+        thickness: state.options.thickness,
+        material_included: state.options.materialIncluded
       })
     });
 
@@ -2028,8 +2102,30 @@ function displayResult() {
   document.getElementById('timeSetup').textContent = `${(time.setup_mins || time.time_setup_mins || 0).toFixed(1)} min`;
   document.getElementById('timeTotal').textContent = `${(time.total_mins || time.time_total_mins || 0).toFixed(1)} min`;
 
-  // Factors
+  // Price breakdown with material cost
   const factors = q.factors || q;
+  const materialCost = q.material_cost || {};
+
+  // Machine cost (base cost from time)
+  const machineCost = pricing.base || pricing.price_base || 0;
+  document.getElementById('costMachine').textContent = `₡${Math.round(machineCost).toLocaleString('es-CR')}`;
+
+  // Material cost
+  const materialCostRow = document.getElementById('materialCostRow');
+  const costMaterialEl = document.getElementById('costMaterial');
+  if (q.material_included && materialCost.with_waste > 0) {
+    costMaterialEl.textContent = `₡${Math.round(materialCost.with_waste).toLocaleString('es-CR')}`;
+    materialCostRow.style.display = 'flex';
+  } else if (!q.material_included) {
+    costMaterialEl.textContent = '₡0 (cliente provee)';
+    costMaterialEl.style.fontSize = '0.75rem';
+    materialCostRow.style.display = 'flex';
+    materialCostRow.classList.remove('material-cost-row');
+  } else {
+    materialCostRow.style.display = 'none';
+  }
+
+  // Factors
   document.getElementById('factorMaterial').textContent = `${(factors.material || factors.factor_material || 1).toFixed(2)}x`;
   document.getElementById('factorEngrave').textContent = `${(factors.engrave || factors.factor_engrave || 1).toFixed(2)}x`;
   document.getElementById('factorUV').textContent = `+${((factors.uv_premium || factors.factor_uv_premium || 0) * 100).toFixed(0)}%`;
@@ -2068,8 +2164,13 @@ function resetWizard() {
     materialId: null,
     engraveTypeId: null,
     quantity: 1,
-    thickness: null
+    thickness: null,
+    materialIncluded: true
   };
+
+  // Reset material toggle
+  document.getElementById('materialYes').classList.add('active');
+  document.getElementById('materialNo').classList.remove('active');
 
   // Reset compatible technologies cache
   compatibleTechnologies = [];

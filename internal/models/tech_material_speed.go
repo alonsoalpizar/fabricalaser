@@ -10,6 +10,8 @@ type TechMaterialSpeed struct {
 	MaterialID        uint     `gorm:"not null;index" json:"material_id"`
 	Thickness         float64  `gorm:"type:decimal(5,2);not null" json:"thickness"`
 	CutSpeedMmMin     *float64 `gorm:"column:cut_speed_mm_min;type:decimal(10,2)" json:"cut_speed_mm_min"`
+	// EngraveSpeedMmMin: velocidad cabezal grabado en mm/min (lineal)
+	// Para raster se multiplica por spot_size de la tecnología para obtener mm²/min
 	EngraveSpeedMmMin *float64 `gorm:"column:engrave_speed_mm_min;type:decimal(10,2)" json:"engrave_speed_mm_min"`
 	IsCompatible      bool     `gorm:"default:true" json:"is_compatible"`
 	Notes             *string  `gorm:"type:text" json:"notes,omitempty"`

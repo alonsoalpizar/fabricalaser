@@ -66,6 +66,7 @@ func NewRouter() *chi.Mux {
 	adminHandler := admin.NewAdminHandler()
 	systemConfigHandler := admin.NewSystemConfigHandler()
 	techMaterialSpeedHandler := admin.NewTechMaterialSpeedHandler()
+	materialCostHandler := admin.NewMaterialCostHandler()
 	r.Route("/api/v1/admin", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
 		r.Use(middleware.AdminOnly)
@@ -134,6 +135,14 @@ func NewRouter() *chi.Mux {
 		r.Get("/tech-rates", adminHandler.GetTechRates)
 		r.Post("/tech-rates", adminHandler.CreateTechRate)
 		r.Delete("/tech-rates/{id}", adminHandler.DeleteTechRate)
+
+		// Material Costs CRUD
+		r.Get("/material-costs", materialCostHandler.GetMaterialCosts)
+		r.Get("/material-costs/{id}", materialCostHandler.GetMaterialCost)
+		r.Post("/material-costs", materialCostHandler.CreateMaterialCost)
+		r.Put("/material-costs/{id}", materialCostHandler.UpdateMaterialCost)
+		r.Delete("/material-costs/{id}", materialCostHandler.DeleteMaterialCost)
+		r.Post("/material-costs/{id}/recalculate", materialCostHandler.RecalculateMaterialCost)
 	})
 
 	// Quote routes (Fase 1 - Cotizador)

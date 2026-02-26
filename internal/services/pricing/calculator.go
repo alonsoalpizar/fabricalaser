@@ -22,9 +22,16 @@ type PriceResult struct {
 	CostEngrave  float64 // time × rate
 	CostCut      float64 // time × rate
 	CostSetup    float64 // setup fee from tech_rates
-	CostBase     float64 // subtotal before factors
-	CostMaterial float64 // base × (material factor - 1) (the extra cost)
+	CostBase     float64 // subtotal before factors (machine cost)
+	CostMaterial float64 // DEPRECATED: base × (material factor - 1)
 	CostOverhead float64 // overhead calculation
+
+	// Material Cost (Fase 7 - raw material pricing)
+	MaterialIncluded    bool    // true if we provide material, false if client provides
+	AreaConsumedMM2     float64 // width × height of SVG
+	WastePct            float64 // waste percentage applied
+	CostMaterialRaw     float64 // area × cost_per_mm2
+	CostMaterialWithWaste float64 // raw × (1 + waste_pct)
 
 	// Factors applied (from DB)
 	FactorMaterial    float64
@@ -38,6 +45,15 @@ type PriceResult struct {
 	PriceHybridTotal float64 // Total with quantity and discount
 	PriceValueUnit   float64 // Per-unit value-based price
 	PriceValueTotal  float64 // Total with quantity and discount
+	PriceModel       string  // "hybrid" o "value" — indica cuál modelo determinó el precio final
+
+	// Simulation: What if we apply FactorMaterial to Hybrid?
+	SimHybridWithMaterialFactor float64 // What hybrid would be WITH material factor
+	SimDifferencePct            float64 // Percentage difference
+
+	// Fallback warning
+	UsedFallbackSpeeds bool
+	FallbackWarning    string
 
 	// Recommended status
 	Status         models.QuoteStatus
@@ -59,6 +75,7 @@ func NewCalculator(configLoader *ConfigLoader) *Calculator {
 
 // Calculate computes full pricing for an SVG analysis with given options
 // thickness is used to look up specific speeds from tech_material_speeds
+// materialIncluded indicates whether we provide material (true) or client provides (false)
 func (c *Calculator) Calculate(
 	analysis *models.SVGAnalysis,
 	techID uint,
@@ -66,6 +83,7 @@ func (c *Calculator) Calculate(
 	engraveTypeID uint,
 	thickness float64,
 	quantity int,
+	materialIncluded bool,
 ) (*PriceResult, error) {
 	// Load current config from DB
 	config, err := c.configLoader.Load()
@@ -73,17 +91,44 @@ func (c *Calculator) Calculate(
 		return nil, err
 	}
 
-	result := &PriceResult{}
+	result := &PriceResult{
+		MaterialIncluded: materialIncluded,
+	}
+
+	// =============================================================
+	// ESCALAR GEOMETRÍA POR CANTIDAD
+	// Multiplicamos la geometría × qty ANTES de calcular.
+	// Esto simula "un SVG con todas las piezas" y refleja la operación real:
+	// un solo setup, un solo job de máquina, material sobre área total.
+	// =============================================================
+
+	// Geometría escalada (Cambio A: TotalArea en vez de Width×Height)
+	scaledCutLength := analysis.CutLengthMM * float64(quantity)
+	scaledVectorLength := analysis.VectorLengthMM * float64(quantity)
+	scaledRasterArea := analysis.RasterAreaMM2 * float64(quantity)
+	scaledMaterialArea := analysis.TotalArea() * float64(quantity) // Bounding box real, no canvas
 
 	// Create time estimator with fresh config
 	timeEstimator := NewTimeEstimator(config)
 
-	// Calculate time estimates (now includes thickness for specific speed lookup)
-	timeEst := timeEstimator.Estimate(analysis, techID, materialID, engraveTypeID, thickness, quantity)
+	// Calcular tiempo sobre geometría escalada, qty=1
+	timeEst := timeEstimator.EstimateWithGeometry(
+		scaledRasterArea,
+		scaledVectorLength,
+		scaledCutLength,
+		techID, materialID, engraveTypeID, thickness,
+	)
+
 	result.TimeEngraveMins = timeEst.EngraveMins
 	result.TimeCutMins = timeEst.CutMins
 	result.TimeSetupMins = timeEst.SetupMins
 	result.TimeTotalMins = timeEst.TotalMins
+
+	// Set fallback warning if specific speeds not found
+	if timeEst.UsedFallback {
+		result.UsedFallbackSpeeds = true
+		result.FallbackWarning = "Precio estimado con velocidades base. No hay calibración específica para esta combinación tech/material/grosor."
+	}
 
 	// Get rates from DB config
 	costPerMinEngrave := config.GetCostPerMinEngrave(techID)
@@ -98,75 +143,117 @@ func (c *Calculator) Calculate(
 	result.FactorMargin = marginPct
 	result.DiscountVolumePct = config.GetVolumeDiscount(quantity)
 
-	// Calculate base costs (time × rate)
+	// Calculate base costs (time × rate) - MACHINE COST
 	result.CostEngrave = timeEst.EngraveMins * costPerMinEngrave
 	result.CostCut = timeEst.CutMins * costPerMinCut
 	result.CostSetup = setupFee
 
-	// Base cost before factors
-	result.CostBase = result.CostEngrave + result.CostCut + result.CostSetup
-
-	// Material cost adjustment
-	result.CostMaterial = result.CostBase * (result.FactorMaterial - 1)
+	// Base machine cost (without material)
+	result.CostBase = result.CostEngrave + result.CostCut
 
 	// =============================================================
-	// HYBRID PRICING MODEL (from roadmap)
-	// Formula: Costo_Base × (1 + margin) × factor_material × factor_grabado × (1 + uv_premium)
+	// MATERIAL COST (Fase 7 + Cambio A: bounding box real)
+	// area_consumida = TotalArea × qty (bounding box real, no canvas)
+	// costo_material = area × cost_per_mm2 × (1 + waste_pct)
 	// =============================================================
 
-	// Calculate per-unit price (divide total time costs by quantity for unit price)
-	perUnitCostBase := (result.CostEngrave + result.CostCut) / float64(quantity)
-	if quantity == 1 {
-		perUnitCostBase = result.CostEngrave + result.CostCut
+	result.AreaConsumedMM2 = scaledMaterialArea
+
+	if materialIncluded {
+		// Get material cost from DB
+		matCost := config.GetMaterialCost(materialID, thickness)
+
+		if matCost.Found && matCost.CostPerMm2 > 0 {
+			result.WastePct = matCost.WastePct
+			result.CostMaterialRaw = result.AreaConsumedMM2 * matCost.CostPerMm2
+			result.CostMaterialWithWaste = result.CostMaterialRaw * (1 + result.WastePct)
+		} else {
+			// No material cost configured - use default waste but zero cost
+			result.WastePct = config.GetDefaultWastePct()
+			result.CostMaterialRaw = 0
+			result.CostMaterialWithWaste = 0
+		}
+	} else {
+		// Client provides material
+		result.WastePct = 0
+		result.CostMaterialRaw = 0
+		result.CostMaterialWithWaste = 0
 	}
 
-	// Apply factors to get per-unit price
-	hybridUnit := perUnitCostBase
-	hybridUnit *= (1 + result.FactorMargin)         // Add margin
-	hybridUnit *= result.FactorMaterial             // Material factor
-	hybridUnit *= result.FactorEngrave              // Engrave type factor
-	hybridUnit *= (1 + result.FactorUVPremium)      // UV premium if applicable
+	// =============================================================
+	// HYBRID PRICING — sobre geometría escalada
+	// El costo base YA incluye todas las piezas (geometría × qty)
+	// =============================================================
 
-	result.PriceHybridUnit = math.Round(hybridUnit*100) / 100
+	machineCost := result.CostBase
+	materialCost := result.CostMaterialWithWaste
 
-	// Total price = (unit price × quantity) - volume discount + setup
-	hybridTotal := result.PriceHybridUnit * float64(quantity)
-	hybridTotal *= (1 - result.DiscountVolumePct) // Apply volume discount
-	hybridTotal += result.CostSetup               // Add one-time setup
+	totalCostBase := machineCost + materialCost
+
+	hybridTotal := totalCostBase
+	hybridTotal *= (1 + result.FactorMargin)
+	hybridTotal *= result.FactorEngrave
+	hybridTotal *= (1 + result.FactorUVPremium)
+
+	// Descuento volumen
+	hybridTotal *= (1 - result.DiscountVolumePct)
+
+	// Setup UNA vez
+	hybridTotal += result.CostSetup
 
 	result.PriceHybridTotal = math.Round(hybridTotal*100) / 100
 
+	// Unitario es referencia: total / qty
+	result.PriceHybridUnit = math.Round((hybridTotal/float64(quantity))*100) / 100
+
 	// =============================================================
-	// VALUE-BASED PRICING MODEL
-	// Simpler model based on area/complexity for comparison
+	// VALUE-BASED PRICING — sobre área escalada
 	// =============================================================
 
-	// Value model uses area-based pricing with complexity factor
-	totalArea := analysis.TotalArea()
+	totalArea := scaledMaterialArea
 	minAreaMM2 := config.GetMinAreaMM2()
 	if totalArea < minAreaMM2 {
-		totalArea = minAreaMM2 // Minimum area for pricing (from system_config)
+		totalArea = minAreaMM2
 	}
 
-	// Base value price: area-based with minimum (valores en colones from system_config)
 	minValueBase := config.GetMinValueBase()
 	pricePerMM2 := config.GetPricePerMM2()
 	valueBase := math.Max(minValueBase, totalArea*pricePerMM2)
+	valueBase *= result.FactorMaterial
+	valueBase *= result.FactorEngrave
+	valueBase *= (1 + result.FactorUVPremium)
 
-	// Apply same factors as hybrid
-	valueUnit := valueBase
-	valueUnit *= result.FactorMaterial
-	valueUnit *= result.FactorEngrave
-	valueUnit *= (1 + result.FactorUVPremium)
-
-	result.PriceValueUnit = math.Round(valueUnit*100) / 100
-
-	// Total with quantity and discount
-	valueTotal := result.PriceValueUnit * float64(quantity)
+	valueTotal := valueBase
 	valueTotal *= (1 - result.DiscountVolumePct)
 	valueTotal += result.CostSetup
 
 	result.PriceValueTotal = math.Round(valueTotal*100) / 100
+	result.PriceValueUnit = math.Round((valueTotal/float64(quantity))*100) / 100
+
+	// =============================================================
+	// PriceFinal = MAX(Hybrid, Value) — protección de piso
+	// =============================================================
+	if result.PriceHybridTotal >= result.PriceValueTotal {
+		result.PriceModel = "hybrid"
+	} else {
+		result.PriceModel = "value"
+	}
+
+	// =============================================================
+	// SIMULACIÓN: ¿Qué pasaría si aplicamos FactorMaterial al Hybrid?
+	// =============================================================
+	simHybridTotal := totalCostBase
+	simHybridTotal *= (1 + result.FactorMargin)
+	simHybridTotal *= result.FactorEngrave
+	simHybridTotal *= (1 + result.FactorUVPremium)
+	simHybridTotal *= result.FactorMaterial // <-- CAMBIO SIMULADO
+	simHybridTotal *= (1 - result.DiscountVolumePct)
+	simHybridTotal += result.CostSetup
+
+	result.SimHybridWithMaterialFactor = math.Round(simHybridTotal*100) / 100
+	if result.PriceHybridTotal > 0 {
+		result.SimDifferencePct = (result.SimHybridWithMaterialFactor - result.PriceHybridTotal) / result.PriceHybridTotal * 100
+	}
 
 	// =============================================================
 	// AUTO-APPROVAL CLASSIFICATION
@@ -211,6 +298,15 @@ func (c *Calculator) ToQuoteModel(
 	}
 	validUntil := now.AddDate(0, 0, validityDays)
 
+	// Convert MaterialIncluded to pointer
+	materialIncl := result.MaterialIncluded
+
+	// Convert FallbackWarning to pointer (only if not empty)
+	var fallbackWarn *string
+	if result.FallbackWarning != "" {
+		fallbackWarn = &result.FallbackWarning
+	}
+
 	return &models.Quote{
 		UserID:        userID,
 		SVGAnalysisID: analysisID,
@@ -229,8 +325,15 @@ func (c *Calculator) ToQuoteModel(
 		CostCut:      result.CostCut,
 		CostSetup:    result.CostSetup,
 		CostBase:     result.CostBase,
-		CostMaterial: result.CostMaterial,
+		CostMaterial: result.CostMaterialWithWaste, // Use new material cost
 		CostOverhead: result.CostOverhead,
+
+		// Material cost fields (Fase 7)
+		MaterialIncluded:      &materialIncl,
+		AreaConsumedMM2:       result.AreaConsumedMM2,
+		WastePct:              result.WastePct,
+		CostMaterialRaw:       result.CostMaterialRaw,
+		CostMaterialWithWaste: result.CostMaterialWithWaste,
 
 		FactorMaterial:    result.FactorMaterial,
 		FactorEngrave:     result.FactorEngrave,
@@ -242,7 +345,16 @@ func (c *Calculator) ToQuoteModel(
 		PriceHybridTotal: result.PriceHybridTotal,
 		PriceValueUnit:   result.PriceValueUnit,
 		PriceValueTotal:  result.PriceValueTotal,
-		PriceFinal:       result.PriceHybridTotal, // Default to hybrid
+		PriceFinal:       math.Max(result.PriceHybridTotal, result.PriceValueTotal),
+		PriceModel:       result.PriceModel,
+
+		// Simulation fields
+		SimHybridWithMaterialFactor: result.SimHybridWithMaterialFactor,
+		SimDifferencePct:            result.SimDifferencePct,
+
+		// Fallback warning fields
+		UsedFallbackSpeeds: result.UsedFallbackSpeeds,
+		FallbackWarning:    fallbackWarn,
 
 		Status:     result.Status,
 		ValidUntil: validUntil,

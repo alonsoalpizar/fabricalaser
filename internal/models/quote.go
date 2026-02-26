@@ -48,9 +48,16 @@ type Quote struct {
 	CostEngrave  float64 `json:"cost_engrave"`  // time × rate
 	CostCut      float64 `json:"cost_cut"`      // time × rate
 	CostSetup    float64 `json:"cost_setup"`    // setup fee
-	CostBase     float64 `json:"cost_base"`     // subtotal before factors
-	CostMaterial float64 `json:"cost_material"` // base × material factor
+	CostBase     float64 `json:"cost_base"`     // subtotal before factors (machine cost)
+	CostMaterial float64 `json:"cost_material"` // DEPRECATED: was base × material factor
 	CostOverhead float64 `json:"cost_overhead"` // overhead rate
+
+	// Material Cost (Fase 7 - raw material pricing)
+	MaterialIncluded      *bool   `gorm:"default:true" json:"material_included"`       // true if we provide material
+	AreaConsumedMM2       float64 `json:"area_consumed_mm2"`                           // width × height of SVG
+	WastePct              float64 `json:"waste_pct"`                                   // waste percentage applied
+	CostMaterialRaw       float64 `json:"cost_material_raw"`                           // area × cost_per_mm2
+	CostMaterialWithWaste float64 `json:"cost_material_with_waste"`                    // raw × (1 + waste_pct)
 
 	// Factors applied (from DB)
 	FactorMaterial    float64 `json:"factor_material"`     // From materials table
@@ -66,7 +73,16 @@ type Quote struct {
 	PriceValueTotal  float64 `json:"price_value_total"`  // × quantity - volume discount
 
 	// Admin can select which price to use
-	PriceFinal float64 `json:"price_final"` // Final quoted price
+	PriceFinal float64 `json:"price_final"`                                      // Final quoted price
+	PriceModel string  `gorm:"type:varchar(10);default:'hybrid'" json:"price_model"` // "hybrid" o "value" — indica cuál modelo determinó el precio final
+
+	// Simulation: What if we apply FactorMaterial to Hybrid?
+	SimHybridWithMaterialFactor float64 `gorm:"type:decimal(12,2);default:0" json:"sim_hybrid_with_material_factor"`
+	SimDifferencePct            float64 `gorm:"type:decimal(8,4);default:0" json:"sim_difference_pct"`
+
+	// Fallback warning (when specific speeds not found)
+	UsedFallbackSpeeds bool    `gorm:"default:false" json:"used_fallback_speeds"`
+	FallbackWarning    *string `gorm:"type:text" json:"fallback_warning,omitempty"`
 
 	// Adjustments (JSONB for flexibility)
 	Adjustments datatypes.JSON `gorm:"type:jsonb;default:'{}'" json:"adjustments"` // {reason: string, amount: float, type: "add"|"discount"}
@@ -132,8 +148,9 @@ func (q *Quote) ToDetailedJSON() map[string]interface{} {
 		"material_id":     q.MaterialID,
 		"engrave_type_id": q.EngraveTypeID,
 
-		"quantity":  q.Quantity,
-		"thickness": q.Thickness,
+		"quantity":          q.Quantity,
+		"thickness":         q.Thickness,
+		"material_included": q.MaterialIncluded,
 
 		"time_breakdown": map[string]interface{}{
 			"engrave_mins": q.TimeEngraveMins,
@@ -151,6 +168,14 @@ func (q *Quote) ToDetailedJSON() map[string]interface{} {
 			"overhead": q.CostOverhead,
 		},
 
+		"material_cost": map[string]interface{}{
+			"included":        q.MaterialIncluded,
+			"area_mm2":        q.AreaConsumedMM2,
+			"waste_pct":       q.WastePct,
+			"raw":             q.CostMaterialRaw,
+			"with_waste":      q.CostMaterialWithWaste,
+		},
+
 		"factors": map[string]interface{}{
 			"material":         q.FactorMaterial,
 			"engrave":          q.FactorEngrave,
@@ -165,10 +190,18 @@ func (q *Quote) ToDetailedJSON() map[string]interface{} {
 			"value_unit":   q.PriceValueUnit,
 			"value_total":  q.PriceValueTotal,
 			"final":        q.PriceFinal,
+			"model":        q.PriceModel,
 		},
 
-		"status":      q.Status,
-		"valid_until": q.ValidUntil,
+		"simulation": map[string]interface{}{
+			"hybrid_with_material_factor": q.SimHybridWithMaterialFactor,
+			"difference_pct":              q.SimDifferencePct,
+		},
+
+		"status":               q.Status,
+		"valid_until":          q.ValidUntil,
+		"used_fallback_speeds": q.UsedFallbackSpeeds,
+		"fallback_warning":     q.FallbackWarning,
 	}
 
 	if q.ReviewNotes != nil {

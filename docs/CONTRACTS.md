@@ -565,6 +565,361 @@ r.Get("/compatible-options", configHandler.GetCompatibleOptions)
 
 ---
 
+## TABLA 3: material_costs
+
+### 3.1 Migración SQL
+
+**Archivo:** `migrations/013_material_costs.sql`
+
+```sql
+-- Migration 013: Material Costs table
+-- FabricaLaser - Costos de materia prima por material/grosor
+
+CREATE TABLE IF NOT EXISTS material_costs (
+    id SERIAL PRIMARY KEY,
+    material_id INTEGER NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+    thickness DECIMAL(5,2) NOT NULL,
+    cost_per_mm2 DECIMAL(12,8) NOT NULL,
+    waste_pct DECIMAL(5,4) NOT NULL DEFAULT 0.15,
+    sheet_cost DECIMAL(10,2),
+    sheet_width_mm DECIMAL(8,2),
+    sheet_height_mm DECIMAL(8,2),
+    notes TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(material_id, thickness)
+);
+
+CREATE INDEX IF NOT EXISTS idx_mc_material ON material_costs(material_id);
+CREATE INDEX IF NOT EXISTS idx_mc_thickness ON material_costs(thickness);
+CREATE INDEX IF NOT EXISTS idx_mc_active ON material_costs(is_active) WHERE is_active = true;
+
+COMMENT ON TABLE material_costs IS 'Costos de materia prima por material y grosor';
+COMMENT ON COLUMN material_costs.cost_per_mm2 IS 'Costo por mm² (CRC) - calculado de sheet_cost / (width × height)';
+COMMENT ON COLUMN material_costs.waste_pct IS 'Porcentaje de merma (default 15%)';
+COMMENT ON COLUMN material_costs.sheet_cost IS 'Costo de lámina completa (CRC) - referencia';
+COMMENT ON COLUMN material_costs.sheet_width_mm IS 'Ancho de lámina estándar (mm) - referencia';
+COMMENT ON COLUMN material_costs.sheet_height_mm IS 'Alto de lámina estándar (mm) - referencia';
+```
+
+### 3.2 Modelo Go
+
+**Archivo:** `internal/models/material_cost.go`
+
+```go
+package models
+
+import (
+	"time"
+)
+
+type MaterialCost struct {
+	ID            uint     `gorm:"primaryKey" json:"id"`
+	MaterialID    uint     `gorm:"not null;index" json:"material_id"`
+	Thickness     float64  `gorm:"type:decimal(5,2);not null" json:"thickness"`
+	CostPerMm2    float64  `gorm:"column:cost_per_mm2;type:decimal(12,8);not null" json:"cost_per_mm2"`
+	WastePct      float64  `gorm:"column:waste_pct;type:decimal(5,4);not null;default:0.15" json:"waste_pct"`
+	SheetCost     *float64 `gorm:"column:sheet_cost;type:decimal(10,2)" json:"sheet_cost,omitempty"`
+	SheetWidthMm  *float64 `gorm:"column:sheet_width_mm;type:decimal(8,2)" json:"sheet_width_mm,omitempty"`
+	SheetHeightMm *float64 `gorm:"column:sheet_height_mm;type:decimal(8,2)" json:"sheet_height_mm,omitempty"`
+	Notes         *string  `gorm:"type:text" json:"notes,omitempty"`
+	IsActive      bool     `gorm:"default:true" json:"is_active"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+
+	// Relations
+	Material Material `gorm:"foreignKey:MaterialID" json:"material,omitempty"`
+}
+
+func (MaterialCost) TableName() string {
+	return "material_costs"
+}
+```
+
+### 3.3 Repository
+
+**Archivo:** `internal/repository/material_cost_repository.go`
+
+```go
+package repository
+
+import (
+	"errors"
+
+	"github.com/alonsoalpizar/fabricalaser/internal/database"
+	"github.com/alonsoalpizar/fabricalaser/internal/models"
+	"gorm.io/gorm"
+)
+
+var ErrMaterialCostNotFound = errors.New("costo de material no encontrado")
+
+type MaterialCostRepository struct {
+	db *gorm.DB
+}
+
+func NewMaterialCostRepository() *MaterialCostRepository {
+	return &MaterialCostRepository{
+		db: database.Get(),
+	}
+}
+
+func (r *MaterialCostRepository) FindAll() ([]models.MaterialCost, error)
+func (r *MaterialCostRepository) FindByID(id uint) (*models.MaterialCost, error)
+func (r *MaterialCostRepository) FindByMaterial(materialID uint) ([]models.MaterialCost, error)
+func (r *MaterialCostRepository) FindByMaterialAndThickness(materialID uint, thickness float64) (*models.MaterialCost, error)
+func (r *MaterialCostRepository) Create(cost *models.MaterialCost) error
+func (r *MaterialCostRepository) Update(cost *models.MaterialCost) error
+func (r *MaterialCostRepository) Delete(id uint) error
+```
+
+### 3.4 Endpoints API
+
+#### GET /api/v1/admin/material-costs
+Lista todos los costos de material.
+
+**Query params:**
+- `material_id` (opcional): Filtrar por material
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "material_id": 2,
+      "material": {"id": 2, "name": "Acrílico transparente"},
+      "thickness": 3.0,
+      "cost_per_mm2": 0.00503935,
+      "waste_pct": 0.15,
+      "sheet_cost": 15000.00,
+      "sheet_width_mm": 1220.00,
+      "sheet_height_mm": 2440.00,
+      "is_active": true
+    }
+  ]
+}
+```
+
+#### GET /api/v1/admin/material-costs/{id}
+Obtiene un costo por ID.
+
+#### POST /api/v1/admin/material-costs
+Crea un nuevo costo de material.
+
+**Request:**
+```json
+{
+  "material_id": 2,
+  "thickness": 5.0,
+  "sheet_cost": 22000.00,
+  "sheet_width_mm": 1220.00,
+  "sheet_height_mm": 2440.00,
+  "waste_pct": 0.15,
+  "notes": "Acrílico 5mm - proveedor X"
+}
+```
+
+> **NOTA:** El backend calcula automáticamente `cost_per_mm2` si se provee `sheet_cost`, `sheet_width_mm` y `sheet_height_mm`.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 5,
+    "cost_per_mm2": 0.00739102
+  }
+}
+```
+
+#### PUT /api/v1/admin/material-costs/{id}
+Actualiza un costo.
+
+**Request:**
+```json
+{
+  "sheet_cost": 16000.00,
+  "notes": "Precio actualizado 2026"
+}
+```
+
+#### DELETE /api/v1/admin/material-costs/{id}
+Elimina (soft delete) un costo.
+
+#### POST /api/v1/admin/material-costs/{id}/recalculate
+Recalcula `cost_per_mm2` basado en `sheet_cost / (sheet_width_mm × sheet_height_mm)`.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "cost_per_mm2": 0.00537634,
+    "message": "Costo recalculado: ₡16,000 / (1220 × 2440) = ₡0.00537634/mm²"
+  }
+}
+```
+
+### 3.5 Seed Data
+
+**Archivo:** `seeds/004_material_costs.sql`
+
+```sql
+-- Seed 004: Material Costs
+-- Costos de materia prima (datos reales aproximados)
+-- Lámina estándar: 1220 × 2440 mm = 2,976,800 mm²
+
+-- =====================================================
+-- Acrílico transparente
+-- =====================================================
+INSERT INTO material_costs (material_id, thickness, cost_per_mm2, waste_pct, sheet_cost, sheet_width_mm, sheet_height_mm, notes)
+SELECT m.id, 3.0, 0.00503935, 0.15, 15000.00, 1220.00, 2440.00, 'Acrílico 3mm - lámina estándar'
+FROM materials m WHERE m.name = 'Acrílico transparente'
+ON CONFLICT (material_id, thickness) DO UPDATE SET
+    cost_per_mm2 = EXCLUDED.cost_per_mm2,
+    sheet_cost = EXCLUDED.sheet_cost;
+
+INSERT INTO material_costs (material_id, thickness, cost_per_mm2, waste_pct, sheet_cost, sheet_width_mm, sheet_height_mm, notes)
+SELECT m.id, 5.0, 0.00739102, 0.15, 22000.00, 1220.00, 2440.00, 'Acrílico 5mm - lámina estándar'
+FROM materials m WHERE m.name = 'Acrílico transparente'
+ON CONFLICT (material_id, thickness) DO UPDATE SET
+    cost_per_mm2 = EXCLUDED.cost_per_mm2,
+    sheet_cost = EXCLUDED.sheet_cost;
+
+INSERT INTO material_costs (material_id, thickness, cost_per_mm2, waste_pct, sheet_cost, sheet_width_mm, sheet_height_mm, notes)
+SELECT m.id, 10.0, 0.01343822, 0.15, 40000.00, 1220.00, 2440.00, 'Acrílico 10mm - lámina estándar'
+FROM materials m WHERE m.name = 'Acrílico transparente'
+ON CONFLICT (material_id, thickness) DO UPDATE SET
+    cost_per_mm2 = EXCLUDED.cost_per_mm2,
+    sheet_cost = EXCLUDED.sheet_cost;
+
+-- =====================================================
+-- Madera / MDF
+-- =====================================================
+INSERT INTO material_costs (material_id, thickness, cost_per_mm2, waste_pct, sheet_cost, sheet_width_mm, sheet_height_mm, notes)
+SELECT m.id, 3.0, 0.00167978, 0.15, 5000.00, 1220.00, 2440.00, 'MDF 3mm - lámina estándar'
+FROM materials m WHERE m.name = 'Madera / MDF'
+ON CONFLICT (material_id, thickness) DO UPDATE SET
+    cost_per_mm2 = EXCLUDED.cost_per_mm2,
+    sheet_cost = EXCLUDED.sheet_cost;
+
+INSERT INTO material_costs (material_id, thickness, cost_per_mm2, waste_pct, sheet_cost, sheet_width_mm, sheet_height_mm, notes)
+SELECT m.id, 5.0, 0.00251967, 0.15, 7500.00, 1220.00, 2440.00, 'MDF 5mm - lámina estándar'
+FROM materials m WHERE m.name = 'Madera / MDF'
+ON CONFLICT (material_id, thickness) DO UPDATE SET
+    cost_per_mm2 = EXCLUDED.cost_per_mm2,
+    sheet_cost = EXCLUDED.sheet_cost;
+
+INSERT INTO material_costs (material_id, thickness, cost_per_mm2, waste_pct, sheet_cost, sheet_width_mm, sheet_height_mm, notes)
+SELECT m.id, 9.0, 0.00335956, 0.15, 10000.00, 1220.00, 2440.00, 'MDF 9mm - lámina estándar'
+FROM materials m WHERE m.name = 'Madera / MDF'
+ON CONFLICT (material_id, thickness) DO UPDATE SET
+    cost_per_mm2 = EXCLUDED.cost_per_mm2,
+    sheet_cost = EXCLUDED.sheet_cost;
+
+-- =====================================================
+-- Materiales sin grosor (cliente provee material)
+-- Metal, Vidrio, Cuero, Cerámica: thickness=0, cost=0
+-- =====================================================
+INSERT INTO material_costs (material_id, thickness, cost_per_mm2, waste_pct, notes)
+SELECT m.id, 0, 0, 0, 'Cliente provee material'
+FROM materials m WHERE m.name IN ('Metal con coating', 'Vidrio / Cristal', 'Cuero / Piel', 'Cerámica')
+ON CONFLICT (material_id, thickness) DO NOTHING;
+```
+
+### 3.6 Rutas Admin
+
+**Archivo:** `internal/handlers/router.go` - Agregar en sección admin:
+
+```go
+// Material Costs CRUD
+r.Get("/material-costs", adminHandler.GetMaterialCosts)
+r.Get("/material-costs/{id}", adminHandler.GetMaterialCost)
+r.Post("/material-costs", adminHandler.CreateMaterialCost)
+r.Put("/material-costs/{id}", adminHandler.UpdateMaterialCost)
+r.Delete("/material-costs/{id}", adminHandler.DeleteMaterialCost)
+r.Post("/material-costs/{id}/recalculate", adminHandler.RecalculateMaterialCost)
+```
+
+### 3.7 Frontend Admin
+
+**Página:** `/web/admin/config/material-costs.html`
+
+- Tabla: Material, Grosor, Costo Lámina, Dimensiones, Costo/mm², Merma%, Acciones
+- Modal crear/editar con campos:
+  - Material (select)
+  - Grosor (input number)
+  - Costo Lámina (input currency)
+  - Ancho Lámina (input, default 1220)
+  - Alto Lámina (input, default 2440)
+  - Merma % (input, default 15)
+  - Notas (textarea)
+- Botón "Recalcular costo/mm²" que llama al endpoint `/recalculate`
+- Preview en tiempo real: "₡15,000 / (1220 × 2440) = ₡0.00503935/mm²"
+
+---
+
+## Cambios al Calculator (Fase 7)
+
+### PriceResult - Nuevos campos
+
+```go
+type PriceResult struct {
+	// ... campos existentes ...
+
+	// Material Cost (Fase 7)
+	MaterialIncluded   bool    // true si nosotros proveemos material
+	AreaConsumedMM2    float64 // width × height del SVG
+	WastePct           float64 // % merma aplicado
+	CostMaterialRaw    float64 // area × cost_per_mm2
+	CostMaterialTotal  float64 // raw × (1 + waste_pct)
+}
+```
+
+### Fórmula de cálculo
+
+```go
+// Si materialIncluded = false, costo material = 0
+if !materialIncluded {
+    result.CostMaterialTotal = 0
+} else {
+    // Área del diseño (del SVG analysis)
+    area := analysis.WidthMM * analysis.HeightMM
+
+    // Buscar costo del material
+    matCost := config.GetMaterialCost(materialID, thickness)
+
+    // Costo antes de merma
+    result.CostMaterialRaw = area * matCost.CostPerMm2
+
+    // Aplicar merma
+    wastePct := matCost.WastePct
+    result.WastePct = wastePct
+    result.CostMaterialTotal = result.CostMaterialRaw * (1 + wastePct)
+}
+
+// Precio final actualizado:
+// (Costo Máquina + Costo Material) × (1 + margen) × (1 - desc_vol) + Setup
+baseCost := result.CostEngrave + result.CostCut + result.CostMaterialTotal
+withMargin := baseCost * (1 + marginPct)
+withDiscount := withMargin * (1 - volumeDiscountPct)
+total := withDiscount + setupFee
+```
+
+### Quote Request - Nuevo campo
+
+```go
+type QuoteRequest struct {
+	// ... campos existentes ...
+	MaterialIncluded bool `json:"material_included"` // default true
+}
+```
+
+---
+
 ## Checklist de Verificación
 
 Después de cada implementación, verificar:
