@@ -2,9 +2,12 @@ package admin
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
 	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 	"github.com/alonsoalpizar/fabricalaser/internal/utils"
@@ -385,15 +388,20 @@ func (h *AdminHandler) UpdateTechRate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		EngraveRateHour   float64 `json:"engrave_rate_hour"`
-		CutRateHour       float64 `json:"cut_rate_hour"`
-		DesignRateHour    float64 `json:"design_rate_hour"`
-		OverheadRateHour  float64 `json:"overhead_rate_hour"`
-		SetupFee          float64 `json:"setup_fee"`
-		CostPerMinEngrave float64 `json:"cost_per_min_engrave"`
-		CostPerMinCut     float64 `json:"cost_per_min_cut"`
-		MarginPercent     float64 `json:"margin_percent"`
-		IsActive          *bool   `json:"is_active"`
+		EngraveRateHour   float64  `json:"engrave_rate_hour"`
+		CutRateHour       float64  `json:"cut_rate_hour"`
+		DesignRateHour    float64  `json:"design_rate_hour"`
+		OverheadRateHour  float64  `json:"overhead_rate_hour"`
+		SetupFee          float64  `json:"setup_fee"`
+		CostPerMinEngrave float64  `json:"cost_per_min_engrave"`
+		CostPerMinCut     float64  `json:"cost_per_min_cut"`
+		MarginPercent     float64  `json:"margin_percent"`
+		ElectricidadMes   *float64 `json:"electricidad_mes"`
+		MantenimientoMes  *float64 `json:"mantenimiento_mes"`
+		DepreciacionMes   *float64 `json:"depreciacion_mes"`
+		SeguroMes         *float64 `json:"seguro_mes"`
+		ConsumiblesMes    *float64 `json:"consumibles_mes"`
+		IsActive          *bool    `json:"is_active"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
@@ -421,6 +429,22 @@ func (h *AdminHandler) UpdateTechRate(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.MarginPercent > 0 {
 		rate.MarginPercent = req.MarginPercent
+	}
+	// Costos fijos por máquina (₡/mes)
+	if req.ElectricidadMes != nil {
+		rate.ElectricidadMes = *req.ElectricidadMes
+	}
+	if req.MantenimientoMes != nil {
+		rate.MantenimientoMes = *req.MantenimientoMes
+	}
+	if req.DepreciacionMes != nil {
+		rate.DepreciacionMes = *req.DepreciacionMes
+	}
+	if req.SeguroMes != nil {
+		rate.SeguroMes = *req.SeguroMes
+	}
+	if req.ConsumiblesMes != nil {
+		rate.ConsumiblesMes = *req.ConsumiblesMes
 	}
 	if req.IsActive != nil {
 		rate.IsActive = *req.IsActive
@@ -1037,18 +1061,24 @@ func (h *AdminHandler) GetTechRates(w http.ResponseWriter, r *http.Request) {
 	ratesResp := make([]map[string]interface{}, len(rates))
 	for i, rate := range rates {
 		ratesResp[i] = map[string]interface{}{
-			"id":                  rate.ID,
-			"technology_id":       rate.TechnologyID,
-			"technology_name":     rate.Technology.Name,
-			"engrave_rate_hour":   rate.EngraveRateHour,
-			"cut_rate_hour":       rate.CutRateHour,
-			"design_rate_hour":    rate.DesignRateHour,
-			"overhead_rate_hour":  rate.OverheadRateHour,
-			"setup_fee":           rate.SetupFee,
+			"id":                   rate.ID,
+			"technology_id":        rate.TechnologyID,
+			"technology_name":      rate.Technology.Name,
+			"engrave_rate_hour":    rate.EngraveRateHour,
+			"cut_rate_hour":        rate.CutRateHour,
+			"design_rate_hour":     rate.DesignRateHour,
+			"overhead_rate_hour":   rate.OverheadRateHour,
+			"setup_fee":            rate.SetupFee,
 			"cost_per_min_engrave": rate.CostPerMinEngrave,
-			"cost_per_min_cut":    rate.CostPerMinCut,
-			"margin_percent":      rate.MarginPercent,
-			"is_active":           rate.IsActive,
+			"cost_per_min_cut":     rate.CostPerMinCut,
+			"margin_percent":       rate.MarginPercent,
+			"is_active":            rate.IsActive,
+			// Costos fijos por máquina
+			"electricidad_mes":   rate.ElectricidadMes,
+			"mantenimiento_mes":  rate.MantenimientoMes,
+			"depreciacion_mes":   rate.DepreciacionMes,
+			"seguro_mes":         rate.SeguroMes,
+			"consumibles_mes":    rate.ConsumiblesMes,
 		}
 	}
 
@@ -1060,14 +1090,19 @@ func (h *AdminHandler) GetTechRates(w http.ResponseWriter, r *http.Request) {
 
 func (h *AdminHandler) CreateTechRate(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		TechnologyID      uint    `json:"technology_id"`
-		EngraveRateHour   float64 `json:"engrave_rate_hour"`
-		CutRateHour       float64 `json:"cut_rate_hour"`
-		DesignRateHour    float64 `json:"design_rate_hour"`
-		OverheadRateHour  float64 `json:"overhead_rate_hour"`
-		SetupFee          float64 `json:"setup_fee"`
-		MarginPercent     float64 `json:"margin_percent"`
-		IsActive          bool    `json:"is_active"`
+		TechnologyID     uint    `json:"technology_id"`
+		EngraveRateHour  float64 `json:"engrave_rate_hour"`
+		CutRateHour      float64 `json:"cut_rate_hour"`
+		DesignRateHour   float64 `json:"design_rate_hour"`
+		OverheadRateHour float64 `json:"overhead_rate_hour"`
+		SetupFee         float64 `json:"setup_fee"`
+		MarginPercent    float64 `json:"margin_percent"`
+		ElectricidadMes  float64 `json:"electricidad_mes"`
+		MantenimientoMes float64 `json:"mantenimiento_mes"`
+		DepreciacionMes  float64 `json:"depreciacion_mes"`
+		SeguroMes        float64 `json:"seguro_mes"`
+		ConsumiblesMes   float64 `json:"consumibles_mes"`
+		IsActive         bool    `json:"is_active"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
@@ -1089,6 +1124,11 @@ func (h *AdminHandler) CreateTechRate(w http.ResponseWriter, r *http.Request) {
 		MarginPercent:     req.MarginPercent,
 		CostPerMinEngrave: (req.EngraveRateHour + req.OverheadRateHour) / 60,
 		CostPerMinCut:     (req.CutRateHour + req.OverheadRateHour) / 60,
+		ElectricidadMes:   req.ElectricidadMes,
+		MantenimientoMes:  req.MantenimientoMes,
+		DepreciacionMes:   req.DepreciacionMes,
+		SeguroMes:         req.SeguroMes,
+		ConsumiblesMes:    req.ConsumiblesMes,
 		IsActive:          req.IsActive,
 	}
 
@@ -1120,6 +1160,48 @@ func (h *AdminHandler) DeleteTechRate(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"success": true,
 		"message": "Tarifa eliminada",
+	})
+}
+
+// GetDashboardStats returns aggregated stats for the admin dashboard
+func (h *AdminHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) {
+	db := database.Get()
+
+	// Get total quoted this month (sum of price_final for approved quotes)
+	var totalQuotedMonth float64
+	now := time.Now()
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+
+	err := db.Model(&models.Quote{}).
+		Where("created_at >= ?", startOfMonth).
+		Where("status IN ?", []string{"auto_approved", "approved", "converted"}).
+		Select("COALESCE(SUM(price_final), 0)").
+		Scan(&totalQuotedMonth).Error
+
+	if err != nil {
+		log.Printf("Error getting dashboard stats: %v", err)
+		totalQuotedMonth = 0
+	}
+
+	// Get total quotes this month
+	var totalQuotesMonth int64
+	db.Model(&models.Quote{}).
+		Where("created_at >= ?", startOfMonth).
+		Count(&totalQuotesMonth)
+
+	// Get new users this month
+	var newUsersMonth int64
+	db.Model(&models.User{}).
+		Where("created_at >= ?", startOfMonth).
+		Count(&newUsersMonth)
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"total_quoted_month": totalQuotedMonth,
+			"total_quotes_month": totalQuotesMonth,
+			"new_users_month":    newUsersMonth,
+		},
 	})
 }
 

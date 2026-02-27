@@ -121,20 +121,34 @@
 
     async function loadMetrics() {
       try {
-        // Load quotes counts
-        const [pendingData, approvedData, usersData] = await Promise.all([
-          apiGet('/admin/quotes?status=pending&limit=1'),
+        // Load quotes counts with correct status values
+        const [pendingData, autoApprovedData, approvedData, usersData] = await Promise.all([
+          apiGet('/admin/quotes?status=needs_review&limit=1'),
+          apiGet('/admin/quotes?status=auto_approved&limit=1'),
           apiGet('/admin/quotes?status=approved&limit=1'),
           apiGet('/admin/users?limit=1')
         ]);
 
         document.getElementById('metricPending').textContent = pendingData.data?.total || 0;
-        document.getElementById('metricApproved').textContent = approvedData.data?.total || 0;
+
+        // Aprobadas = auto_approved + approved
+        const totalApproved = (autoApprovedData.data?.total || 0) + (approvedData.data?.total || 0);
+        document.getElementById('metricApproved').textContent = totalApproved;
+
         document.getElementById('metricUsers').textContent = usersData.data?.total || 0;
 
-        // Calculate total quoted this month
-        // For now show placeholder - would need aggregation endpoint
-        document.getElementById('metricTotal').textContent = '-';
+        // Load dashboard stats for total quoted this month
+        try {
+          const statsData = await apiGet('/admin/dashboard-stats');
+          if (statsData.data?.total_quoted_month > 0) {
+            document.getElementById('metricTotal').textContent = formatCurrency(statsData.data.total_quoted_month);
+          } else {
+            document.getElementById('metricTotal').textContent = '₡0';
+          }
+        } catch (statsErr) {
+          console.error('Stats endpoint not available:', statsErr);
+          document.getElementById('metricTotal').textContent = '₡0';
+        }
 
       } catch (err) {
         console.error('Failed to load metrics:', err);
