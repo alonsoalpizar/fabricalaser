@@ -650,6 +650,8 @@ body {
 .modal-body {
   padding: 1.5rem;
   overflow-y: auto;
+  flex: 1;
+  max-height: calc(90vh - 140px); /* Account for header + footer */
 }
 
 .modal-footer {
