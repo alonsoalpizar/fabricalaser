@@ -387,6 +387,11 @@ func (c *PricingConfig) GetMinAreaMM2() float64 {
 	return c.GetSystemConfigFloat("min_area_mm2", 100.0)
 }
 
+// GetPricePerMmCut returns price per mm of cut for cut-only Value-Based pricing
+func (c *PricingConfig) GetPricePerMmCut() float64 {
+	return c.GetSystemConfigFloat("price_per_mm_cut", 0.25)
+}
+
 // =============================================================
 // Tech Material Speed Methods
 // =============================================================

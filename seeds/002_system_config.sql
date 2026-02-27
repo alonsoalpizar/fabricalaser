@@ -20,7 +20,8 @@ INSERT INTO system_config (config_key, config_value, value_type, category, descr
 -- Pricing value-based (de calculator.go)
 ('min_value_base', '2575', 'number', 'pricing', 'Precio minimo base (CRC)'),
 ('price_per_mm2', '0.515', 'number', 'pricing', 'Precio por mm2 (CRC)'),
-('min_area_mm2', '100', 'number', 'pricing', 'Area minima para cobrar (mm2)')
+('min_area_mm2', '100', 'number', 'pricing', 'Area minima para cobrar (mm2)'),
+('price_per_mm_cut', '0.25', 'number', 'pricing', 'Tarifa por mm lineal de corte para Value-Based en solo corte (CRC/mm)')
 ON CONFLICT (config_key) DO UPDATE SET
     config_value = EXCLUDED.config_value,
     description = EXCLUDED.description;

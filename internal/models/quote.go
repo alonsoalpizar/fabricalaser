@@ -73,8 +73,9 @@ type Quote struct {
 	PriceValueTotal  float64 `json:"price_value_total"`  // × quantity - volume discount
 
 	// Admin can select which price to use
-	PriceFinal float64 `json:"price_final"`                                      // Final quoted price
-	PriceModel string  `gorm:"type:varchar(10);default:'hybrid'" json:"price_model"` // "hybrid" o "value" — indica cuál modelo determinó el precio final
+	PriceFinal       float64 `json:"price_final"`                                          // Final quoted price
+	PriceModel       string  `gorm:"type:varchar(10);default:'hybrid'" json:"price_model"` // "hybrid" o "value" — indica cuál modelo determinó el precio final
+	PriceModelDetail string  `gorm:"type:varchar(20)" json:"price_model_detail,omitempty"` // "area" o "perimeter" — detalle del modelo value
 
 	// Simulation: What if we apply FactorMaterial to Hybrid?
 	SimHybridWithMaterialFactor float64 `gorm:"type:decimal(12,2);default:0" json:"sim_hybrid_with_material_factor"`
@@ -191,6 +192,7 @@ func (q *Quote) ToDetailedJSON() map[string]interface{} {
 			"value_total":  q.PriceValueTotal,
 			"final":        q.PriceFinal,
 			"model":        q.PriceModel,
+			"model_detail": q.PriceModelDetail,
 		},
 
 		"simulation": map[string]interface{}{

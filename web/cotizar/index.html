@@ -2143,7 +2143,11 @@ function displayResult() {
   // Price (en colones CRC)
   const pricing = q.pricing || q;
   const qty = q.quantity || 1;
-  const unitPrice = pricing.hybrid_unit || pricing.price_hybrid_unit || 0;
+  const priceModel = pricing.model || pricing.price_model || 'hybrid';
+  // Use unit price from winning model
+  const unitPrice = priceModel === 'value'
+    ? (pricing.value_unit || pricing.price_value_unit || 0)
+    : (pricing.hybrid_unit || pricing.price_hybrid_unit || 0);
 
   document.getElementById('resultPrice').textContent = Math.round(pricing.final || pricing.price_final || 0).toLocaleString('es-CR');
   document.getElementById('resultQty').textContent = qty;
@@ -2166,14 +2170,26 @@ function displayResult() {
   const priceModelEl = document.getElementById('resultPriceModel');
   const priceModelBadge = document.getElementById('priceModelBadge');
   const model = pricing.model || pricing.price_model;
+  const modelDetail = pricing.model_detail || pricing.price_model_detail || 'area';
   if (model) {
-    const modelLabels = {
-      'hybrid': { text: '⏱️ Precio por tiempo de produccion', class: 'hybrid' },
-      'value':  { text: '📐 Precio por area', class: 'value' }
-    };
-    const modelInfo = modelLabels[model] || { text: model, class: 'hybrid' };
-    priceModelBadge.textContent = modelInfo.text;
-    priceModelBadge.className = `price-model-badge ${modelInfo.class}`;
+    let modelText, modelClass;
+    if (model === 'hybrid') {
+      modelText = '⏱️ Precio por tiempo de produccion';
+      modelClass = 'hybrid';
+    } else if (model === 'value') {
+      // Para value, mostrar detalle (área vs perímetro)
+      if (modelDetail === 'perimeter') {
+        modelText = '📏 Precio por perimetro de corte';
+      } else {
+        modelText = '📐 Precio por area';
+      }
+      modelClass = 'value';
+    } else {
+      modelText = model;
+      modelClass = 'hybrid';
+    }
+    priceModelBadge.textContent = modelText;
+    priceModelBadge.className = `price-model-badge ${modelClass}`;
     priceModelEl.style.display = 'block';
   } else {
     priceModelEl.style.display = 'none';
@@ -2225,9 +2241,10 @@ function displayResult() {
   // Price breakdown with material cost
   const factors = q.factors || q;
   const materialCost = q.material_cost || {};
+  const costBreakdown = q.cost_breakdown || {};
 
-  // Machine cost (base cost from time)
-  const machineCost = pricing.base || pricing.price_base || 0;
+  // Machine cost (base cost from time) - read from cost_breakdown, not pricing
+  const machineCost = costBreakdown.base || q.cost_base || 0;
   document.getElementById('costMachine').textContent = `₡${Math.round(machineCost).toLocaleString('es-CR')}`;
 
   // Material cost - read with fallback for compatibility

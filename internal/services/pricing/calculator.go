@@ -41,11 +41,12 @@ type PriceResult struct {
 	DiscountVolumePct float64
 
 	// Final prices (two models)
-	PriceHybridUnit  float64 // Per-unit hybrid price
-	PriceHybridTotal float64 // Total with quantity and discount
-	PriceValueUnit   float64 // Per-unit value-based price
-	PriceValueTotal  float64 // Total with quantity and discount
-	PriceModel       string  // "hybrid" o "value" — indica cuál modelo determinó el precio final
+	PriceHybridUnit    float64 // Per-unit hybrid price
+	PriceHybridTotal   float64 // Total with quantity and discount
+	PriceValueUnit     float64 // Per-unit value-based price
+	PriceValueTotal    float64 // Total with quantity and discount
+	PriceModel         string  // "hybrid" o "value" — indica cuál modelo determinó el precio final
+	PriceModelDetail   string  // "area" o "perimeter" — detalle del modelo value
 
 	// Simulation: What if we apply FactorMaterial to Hybrid?
 	SimHybridWithMaterialFactor float64 // What hybrid would be WITH material factor
@@ -207,18 +208,36 @@ func (c *Calculator) Calculate(
 	result.PriceHybridUnit = math.Round((hybridTotal/float64(quantity))*100) / 100
 
 	// =============================================================
-	// VALUE-BASED PRICING — sobre área escalada
+	// VALUE-BASED PRICING — adaptativo por tipo de trabajo
+	// Solo corte → usa perímetro × price_per_mm_cut
+	// Con grabado → usa área × price_per_mm2 (como antes)
 	// =============================================================
 
-	totalArea := scaledMaterialArea
-	minAreaMM2 := config.GetMinAreaMM2()
-	if totalArea < minAreaMM2 {
-		totalArea = minAreaMM2
-	}
+	var valueBase float64
+
+	hasEngrave := scaledRasterArea > 0 || scaledVectorLength > 0
+	isOnlyCut := !hasEngrave && scaledCutLength > 0
 
 	minValueBase := config.GetMinValueBase()
-	pricePerMM2 := config.GetPricePerMM2()
-	valueBase := math.Max(minValueBase, totalArea*pricePerMM2)
+
+	if isOnlyCut {
+		// Solo corte: valor por perímetro
+		pricePerMmCut := config.GetPricePerMmCut()
+		valueBase = math.Max(minValueBase, scaledCutLength*pricePerMmCut)
+		result.PriceModelDetail = "perimeter"
+	} else {
+		// Con grabado: valor por área (comportamiento original)
+		totalArea := scaledMaterialArea
+		minAreaMM2 := config.GetMinAreaMM2()
+		if totalArea < minAreaMM2 {
+			totalArea = minAreaMM2
+		}
+		pricePerMM2 := config.GetPricePerMM2()
+		valueBase = math.Max(minValueBase, totalArea*pricePerMM2)
+		result.PriceModelDetail = "area"
+	}
+
+	// Aplicar factores (igual para ambos casos)
 	valueBase *= result.FactorMaterial
 	valueBase *= result.FactorEngrave
 	valueBase *= (1 + result.FactorUVPremium)
@@ -347,6 +366,7 @@ func (c *Calculator) ToQuoteModel(
 		PriceValueTotal:  result.PriceValueTotal,
 		PriceFinal:       math.Max(result.PriceHybridTotal, result.PriceValueTotal),
 		PriceModel:       result.PriceModel,
+		PriceModelDetail: result.PriceModelDetail,
 
 		// Simulation fields
 		SimHybridWithMaterialFactor: result.SimHybridWithMaterialFactor,
