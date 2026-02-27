@@ -71,6 +71,9 @@ func NewRouter() *chi.Mux {
 		r.Use(middleware.AuthMiddleware)
 		r.Use(middleware.AdminOnly)
 
+		// Dashboard stats
+		r.Get("/dashboard-stats", adminHandler.GetDashboardStats)
+
 		// System Config CRUD
 		r.Get("/system-config", systemConfigHandler.GetSystemConfigs)
 		r.Get("/system-config/{id}", systemConfigHandler.GetSystemConfig)
@@ -193,6 +196,9 @@ func NewRouter() *chi.Mux {
 
 	// Cotizar page (Phase 1 - requires auth via JS)
 	r.Get("/cotizar", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "cotizar", "index.html"))
+	})
+	r.Get("/cotizar/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "cotizar", "index.html"))
 	})
 

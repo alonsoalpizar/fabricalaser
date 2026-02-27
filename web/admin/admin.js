@@ -482,6 +482,18 @@ function renderSidebar(activePage = 'dashboard') {
           <span>Velocidades</span>
         </a>
       </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Accesos rapidos</div>
+        <a href="/cotizar/" class="nav-item" target="_blank" style="color: var(--accent);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          <span>Ir al Cotizador</span>
+        </a>
+        <a href="/" class="nav-item" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Landing Page</span>
+        </a>
+      </div>
     </nav>
 
     <div class="sidebar-footer">

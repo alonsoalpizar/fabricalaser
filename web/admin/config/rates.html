@@ -7,6 +7,37 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../admin.css">
+  <style>
+    .field-calculated {
+      background: var(--bg-warm, #EDEAE4) !important;
+      color: var(--text-muted, #8A8681) !important;
+      cursor: not-allowed;
+      border-style: dashed !important;
+      font-weight: 500;
+    }
+    .field-calculated-hint {
+      font-size: 0.6875rem;
+      color: var(--text-muted, #8A8681);
+      margin-top: 0.25rem;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .field-calculated-hint::before {
+      content: '⚡';
+    }
+    /* Modal scroll fix */
+    #itemModal .modal {
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #itemModal .modal-body {
+      overflow-y: auto;
+      max-height: calc(90vh - 140px);
+    }
+  </style>
 </head>
 <body>
   <div class="admin-layout">
@@ -76,30 +107,23 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
-              <label class="form-label">Tarifa Grabado (₡/hora) *</label>
+              <label class="form-label">Tarifa Operador Grabado (₡/hora) *</label>
               <input type="number" class="form-input" id="itemEngraveRate" required min="0" step="1" placeholder="Ej: 6180">
             </div>
 
             <div class="form-group">
-              <label class="form-label">Tarifa Corte (₡/hora) *</label>
+              <label class="form-label">Tarifa Operador Corte (₡/hora) *</label>
               <input type="number" class="form-input" id="itemCutRate" required min="0" step="1" placeholder="Ej: 7210">
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
             <div class="form-group">
-              <label class="form-label">Tarifa Diseno (₡/hora)</label>
+              <label class="form-label">Tarifa Operador Diseno (₡/hora)</label>
               <input type="number" class="form-input" id="itemDesignRate" min="0" step="1" placeholder="Ej: 7725">
+              <span class="form-hint" style="font-style: normal;">Informativo — no afecta el calculo actual</span>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Overhead (₡/hora)</label>
-              <input type="number" class="form-input" id="itemOverheadRate" min="0" step="1" placeholder="Ej: 1947">
-              <span class="form-hint">Costos fijos por hora</span>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
               <label class="form-label">Setup Fee (₡)</label>
               <input type="number" class="form-input" id="itemSetupFee" min="0" step="1" placeholder="Ej: 2575">
@@ -110,6 +134,62 @@
               <label class="form-label">Margen (%)</label>
               <input type="number" class="form-input" id="itemMargin" min="0" max="100" step="1" placeholder="Ej: 40">
               <span class="form-hint">Porcentaje de ganancia</span>
+            </div>
+          </div>
+
+          <!-- Costos Fijos por Máquina -->
+          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <h4 style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+              Costos Fijos de esta Máquina (₡/mes)
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem;">
+              <div class="form-group">
+                <label class="form-label" style="font-size: 0.75rem;">Electricidad</label>
+                <input type="number" class="form-input" id="itemElectricidad" min="0" step="100" placeholder="15450">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size: 0.75rem;">Mantenimiento</label>
+                <input type="number" class="form-input" id="itemMantenimiento" min="0" step="100" placeholder="25750">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size: 0.75rem;">Depreciación</label>
+                <input type="number" class="form-input" id="itemDepreciacion" min="0" step="100" placeholder="96990">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size: 0.75rem;">Seguro</label>
+                <input type="number" class="form-input" id="itemSeguro" min="0" step="100" placeholder="12875">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size: 0.75rem;">Consumibles</label>
+                <input type="number" class="form-input" id="itemConsumibles" min="0" step="100" placeholder="20600">
+              </div>
+            </div>
+            <p class="form-hint" style="margin-top: 0.5rem;">
+              Estos costos se suman al overhead global del taller para calcular el costo por minuto.
+            </p>
+          </div>
+
+          <!-- Campos Calculados (readonly) -->
+          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <h4 style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+              Valores Calculados
+            </h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+              <div class="form-group">
+                <label class="form-label" style="font-size: 0.75rem;">Costos Fijos/Hora (₡)</label>
+                <input type="text" class="form-input field-calculated" id="itemOverheadHora" readonly value="0">
+                <span class="field-calculated-hint">Global + maquina</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size: 0.75rem;">Costo/Min Grabado (₡)</label>
+                <input type="text" class="form-input field-calculated" id="itemCostMinEngrave" readonly value="0">
+                <span class="field-calculated-hint">(Tarifa + Fijos) / 60</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size: 0.75rem;">Costo/Min Corte (₡)</label>
+                <input type="text" class="form-input field-calculated" id="itemCostMinCut" readonly value="0">
+                <span class="field-calculated-hint">(Tarifa + Fijos) / 60</span>
+              </div>
             </div>
           </div>
 
@@ -159,18 +239,30 @@
     let technologies = [];
     let deleteItemId = null;
 
+    // Overhead global (se carga desde system_config)
+    let overheadGlobalHora = 0;
+    let horasTrabajoMes = 120;
+
     async function loadData() {
       const container = document.getElementById('dataTable');
       container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
       try {
-        const [ratesData, techData] = await Promise.all([
+        const [ratesData, techData, configData] = await Promise.all([
           apiGet(ENDPOINT),
-          apiGet('/admin/technologies')
+          apiGet('/admin/technologies'),
+          apiGet('/admin/system-config')
         ]);
 
         items = ratesData.data || [];
         technologies = techData.data || [];
+
+        // Extraer overhead global desde system_config
+        const configs = configData.data || [];
+        const alquiler = parseFloat(configs.find(c => c.config_key === 'overhead_alquiler')?.config_value || 0);
+        const internet = parseFloat(configs.find(c => c.config_key === 'overhead_internet')?.config_value || 0);
+        horasTrabajoMes = parseFloat(configs.find(c => c.config_key === 'horas_trabajo_mes')?.config_value || 120);
+        overheadGlobalHora = (alquiler + internet) / horasTrabajoMes;
 
         populateTechSelect();
         renderTable();
@@ -178,6 +270,50 @@
         console.error('Failed to load data:', err);
         container.innerHTML = `<div class="empty-state"><p class="text-error">Error: ${err.message}</p></div>`;
       }
+    }
+
+    // Recalcular campos derivados en tiempo real
+    function recalcularCostos() {
+      const electricidad = parseFloat(document.getElementById('itemElectricidad').value) || 0;
+      const mantenimiento = parseFloat(document.getElementById('itemMantenimiento').value) || 0;
+      const depreciacion = parseFloat(document.getElementById('itemDepreciacion').value) || 0;
+      const seguro = parseFloat(document.getElementById('itemSeguro').value) || 0;
+      const consumibles = parseFloat(document.getElementById('itemConsumibles').value) || 0;
+
+      // Overhead maquina por hora
+      const totalMaquinaMes = electricidad + mantenimiento + depreciacion + seguro + consumibles;
+      const overheadMaquinaHora = totalMaquinaMes / horasTrabajoMes;
+
+      // Total costos fijos por hora
+      const costosFijosHora = overheadGlobalHora + overheadMaquinaHora;
+
+      // Actualizar campo Costos Fijos por Hora
+      document.getElementById('itemOverheadHora').value = costosFijosHora.toFixed(2);
+
+      // Leer tarifas operador
+      const tarifaGrabado = parseFloat(document.getElementById('itemEngraveRate').value) || 0;
+      const tarifaCorte = parseFloat(document.getElementById('itemCutRate').value) || 0;
+
+      // Calcular cost per minute
+      const costPerMinEngrave = (tarifaGrabado + costosFijosHora) / 60;
+      const costPerMinCut = (tarifaCorte + costosFijosHora) / 60;
+
+      // Actualizar campos calculados
+      document.getElementById('itemCostMinEngrave').value = costPerMinEngrave.toFixed(2);
+      document.getElementById('itemCostMinCut').value = costPerMinCut.toFixed(2);
+    }
+
+    // Escuchar cambios en campos que afectan el calculo
+    function setupRecalculoListeners() {
+      const camposQueAfectan = [
+        'itemElectricidad', 'itemMantenimiento', 'itemDepreciacion',
+        'itemSeguro', 'itemConsumibles',
+        'itemEngraveRate', 'itemCutRate'
+      ];
+      camposQueAfectan.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', recalcularCostos);
+      });
     }
 
     function populateTechSelect() {
@@ -216,8 +352,7 @@
               <th>Tecnologia</th>
               <th>Grabado/hr</th>
               <th>Corte/hr</th>
-              <th>₡/min Grab</th>
-              <th>₡/min Corte</th>
+              <th>Overhead/mes</th>
               <th>Margen</th>
               <th>Setup</th>
               <th>Estado</th>
@@ -225,13 +360,18 @@
             </tr>
           </thead>
           <tbody>
-            ${items.map(item => `
+            ${items.map(item => {
+              const overheadMes = (item.electricidad_mes || 0) + (item.mantenimiento_mes || 0) +
+                                  (item.depreciacion_mes || 0) + (item.seguro_mes || 0) +
+                                  (item.consumibles_mes || 0);
+              return `
               <tr>
                 <td class="font-semibold">${item.technology?.name || getTechName(item.technology_id)}</td>
                 <td class="font-mono">₡${Math.round(item.engrave_rate_hour || 0).toLocaleString('es-CR')}</td>
                 <td class="font-mono">₡${Math.round(item.cut_rate_hour || 0).toLocaleString('es-CR')}</td>
-                <td class="font-mono text-accent">₡${(item.cost_per_min_engrave || 0).toFixed(2)}</td>
-                <td class="font-mono text-accent">₡${(item.cost_per_min_cut || 0).toFixed(2)}</td>
+                <td class="font-mono text-muted" title="Electricidad + Mantenimiento + Depreciación + Seguro + Consumibles">
+                  ₡${Math.round(overheadMes).toLocaleString('es-CR')}
+                </td>
                 <td class="font-semibold">${((item.margin_percent || 0) * 100).toFixed(0)}%</td>
                 <td class="font-mono">₡${Math.round(item.setup_fee || 0).toLocaleString('es-CR')}</td>
                 <td>
@@ -256,7 +396,7 @@
                   </div>
                 </td>
               </tr>
-            `).join('')}
+            `}).join('')}
           </tbody>
         </table>
       `;
@@ -268,9 +408,15 @@
       document.getElementById('itemId').value = '';
       document.getElementById('itemTechnology').disabled = false;
       document.getElementById('itemMargin').value = '40';
-      document.getElementById('itemOverheadRate').value = '1947';
       document.getElementById('itemDesignRate').value = '7725';
+      // Defaults para costos fijos por máquina
+      document.getElementById('itemElectricidad').value = '15450';
+      document.getElementById('itemMantenimiento').value = '25750';
+      document.getElementById('itemDepreciacion').value = '96990';
+      document.getElementById('itemSeguro').value = '12875';
+      document.getElementById('itemConsumibles').value = '20600';
       openModal('itemModal');
+      recalcularCostos();
     }
 
     function editItem(id) {
@@ -284,11 +430,17 @@
       document.getElementById('itemEngraveRate').value = item.engrave_rate_hour || 0;
       document.getElementById('itemCutRate').value = item.cut_rate_hour || 0;
       document.getElementById('itemDesignRate').value = item.design_rate_hour || 7725;
-      document.getElementById('itemOverheadRate').value = item.overhead_rate_hour || 1947;
       document.getElementById('itemSetupFee').value = item.setup_fee || 0;
       document.getElementById('itemMargin').value = ((item.margin_percent || 0.4) * 100).toFixed(0);
       document.getElementById('itemActive').value = item.is_active ? 'true' : 'false';
+      // Costos fijos por máquina
+      document.getElementById('itemElectricidad').value = item.electricidad_mes || 0;
+      document.getElementById('itemMantenimiento').value = item.mantenimiento_mes || 0;
+      document.getElementById('itemDepreciacion').value = item.depreciacion_mes || 0;
+      document.getElementById('itemSeguro').value = item.seguro_mes || 0;
+      document.getElementById('itemConsumibles').value = item.consumibles_mes || 0;
       openModal('itemModal');
+      recalcularCostos();
     }
 
     async function saveItem(e) {
@@ -300,23 +452,27 @@
       const engraveRate = parseFloat(document.getElementById('itemEngraveRate').value) || 0;
       const cutRate = parseFloat(document.getElementById('itemCutRate').value) || 0;
       const designRate = parseFloat(document.getElementById('itemDesignRate').value) || 7725;
-      const overheadRate = parseFloat(document.getElementById('itemOverheadRate').value) || 1947;
       const marginPct = (parseFloat(document.getElementById('itemMargin').value) || 40) / 100;
 
-      // Calculate cost per minute: (rate + overhead) / 60
-      const costPerMinEngrave = (engraveRate + overheadRate) / 60;
-      const costPerMinCut = (cutRate + overheadRate) / 60;
+      // Costos fijos por máquina
+      const electricidad = parseFloat(document.getElementById('itemElectricidad').value) || 0;
+      const mantenimiento = parseFloat(document.getElementById('itemMantenimiento').value) || 0;
+      const depreciacion = parseFloat(document.getElementById('itemDepreciacion').value) || 0;
+      const seguro = parseFloat(document.getElementById('itemSeguro').value) || 0;
+      const consumibles = parseFloat(document.getElementById('itemConsumibles').value) || 0;
 
       const body = {
         technology_id: parseInt(document.getElementById('itemTechnology').value),
         engrave_rate_hour: engraveRate,
         cut_rate_hour: cutRate,
         design_rate_hour: designRate,
-        overhead_rate_hour: overheadRate,
         setup_fee: parseFloat(document.getElementById('itemSetupFee').value) || 0,
-        cost_per_min_engrave: costPerMinEngrave,
-        cost_per_min_cut: costPerMinCut,
         margin_percent: marginPct,
+        electricidad_mes: electricidad,
+        mantenimiento_mes: mantenimiento,
+        depreciacion_mes: depreciacion,
+        seguro_mes: seguro,
+        consumibles_mes: consumibles,
         is_active: document.getElementById('itemActive').value === 'true'
       };
 
@@ -367,7 +523,10 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       const ready = await initAdmin('rates');
-      if (ready) loadData();
+      if (ready) {
+        setupRecalculoListeners();
+        loadData();
+      }
     });
   </script>
 </body>

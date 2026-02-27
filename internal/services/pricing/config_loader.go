@@ -181,20 +181,28 @@ func (c *PricingConfig) GetVolumeDiscount(quantity int) float64 {
 	return discount
 }
 
-// GetCostPerMinEngrave returns the cost per minute for engraving
+// GetCostPerMinEngrave returns cost per minute for engraving
+// Formula: (tarifa_operador + overhead_global + overhead_maquina) / 60
 func (c *PricingConfig) GetCostPerMinEngrave(techID uint) float64 {
-	if rate := c.TechRates[techID]; rate != nil {
-		return rate.CostPerMinEngrave
+	rate := c.TechRates[techID]
+	if rate == nil {
+		return 0
 	}
-	return 0
+	overheadGlobal := c.GetOverheadGlobalPerHourCRC()
+	overheadMaquina := c.GetOverheadMaquinaPerHourCRC(techID)
+	return (rate.EngraveRateHour + overheadGlobal + overheadMaquina) / 60
 }
 
-// GetCostPerMinCut returns the cost per minute for cutting
+// GetCostPerMinCut returns cost per minute for cutting
+// Formula: (tarifa_operador + overhead_global + overhead_maquina) / 60
 func (c *PricingConfig) GetCostPerMinCut(techID uint) float64 {
-	if rate := c.TechRates[techID]; rate != nil {
-		return rate.CostPerMinCut
+	rate := c.TechRates[techID]
+	if rate == nil {
+		return 0
 	}
-	return 0
+	overheadGlobal := c.GetOverheadGlobalPerHourCRC()
+	overheadMaquina := c.GetOverheadMaquinaPerHourCRC(techID)
+	return (rate.CutRateHour + overheadGlobal + overheadMaquina) / 60
 }
 
 // GetMarginPercent returns the margin percentage for a technology
@@ -244,6 +252,53 @@ func (c *PricingConfig) GetUVPremiumFactor(techID uint) float64 {
 		return tech.UVPremiumFactor
 	}
 	return 0 // Default no premium
+}
+
+// =============================================================
+// COSTOS FIJOS DINÁMICOS
+// Separados en dos niveles:
+// - Global: costos del taller compartidos (alquiler, internet)
+// - Por máquina: costos específicos de cada tecnología (electricidad, etc.)
+// =============================================================
+
+// GetHorasTrabajoMes returns estimated working hours per month
+func (c *PricingConfig) GetHorasTrabajoMes() float64 {
+	return c.GetSystemConfigFloat("horas_trabajo_mes", 120)
+}
+
+// GetOverheadGlobalPerHourCRC returns shared taller overhead per hour in CRC
+// Includes: alquiler, internet — costs shared across all machines
+func (c *PricingConfig) GetOverheadGlobalPerHourCRC() float64 {
+	alquiler := c.GetSystemConfigFloat("overhead_alquiler", 0)
+	internet := c.GetSystemConfigFloat("overhead_internet", 0)
+	totalGlobal := alquiler + internet
+
+	horasMes := c.GetHorasTrabajoMes()
+	if horasMes <= 0 {
+		horasMes = 120
+	}
+	return totalGlobal / horasMes
+}
+
+// GetOverheadMaquinaPerHourCRC returns machine-specific overhead per hour in CRC
+// Includes: electricidad, mantenimiento, depreciación, seguro, consumibles
+func (c *PricingConfig) GetOverheadMaquinaPerHourCRC(techID uint) float64 {
+	rate := c.TechRates[techID]
+	if rate == nil {
+		return 0
+	}
+
+	totalMaquina := rate.ElectricidadMes +
+		rate.MantenimientoMes +
+		rate.DepreciacionMes +
+		rate.SeguroMes +
+		rate.ConsumiblesMes
+
+	horasMes := c.GetHorasTrabajoMes()
+	if horasMes <= 0 {
+		horasMes = 120
+	}
+	return totalMaquina / horasMes
 }
 
 // =============================================================

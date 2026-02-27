@@ -15,6 +15,14 @@ type TechRate struct {
 	CostPerMinEngrave float64 `gorm:"type:decimal(10,6);not null" json:"cost_per_min_engrave"` // Calculated: (engrave + overhead) / 60
 	CostPerMinCut    float64 `gorm:"type:decimal(10,6);not null" json:"cost_per_min_cut"`    // Calculated: (cut + overhead) / 60
 	MarginPercent    float64 `gorm:"type:decimal(5,4);default:0.40" json:"margin_percent"`  // Default 40%
+
+	// Costos fijos mensuales por máquina (₡/mes)
+	ElectricidadMes  float64 `gorm:"type:float;not null;default:0" json:"electricidad_mes"`
+	MantenimientoMes float64 `gorm:"type:float;not null;default:0" json:"mantenimiento_mes"`
+	DepreciacionMes  float64 `gorm:"type:float;not null;default:0" json:"depreciacion_mes"`
+	SeguroMes        float64 `gorm:"type:float;not null;default:0" json:"seguro_mes"`
+	ConsumiblesMes   float64 `gorm:"type:float;not null;default:0" json:"consumibles_mes"`
+
 	IsActive         bool    `gorm:"default:true" json:"is_active"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
