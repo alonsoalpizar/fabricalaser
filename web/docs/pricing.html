@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motor de Precios | FabricaLaser Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f0f0f;
+      --bg-card: #1a1a1a;
+      --bg-elevated: #242424;
+      --bg-hover: #2a2a2a;
+      --border: #333;
+      --border-light: #444;
+      --text: #f5f5f5;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666;
+      --accent: #c9a87c;
+      --accent-hover: #d4b88a;
+      --accent-bg: rgba(201, 168, 124, 0.1);
+      --success: #22c55e;
+      --success-bg: rgba(34, 197, 94, 0.1);
+      --warning: #eab308;
+      --warning-bg: rgba(234, 179, 8, 0.1);
+      --error: #ef4444;
+      --error-bg: rgba(239, 68, 68, 0.1);
+      --info: #3b82f6;
+      --info-bg: rgba(59, 130, 246, 0.1);
+      --purple: #7c3aed;
+      --purple-bg: rgba(124, 58, 237, 0.1);
+      --sidebar-width: 280px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .docs-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .docs-sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .sidebar-logo svg {
+      width: 32px;
+      height: 32px;
+      color: var(--accent);
+    }
+
+    .sidebar-logo-text {
+      font-weight: 700;
+      font-size: 1.125rem;
+    }
+
+    .sidebar-logo-text span {
+      color: var(--accent);
+    }
+
+    .sidebar-nav {
+      padding: 1rem 0;
+    }
+
+    .nav-section {
+      padding: 0 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-section-title {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      padding: 0.5rem 0.75rem;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 0.5rem 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .nav-link:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+
+    .nav-link.active {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .nav-link-sub {
+      padding-left: 1.5rem;
+      font-size: 0.8125rem;
+    }
+
+    /* Main content */
+    .docs-main {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      padding: 2rem 3rem;
+      max-width: calc(100% - var(--sidebar-width));
+    }
+
+    .docs-content {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Quick Reference Card */
+    .quick-ref {
+      background: linear-gradient(135deg, var(--accent-bg), var(--purple-bg));
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .quick-ref-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .quick-ref-formula {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.125rem;
+      color: var(--text);
+      background: var(--bg-dark);
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .quick-ref-formula .highlight {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Typography */
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .docs-subtitle {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 3rem 0 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    h2:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 1.5rem 0 0.75rem;
+      color: var(--text);
+    }
+
+    h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 1.25rem 0 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+
+    /* Lists */
+    ul, ol {
+      margin: 0 0 1rem 1.5rem;
+      color: var(--text-secondary);
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    li strong {
+      color: var(--text);
+    }
+
+    /* Code blocks */
+    pre {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      line-height: 1.7;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875em;
+      background: var(--bg-elevated);
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: var(--text);
+    }
+
+    .code-comment {
+      color: var(--text-muted);
+    }
+
+    .code-keyword {
+      color: var(--purple);
+    }
+
+    .code-value {
+      color: var(--success);
+    }
+
+    .code-highlight {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Tables */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg-card);
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    td {
+      color: var(--text-secondary);
+    }
+
+    tr:hover td {
+      background: var(--bg-hover);
+    }
+
+    /* Info boxes */
+    .info-box {
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .info-box svg {
+      flex-shrink: 0;
+      margin-top: 0.125rem;
+    }
+
+    .info-box-content {
+      flex: 1;
+    }
+
+    .info-box-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .info-box.tip {
+      background: var(--success-bg);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .info-box.tip svg { color: var(--success); }
+    .info-box.tip .info-box-title { color: var(--success); }
+
+    .info-box.warning {
+      background: var(--warning-bg);
+      border: 1px solid rgba(234, 179, 8, 0.3);
+    }
+    .info-box.warning svg { color: var(--warning); }
+    .info-box.warning .info-box-title { color: var(--warning); }
+
+    .info-box.info {
+      background: var(--info-bg);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .info-box.info svg { color: var(--info); }
+    .info-box.info .info-box-title { color: var(--info); }
+
+    /* Flow diagram */
+    .flow-diagram {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .flow-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .flow-step {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      text-align: center;
+    }
+
+    .flow-step.highlight {
+      background: var(--accent-bg);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .flow-arrow {
+      color: var(--text-muted);
+      font-size: 1.25rem;
+    }
+
+    .flow-branch {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .flow-branch-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .flow-branch-item.hybrid { color: var(--info); }
+    .flow-branch-item.value { color: var(--purple); }
+    .flow-branch-item.final { color: var(--success); }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .badge.optimal { background: var(--success-bg); color: var(--success); }
+    .badge.possible { background: var(--warning-bg); color: var(--warning); }
+    .badge.incompatible { background: var(--error-bg); color: var(--error); }
+    .badge.calculated { background: var(--info-bg); color: var(--info); }
+
+    /* Status table */
+    .status-table td:first-child {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* Glossary */
+    .glossary-term {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .glossary-term:last-child {
+      border-bottom: none;
+    }
+
+    .glossary-word {
+      font-weight: 600;
+      color: var(--accent);
+      min-width: 120px;
+    }
+
+    .glossary-def {
+      color: var(--text-secondary);
+    }
+
+    /* Admin links */
+    .admin-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.8125rem;
+    }
+
+    .admin-link:hover {
+      text-decoration: underline;
+    }
+
+    .admin-link svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Back to top */
+    .back-to-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      color: var(--bg-dark);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s;
+    }
+
+    .back-to-top.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .back-to-top:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+
+    /* Mobile */
+    @media (max-width: 1024px) {
+      .docs-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+      }
+
+      .docs-sidebar.open {
+        transform: translateX(0);
+      }
+
+      .docs-main {
+        margin-left: 0;
+        max-width: 100%;
+        padding: 1.5rem;
+      }
+
+      .mobile-menu-btn {
+        display: flex;
+      }
+    }
+
+    @media (min-width: 1025px) {
+      .mobile-menu-btn {
+        display: none;
+      }
+    }
+
+    .mobile-menu-btn {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      width: 40px;
+      height: 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      cursor: pointer;
+      z-index: 101;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Print styles */
+    @media print {
+      .docs-sidebar, .back-to-top, .mobile-menu-btn {
+        display: none !important;
+      }
+
+      .docs-main {
+        margin-left: 0;
+        max-width: 100%;
+      }
+
+      body {
+        background: white;
+        color: black;
+      }
+
+      pre, .info-box, .flow-diagram {
+        border: 1px solid #ccc;
+        background: #f5f5f5;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="mobile-menu-btn" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="docs-layout">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="sidebar-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          <span class="sidebar-logo-text">Fabrica<span>Laser</span></span>
+        </a>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Introduccion</div>
+          <a href="#vision-general" class="nav-link">Vision General</a>
+          <a href="#analisis-svg" class="nav-link">Analisis del SVG</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Modelos de Precio</div>
+          <a href="#modelo-hybrid" class="nav-link">Modelo Hybrid</a>
+          <a href="#estimacion-tiempo" class="nav-link nav-link-sub">Estimacion de Tiempo</a>
+          <a href="#costos-maquina" class="nav-link nav-link-sub">Costos de Maquina</a>
+          <a href="#costo-material" class="nav-link nav-link-sub">Costo de Material</a>
+          <a href="#factores-ajustes" class="nav-link nav-link-sub">Factores y Ajustes</a>
+          <a href="#modelo-value" class="nav-link">Modelo Value-Based</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Conceptos</div>
+          <a href="#geometria-cantidad" class="nav-link">Geometria x Cantidad</a>
+          <a href="#compatibilidad" class="nav-link">Compatibilidad</a>
+          <a href="#descuentos" class="nav-link">Descuentos por Volumen</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Administracion</div>
+          <a href="#configuracion" class="nav-link">Configuracion</a>
+          <a href="#estados-cotizacion" class="nav-link">Estados de Cotizacion</a>
+          <a href="#diagnostico" class="nav-link">Diagnostico</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Referencia</div>
+          <a href="#glosario" class="nav-link">Glosario</a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-main">
+      <div class="docs-content">
+        <h1>Motor de Precios</h1>
+        <p class="docs-subtitle">Documentacion completa del sistema de cotizacion de FabricaLaser</p>
+
+        <!-- Quick Reference -->
+        <div class="quick-ref">
+          <div class="quick-ref-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+            Formula Principal
+          </div>
+          <div class="quick-ref-formula">
+            Precio Final = <span class="highlight">MAX</span>(Hybrid, Value) + Setup Fee
+          </div>
+        </div>
+
+        <!-- Vision General -->
+        <section id="vision-general">
+          <h2>Vision General</h2>
+          <p>
+            FabricaLaser utiliza un <strong>sistema de doble modelo</strong> que protege tanto al negocio como al cliente.
+            El sistema calcula dos precios de forma independiente y siempre elige el mayor:
+          </p>
+          <ul>
+            <li><strong>Hybrid:</strong> Basado en costos reales de produccion (tiempo + material + margen)</li>
+            <li><strong>Value-Based:</strong> Basado en el valor de mercado del servicio (precio por mm cuadrado)</li>
+          </ul>
+          <p>
+            Esta estrategia garantiza que nunca se cobre por debajo del costo de produccion ni por debajo del valor de mercado.
+          </p>
+
+          <div class="flow-diagram">
+            <div class="flow-steps">
+              <div class="flow-step">SVG Upload</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-step">Analisis</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-step">Geometria x Qty</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-branch">
+                <div class="flow-branch-item hybrid">├ Hybrid: tiempo + material</div>
+                <div class="flow-branch-item value">├ Value: area x tarifa</div>
+                <div class="flow-branch-item final">└ Final: MAX + Setup</div>
+              </div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-step highlight">Cotizacion</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Analisis SVG -->
+        <section id="analisis-svg">
+          <h2>Analisis del SVG</h2>
+          <p>El sistema interpreta los archivos SVG usando convenciones de color:</p>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Operacion</th>
+                  <th>Color</th>
+                  <th>Descripcion</th>
+                  <th>Unidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Corte</strong></td>
+                  <td style="color: #ff0000;">Rojo (#FF0000)</td>
+                  <td>Lineas de stroke rojo. Perimetro a cortar.</td>
+                  <td>mm lineales</td>
+                </tr>
+                <tr>
+                  <td><strong>Grabado Vector</strong></td>
+                  <td style="color: #0066ff;">Azul (#0000FF)</td>
+                  <td>Lineas de stroke azul. Lineas a grabar sin relleno.</td>
+                  <td>mm lineales</td>
+                </tr>
+                <tr>
+                  <td><strong>Grabado Raster</strong></td>
+                  <td style="color: #333;">Negro (#000000)</td>
+                  <td>Areas con fill negro. Superficies a grabar por barrido.</td>
+                  <td>mm cuadrados</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="info-box tip">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <div class="info-box-content">
+              <div class="info-box-title">Bounding Box Real</div>
+              <p style="margin: 0;">El sistema usa el bounding box de los elementos del SVG, NO el canvas. Un SVG de 300x300mm con un circulo de 50mm solo cuenta 50x50mm.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Modelo Hybrid -->
+        <section id="modelo-hybrid">
+          <h2>Modelo Hybrid (Costo de Produccion)</h2>
+          <p>
+            El modelo Hybrid calcula el precio basado en el costo real de producir el trabajo:
+            tiempo de maquina, costo de material y margen de ganancia.
+          </p>
+
+          <h3 id="estimacion-tiempo">Estimacion de Tiempo</h3>
+          <p>El tiempo de produccion se calcula por componente:</p>
+
+          <pre><code><span class="code-comment">// Tiempo por operacion</span>
+Tiempo Raster = area_mm<sup>2</sup> / (velocidad x spot_size x speed_mult)
+Tiempo Vector = longitud_mm / (velocidad x speed_mult)
+Tiempo Corte  = longitud_mm / velocidad_corte
+Tiempo Setup  = <span class="code-value">5 min</span> <span class="code-comment">(constante)</span>
+
+<span class="code-highlight">Tiempo Total = Setup + Raster + Vector + Corte</span></code></pre>
+
+          <h4>Parametros de velocidad:</h4>
+          <ul>
+            <li><strong>Velocidad cabezal:</strong> Viene de la matriz <code>tech_material_speeds</code>. Calibrada por tecnologia, material y grosor (mm/min)</li>
+            <li><strong>Spot size:</strong> Diametro del haz laser. Convierte velocidad lineal en velocidad de area
+              <ul>
+                <li>CO2: 0.10mm | FIBRA: 0.03mm | MOPA: 0.04mm | UV: 0.02mm</li>
+              </ul>
+            </li>
+            <li><strong>Speed multiplier:</strong> Factor por tipo de grabado
+              <ul>
+                <li>Vectorial: 1.0 | Rasterizado: 0.5 | Fotograbado: 0.25</li>
+              </ul>
+            </li>
+          </ul>
+
+          <div class="info-box warning">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div class="info-box-content">
+              <div class="info-box-title">Velocidades Fallback</div>
+              <p style="margin: 0;">Cuando no hay datos calibrados para una combinacion especifica, se usan velocidades conservadoras (mas lentas = precio mas alto). El sistema muestra un warning en la cotizacion.</p>
+            </div>
+          </div>
+
+          <h3 id="costos-maquina">Costos de Maquina</h3>
+          <pre><code>Costo por minuto = (Tarifa Operador + Overhead) / 60
+
+<span class="code-comment">// Overhead se compone de:</span>
+Overhead Global   = (alquiler + internet) / horas_mes
+Overhead Maquina  = (electricidad + mantenimiento + depreciacion + seguro + consumibles) / horas_mes
+
+<span class="code-highlight">overhead_rate_hour</span> = Overhead Global + Overhead Maquina <span class="code-comment">// Campo calculado automaticamente</span></code></pre>
+
+          <h4>Ejemplo con CO2:</h4>
+          <pre><code>Tarifa Operador Grabado: ₡6,180/hora
+Overhead Global:         ₡515/hora   (₡61,800/mes / 120 horas)
+Overhead Maquina CO2:    ₡1,528/hora (₡183,365/mes / 120 horas)
+
+<span class="code-highlight">Costo por minuto = (6,180 + 515 + 1,528) / 60 = ₡137.05/min</span></code></pre>
+
+          <div class="info-box info">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 16v-4"></path>
+              <path d="M12 8h.01"></path>
+            </svg>
+            <div class="info-box-content">
+              <div class="info-box-title">Campos Calculados</div>
+              <p style="margin: 0;"><code>overhead_rate_hour</code>, <code>cost_per_min_engrave</code> y <code>cost_per_min_cut</code> se recalculan automaticamente cuando se modifican los costos mensuales en el admin.</p>
+            </div>
+          </div>
+
+          <h3 id="costo-material">Costo de Material</h3>
+          <pre><code>Area Material = bounding_box_real x cantidad
+Costo Base    = area x costo_por_mm<sup>2</sup>
+Merma         = <span class="code-value">15%</span> adicional <span class="code-comment">(desperdicio de corte)</span>
+
+<span class="code-highlight">Costo Material = Costo Base x 1.15</span></code></pre>
+          <p>Si el cliente provee el material, el costo de material es ₡0 y se indica en la cotizacion.</p>
+
+          <h3 id="factores-ajustes">Factores y Ajustes</h3>
+          <pre><code>Precio Hybrid = (Costo Maquina + Costo Material)
+              x (1 + <span class="code-value">Margen%</span>)        <span class="code-comment">// 40% por defecto</span>
+              x <span class="code-value">Factor Grabado</span>       <span class="code-comment">// Vec=1.0, Raster=1.5, Foto=2.5</span>
+              x (1 + <span class="code-value">Premium UV%</span>)    <span class="code-comment">// 20% extra si es Laser UV</span>
+              x (1 - <span class="code-value">Descuento%</span>)     <span class="code-comment">// Por volumen</span>
+              + <span class="code-value">Setup Fee</span>            <span class="code-comment">// ₡4,000 (una vez)</span></code></pre>
+        </section>
+
+        <!-- Modelo Value-Based -->
+        <section id="modelo-value">
+          <h2>Modelo Value-Based (Valor de Mercado)</h2>
+          <p>
+            El modelo Value-Based establece un precio minimo basado en lo que el mercado paga por el servicio,
+            independiente del tiempo de produccion.
+          </p>
+
+          <pre><code>Area Total = MAX(area_bounding_box x cantidad, area_minima)
+Valor Base = MAX(<span class="code-value">min_value_base</span>, Area Total x <span class="code-value">precio_por_mm<sup>2</sup></span>)
+
+Precio Value = Valor Base
+             x <span class="code-value">Factor Material</span>    <span class="code-comment">// MDF=1.0, Acrilico=1.2, Vidrio=1.5, Metal=1.8</span>
+             x <span class="code-value">Factor Grabado</span>     <span class="code-comment">// Vec=1.0, Raster=1.5, Foto=2.5</span>
+             x (1 + Premium UV%)
+             x (1 - Descuento%)
+             + Setup Fee</code></pre>
+
+          <h4>Valores actuales:</h4>
+          <ul>
+            <li><strong>precio_por_mm<sup>2</sup>:</strong> ₡0.515 - Tarifa promedio de mercado</li>
+            <li><strong>min_value_base:</strong> ₡3,000 - Precio minimo absoluto (protege trabajos muy pequenos)</li>
+          </ul>
+        </section>
+
+        <!-- Geometria por Cantidad -->
+        <section id="geometria-cantidad">
+          <h2>Geometria Escalada por Cantidad</h2>
+          <p>
+            El sistema <strong>NO</strong> calcula "precio x cantidad". En su lugar, escala la geometria
+            y calcula una sola vez:
+          </p>
+
+          <pre><code><span class="code-comment">// ANTES (incorrecto)</span>
+calcular_precio(1 pieza) x cantidad
+
+<span class="code-comment">// AHORA (correcto)</span>
+geometria x cantidad → calcular_precio(1 vez)</code></pre>
+
+          <h4>Diferencia clave:</h4>
+          <ul>
+            <li><strong>Setup</strong> se cobra UNA vez (no qty veces)</li>
+            <li><strong>Material</strong> se calcula sobre area total (no qty x area individual con qty mermas)</li>
+            <li><strong>Descuento</strong> aplica sobre el total</li>
+            <li><strong>Unitario</strong> = Total / qty (solo referencia)</li>
+          </ul>
+
+          <div class="info-box tip">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <div class="info-box-content">
+              <div class="info-box-title">Ejemplo: 10 circulos 50mm, MDF 3mm</div>
+              <p style="margin: 0;">
+                Geometria escalada: corte = 1,570mm, area = 25,000mm<sup>2</sup><br>
+                Tiempo: 1,570 / 2,200 = 0.71 min + 5 min setup = 5.71 min<br>
+                Setup: ₡4,000 (una vez, no ₡40,000)<br>
+                <strong>Unitario baja de ~₡7,000 (qty=1) a ~₡1,623 (qty=10)</strong>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Compatibilidad -->
+        <section id="compatibilidad">
+          <h2>Compatibilidad Tecnologia x Material</h2>
+          <p>El cotizador solo muestra tecnologias compatibles con el material seleccionado:</p>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>CO2</th>
+                  <th>UV</th>
+                  <th>FIBRA</th>
+                  <th>MOPA</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>MDF/Madera</td>
+                  <td><span class="badge optimal">Ideal</span></td>
+                  <td><span class="badge possible">Posible</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                </tr>
+                <tr>
+                  <td>Acrilico</td>
+                  <td><span class="badge optimal">Ideal</span></td>
+                  <td><span class="badge optimal">Bueno</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                </tr>
+                <tr>
+                  <td>Cuero</td>
+                  <td><span class="badge optimal">Ideal</span></td>
+                  <td><span class="badge possible">Posible</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                </tr>
+                <tr>
+                  <td>Vidrio</td>
+                  <td><span class="badge possible">Posible</span></td>
+                  <td><span class="badge optimal">Ideal</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                  <td><span class="badge optimal">Bueno</span></td>
+                </tr>
+                <tr>
+                  <td>Metal</td>
+                  <td><span class="badge incompatible">No</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                  <td><span class="badge optimal">Ideal</span></td>
+                  <td><span class="badge optimal">Ideal</span></td>
+                </tr>
+                <tr>
+                  <td>ABS/Plastico</td>
+                  <td><span class="badge optimal">Bueno</span></td>
+                  <td><span class="badge optimal">Bueno</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                  <td><span class="badge possible">Posible</span></td>
+                </tr>
+                <tr>
+                  <td>Ceramica</td>
+                  <td><span class="badge possible">Posible</span></td>
+                  <td><span class="badge optimal">Ideal</span></td>
+                  <td><span class="badge incompatible">No</span></td>
+                  <td><span class="badge optimal">Bueno</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Descuentos -->
+        <section id="descuentos">
+          <h2>Descuentos por Volumen</h2>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cantidad</th>
+                  <th>Descuento</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1 - 9</td><td>0%</td></tr>
+                <tr><td>10 - 24</td><td>5%</td></tr>
+                <tr><td>25 - 49</td><td>10%</td></tr>
+                <tr><td>50 - 99</td><td>15%</td></tr>
+                <tr><td>100+</td><td>20%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <a href="/admin/config/discounts.html" class="admin-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Administrar descuentos
+            </a>
+          </p>
+        </section>
+
+        <!-- Configuracion -->
+        <section id="configuracion">
+          <h2>Configuracion Administrable</h2>
+
+          <h3>Configuracion General (system_config)</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Clave</th>
+                  <th>Descripcion</th>
+                  <th>Valor Default</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>price_per_mm2</code></td>
+                  <td>Tarifa por mm<sup>2</sup> para Value-Based</td>
+                  <td>₡0.515</td>
+                </tr>
+                <tr>
+                  <td><code>min_value_base</code></td>
+                  <td>Precio minimo Value-Based</td>
+                  <td>₡3,000</td>
+                </tr>
+                <tr>
+                  <td><code>base_engrave_line_speed</code></td>
+                  <td>Velocidad fallback grabado</td>
+                  <td>1000 mm/min</td>
+                </tr>
+                <tr>
+                  <td><code>base_cut_speed</code></td>
+                  <td>Velocidad fallback corte</td>
+                  <td>500 mm/min</td>
+                </tr>
+                <tr>
+                  <td><code>waste_factor</code></td>
+                  <td>Factor de merma</td>
+                  <td>1.15 (15%)</td>
+                </tr>
+                <tr>
+                  <td><code>overhead_alquiler</code></td>
+                  <td>Alquiler mensual del taller</td>
+                  <td>₡50,000</td>
+                </tr>
+                <tr>
+                  <td><code>overhead_internet</code></td>
+                  <td>Internet mensual</td>
+                  <td>₡11,800</td>
+                </tr>
+                <tr>
+                  <td><code>horas_trabajo_mes</code></td>
+                  <td>Horas de trabajo estimadas/mes</td>
+                  <td>120</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Por Tecnologia (tech_rates)</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Campo</th>
+                  <th>Descripcion</th>
+                  <th>Tipo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>engrave_rate_hour</code></td>
+                  <td>Tarifa operador grabado</td>
+                  <td>₡/hora</td>
+                </tr>
+                <tr>
+                  <td><code>cut_rate_hour</code></td>
+                  <td>Tarifa operador corte</td>
+                  <td>₡/hora</td>
+                </tr>
+                <tr>
+                  <td><code>electricidad_mes</code></td>
+                  <td>Electricidad mensual de la maquina</td>
+                  <td>₡/mes</td>
+                </tr>
+                <tr>
+                  <td><code>mantenimiento_mes</code></td>
+                  <td>Mantenimiento mensual</td>
+                  <td>₡/mes</td>
+                </tr>
+                <tr>
+                  <td><code>depreciacion_mes</code></td>
+                  <td>Depreciacion mensual</td>
+                  <td>₡/mes</td>
+                </tr>
+                <tr>
+                  <td><code>seguro_mes</code></td>
+                  <td>Seguro mensual</td>
+                  <td>₡/mes</td>
+                </tr>
+                <tr>
+                  <td><code>consumibles_mes</code></td>
+                  <td>Consumibles mensuales</td>
+                  <td>₡/mes</td>
+                </tr>
+                <tr>
+                  <td><code>overhead_rate_hour</code></td>
+                  <td>Overhead total por hora</td>
+                  <td><span class="badge calculated">Calculado</span></td>
+                </tr>
+                <tr>
+                  <td><code>cost_per_min_engrave</code></td>
+                  <td>Costo por minuto grabado</td>
+                  <td><span class="badge calculated">Calculado</span></td>
+                </tr>
+                <tr>
+                  <td><code>cost_per_min_cut</code></td>
+                  <td>Costo por minuto corte</td>
+                  <td><span class="badge calculated">Calculado</span></td>
+                </tr>
+                <tr>
+                  <td><code>setup_fee</code></td>
+                  <td>Cargo unico de preparacion</td>
+                  <td>₡</td>
+                </tr>
+                <tr>
+                  <td><code>margin_percent</code></td>
+                  <td>Margen de ganancia</td>
+                  <td>% (ej: 0.40)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <a href="/admin/config/rates.html" class="admin-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Administrar tarifas por tecnologia
+            </a>
+          </p>
+
+          <h3>Matriz de Velocidades (tech_material_speeds)</h3>
+          <p>
+            Velocidad de grabado y corte por combinacion tecnologia x material x grosor.
+            Actualmente hay <strong>37 combinaciones calibradas</strong>.
+          </p>
+          <p>
+            <a href="/admin/config/speeds.html" class="admin-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Administrar velocidades
+            </a>
+          </p>
+        </section>
+
+        <!-- Estados de Cotizacion -->
+        <section id="estados-cotizacion">
+          <h2>Estados de Cotizacion</h2>
+          <p>Las cotizaciones pasan por diferentes estados durante su ciclo de vida:</p>
+
+          <div class="table-wrapper">
+            <table class="status-table">
+              <thead>
+                <tr>
+                  <th>Estado</th>
+                  <th>Descripcion</th>
+                  <th>Accion</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="color: var(--text-muted);">draft</td>
+                  <td>Cotizacion en progreso, aun no finalizada</td>
+                  <td>Automatico al crear</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--success);">auto_approved</td>
+                  <td>Aprobada automaticamente (dentro de parametros normales)</td>
+                  <td>Automatico al calcular</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--warning);">needs_review</td>
+                  <td>Requiere revision manual (precio inusual o trabajo complejo)</td>
+                  <td>Automatico si excede umbrales</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--success);">approved</td>
+                  <td>Aprobada manualmente por un administrador</td>
+                  <td>Admin aprueba</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--error);">rejected</td>
+                  <td>Rechazada por administrador</td>
+                  <td>Admin rechaza</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--text-muted);">expired</td>
+                  <td>La cotizacion vencio (7 dias por defecto)</td>
+                  <td>Automatico por tiempo</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--info);">converted</td>
+                  <td>Convertida en pedido</td>
+                  <td>Cliente acepta</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Diagnostico -->
+        <section id="diagnostico">
+          <h2>Diagnostico de Precios</h2>
+          <p>Guia para cuando un precio "parece raro":</p>
+
+          <h3>Precio muy bajo</h3>
+          <ul>
+            <li>¿El modelo es Hybrid? → Trabajo pequeno/rapido. El Value-Based deberia proteger como piso</li>
+            <li>¿<code>min_value_base</code> esta configurado? → Verificar que sea ≥ ₡3,000</li>
+            <li>¿Setup fee esta en 0? → Verificar <code>tech_rates</code></li>
+          </ul>
+
+          <h3>Precio muy alto</h3>
+          <ul>
+            <li>¿Uso fallback? → Velocidades conservadoras. Calibrar esa combinacion en la matriz de velocidades</li>
+            <li>¿Canvas muy grande? → Verificar que el SVG tenga dimensiones reales (bounding box, no canvas inflado)</li>
+            <li>¿Factor grabado alto? → Fotograbado = 2.5x. Confirmar que el tipo de grabado es correcto</li>
+          </ul>
+
+          <h3>Precio no cambia con cantidad</h3>
+          <ul>
+            <li>¿Descuento por volumen esta configurado? → Verificar <code>volume_discounts</code></li>
+            <li>¿Setup fee es muy alto relativo al trabajo? → Setup se diluye con cantidad</li>
+          </ul>
+
+          <h3>Warning de velocidades fallback</h3>
+          <ul>
+            <li>El sistema no tiene velocidades calibradas para la combinacion tecnologia + material + grosor</li>
+            <li>Usar velocidades conservadoras resulta en precio mas alto como proteccion</li>
+            <li><strong>Solucion:</strong> Calibrar la combinacion en
+              <a href="/admin/config/speeds.html" class="admin-link" style="display: inline;">velocidades</a>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Glosario -->
+        <section id="glosario">
+          <h2>Glosario</h2>
+          <div class="glossary-term">
+            <span class="glossary-word">Bounding box</span>
+            <span class="glossary-def">Rectangulo minimo que contiene todos los elementos del SVG</span>
+          </div>
+          <div class="glossary-term">
+            <span class="glossary-word">Spot size</span>
+            <span class="glossary-def">Diametro del punto del haz laser. Determina cuanta area cubre por pasada</span>
+          </div>
+          <div class="glossary-term">
+            <span class="glossary-word">Raster</span>
+            <span class="glossary-def">Grabado por barrido de area (como una impresora). Usa spot_size para calcular velocidad</span>
+          </div>
+          <div class="glossary-term">
+            <span class="glossary-word">Vector</span>
+            <span class="glossary-def">Grabado siguiendo lineas/contornos. Velocidad directa del cabezal</span>
+          </div>
+          <div class="glossary-term">
+            <span class="glossary-word">Fallback</span>
+            <span class="glossary-def">Velocidad generica usada cuando no hay datos calibrados para una combinacion especifica</span>
+          </div>
+          <div class="glossary-term">
+            <span class="glossary-word">Merma</span>
+            <span class="glossary-def">Porcentaje de material desperdiciado por el proceso de corte (15%)</span>
+          </div>
+          <div class="glossary-term">
+            <span class="glossary-word">Overhead</span>
+            <span class="glossary-def">Costos fijos del taller y la maquina prorrateados por hora de trabajo</span>
+          </div>
+          <div class="glossary-term">
+            <span class="glossary-word">Hybrid</span>
+            <span class="glossary-def">Modelo de precio basado en costos reales de produccion</span>
+          </div>
+          <div class="glossary-term">
+            <span class="glossary-word">Value-Based</span>
+            <span class="glossary-def">Modelo de precio basado en el valor de mercado del servicio</span>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
+
+  <script>
+    // Active nav link
+    function updateActiveNav() {
+      const sections = document.querySelectorAll('section[id]');
+      const navLinks = document.querySelectorAll('.nav-link');
+
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (window.scrollY >= sectionTop - 100) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    }
+
+    // Back to top button
+    function updateBackToTop() {
+      const btn = document.getElementById('backToTop');
+      if (window.scrollY > 300) {
+        btn.classList.add('visible');
+      } else {
+        btn.classList.remove('visible');
+      }
+    }
+
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Mobile sidebar
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    // Close sidebar on link click (mobile)
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('open');
+      });
+    });
+
+    // Events
+    window.addEventListener('scroll', () => {
+      updateActiveNav();
+      updateBackToTop();
+    });
+
+    // Initial state
+    updateActiveNav();
+  </script>
+</body>
+</html>

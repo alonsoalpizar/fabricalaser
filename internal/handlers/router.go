@@ -202,6 +202,14 @@ func NewRouter() *chi.Mux {
 		http.ServeFile(w, r, filepath.Join(webDir, "cotizar", "index.html"))
 	})
 
+	// Documentation pages
+	r.Get("/docs/pricing", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "docs", "pricing.html"))
+	})
+	r.Get("/docs/pricing/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/docs/pricing", http.StatusMovedPermanently)
+	})
+
 	// Static assets (if needed in future)
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(webDir, "static")))))
 
