@@ -1992,6 +1992,10 @@ body {
             <span class="summary-item-label">Grabado:</span>
             <span class="summary-item-value" id="summaryEngrave">-</span>
           </div>
+          <div class="summary-item" id="areaSummaryItem">
+            <span class="summary-item-label">Tamaño:</span>
+            <span class="summary-item-value" id="summaryArea">-</span>
+          </div>
         </div>
 
         <!-- Fallback warning -->
@@ -2985,6 +2989,29 @@ function displayResult() {
     engraveSummaryItem.style.display = 'none';
   }
 
+  // Area del diseño (dimensiones del bounding box)
+  const areaSummaryItem = document.getElementById('areaSummaryItem');
+  const analysis = state.analysis;
+  if (analysis) {
+    const w = analysis.bounds_width || analysis.width || 0;
+    const h = analysis.bounds_height || analysis.height || 0;
+    if (w > 0 && h > 0) {
+      const areaMM2 = w * h;
+      let areaDisplay;
+      if (areaMM2 > 10000) {
+        areaDisplay = `${w.toFixed(0)} × ${h.toFixed(0)} mm (${(areaMM2 / 100).toFixed(1)} cm²)`;
+      } else {
+        areaDisplay = `${w.toFixed(1)} × ${h.toFixed(1)} mm`;
+      }
+      document.getElementById('summaryArea').textContent = areaDisplay;
+      areaSummaryItem.style.display = 'flex';
+    } else {
+      areaSummaryItem.style.display = 'none';
+    }
+  } else {
+    areaSummaryItem.style.display = 'none';
+  }
+
   // Fallback warning
   const fallbackEl = document.getElementById('fallbackWarning');
   const usedFallback = q.used_fallback_speeds || q.usedFallbackSpeeds || false;
@@ -3264,6 +3291,10 @@ function resetWizard() {
   // Reset status explanation
   const statusExplanation = document.getElementById('statusExplanation');
   if (statusExplanation) statusExplanation.style.display = 'none';
+
+  // Reset area summary
+  const areaSummaryItem = document.getElementById('areaSummaryItem');
+  if (areaSummaryItem) areaSummaryItem.style.display = 'none';
 
   // Reset price label
   const priceLabelEl = document.querySelector('.result-price-label');
