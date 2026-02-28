@@ -31,12 +31,17 @@ type Classifier struct {
 	tolerance int
 }
 
-// ClassifiedElement contains the raw element with its classified category
+// ClassifiedElement contains the raw element with its classified operations
+// An element can have multiple operations (e.g., blue stroke + black fill = vector + raster)
 type ClassifiedElement struct {
 	Raw         RawElement
-	Category    models.ElementCategory
+	Category    models.ElementCategory // Primary category (for backward compatibility)
 	StrokeColor *string
 	FillColor   *string
+	// Multi-operation flags
+	HasCut    bool // Red stroke detected
+	HasVector bool // Blue stroke detected
+	HasRaster bool // Black fill detected
 }
 
 // NewClassifier creates a classifier with default tolerance
@@ -46,7 +51,8 @@ func NewClassifier() *Classifier {
 	}
 }
 
-// Classify determines the category of an element based on its stroke/fill colors
+// Classify determines ALL operations of an element based on its stroke/fill colors
+// An element can have multiple operations (e.g., stroke azul + fill negro = vector + raster)
 func (c *Classifier) Classify(elem RawElement) ClassifiedElement {
 	result := ClassifiedElement{
 		Raw:      elem,
@@ -64,40 +70,36 @@ func (c *Classifier) Classify(elem RawElement) ClassifiedElement {
 		result.FillColor = &fillStr
 	}
 
-	// Classification priority:
-	// 1. Red stroke (#FF0000) = Cut (highest priority)
-	// 2. Blue stroke (#0000FF) = Vector engrave
-	// 3. Black fill (#000000) = Raster engrave
-	// 4. Otherwise = Ignored
-
-	// Check stroke color first (for cut and vector)
+	// Check stroke color for Cut (red) or Vector (blue)
 	if strokeStr != "" && strokeStr != "none" {
 		strokeRGB := c.parseColor(strokeStr)
 		if strokeRGB != nil {
 			if c.isColorMatch(*strokeRGB, colorRed) {
-				result.Category = models.CategoryCut
-				return result
-			}
-			if c.isColorMatch(*strokeRGB, colorBlue) {
-				result.Category = models.CategoryVector
-				return result
+				result.HasCut = true
+				result.Category = models.CategoryCut // Primary category
+			} else if c.isColorMatch(*strokeRGB, colorBlue) {
+				result.HasVector = true
+				if result.Category == models.CategoryIgnored {
+					result.Category = models.CategoryVector
+				}
 			}
 		}
 	}
 
-	// Check fill color for raster
+	// Check fill color for Raster (black)
+	// This is independent of stroke - an element can have both!
 	if fillStr != "" && fillStr != "none" {
 		fillRGB := c.parseColor(fillStr)
 		if fillRGB != nil {
 			if c.isColorMatch(*fillRGB, colorBlack) {
-				result.Category = models.CategoryRaster
-				return result
+				result.HasRaster = true
+				if result.Category == models.CategoryIgnored {
+					result.Category = models.CategoryRaster
+				}
 			}
 		}
 	}
 
-	// If element has a stroke but not matching colors, still might be useful
-	// For now, mark as ignored
 	return result
 }
 

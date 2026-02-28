@@ -62,6 +62,10 @@ type ElementResult struct {
 	BoundsMinY  float64
 	BoundsMaxX  float64
 	BoundsMaxY  float64
+	// Multi-operation flags
+	HasCut    bool
+	HasVector bool
+	HasRaster bool
 }
 
 // NewAnalyzer creates an analyzer with default components
@@ -122,6 +126,9 @@ func (a *Analyzer) Analyze(svgContent string) (*AnalysisResult, error) {
 			BoundsMinY:  geom.Bounds.MinY,
 			BoundsMaxX:  geom.Bounds.MaxX,
 			BoundsMaxY:  geom.Bounds.MaxY,
+			HasCut:      elem.HasCut,
+			HasVector:   elem.HasVector,
+			HasRaster:   elem.HasRaster,
 		}
 
 		if elem.Raw.ID != "" {
@@ -131,18 +138,25 @@ func (a *Analyzer) Analyze(svgContent string) (*AnalysisResult, error) {
 		result.Elements = append(result.Elements, elemResult)
 		result.ElementCount++
 
-		// Aggregate by category
-		switch elem.Category {
-		case models.CategoryCut:
+		// Aggregate by detected operations (an element can have multiple!)
+		hasAnyOperation := false
+
+		if elem.HasCut {
 			result.CutLengthMM += geom.Length
 			result.CutCount++
-		case models.CategoryVector:
+			hasAnyOperation = true
+		}
+		if elem.HasVector {
 			result.VectorLengthMM += geom.Length
 			result.VectorCount++
-		case models.CategoryRaster:
+			hasAnyOperation = true
+		}
+		if elem.HasRaster {
 			result.RasterAreaMM2 += geom.Area
 			result.RasterCount++
-		case models.CategoryIgnored:
+			hasAnyOperation = true
+		}
+		if !hasAnyOperation {
 			result.IgnoredCount++
 		}
 

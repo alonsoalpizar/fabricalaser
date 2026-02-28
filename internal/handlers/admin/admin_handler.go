@@ -818,8 +818,8 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		Telefono   string `json:"telefono"`
 		Password   string `json:"password"`
 		Role       string `json:"role"`
-		IsActive   bool   `json:"is_active"`
-		QuoteLimit int    `json:"quote_limit"`
+		IsActive   *bool  `json:"is_active"`
+		QuoteLimit *int   `json:"quote_limit"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
@@ -838,9 +838,11 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if req.Role != "" {
 		user.Role = req.Role
 	}
-	user.Activo = req.IsActive
-	if req.QuoteLimit > 0 {
-		user.QuoteQuota = req.QuoteLimit
+	if req.IsActive != nil {
+		user.Activo = *req.IsActive
+	}
+	if req.QuoteLimit != nil {
+		user.QuoteQuota = *req.QuoteLimit
 	}
 	if req.Password != "" {
 		hash, err := utils.HashPassword(req.Password)

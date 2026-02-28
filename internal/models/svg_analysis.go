@@ -68,6 +68,12 @@ func (a *SVGAnalysis) HasEngraveOperations() bool {
 	return a.VectorLengthMM > 0 || a.RasterAreaMM2 > 0
 }
 
+// HasAnyWork returns true if the SVG has any processable work (cut, vector, or raster)
+// Returns false if the SVG is "empty" - no red (cut), blue (vector), or black (raster) elements
+func (a *SVGAnalysis) HasAnyWork() bool {
+	return a.HasCutOperations() || a.HasEngraveOperations()
+}
+
 // ComplexityFactor returns a factor indicating design complexity
 // Used for auto-approval classification
 func (a *SVGAnalysis) ComplexityFactor() float64 {

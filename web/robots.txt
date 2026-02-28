@@ -1,0 +1,10 @@
+# robots.txt for fabricalaser.com
+# https://fabricalaser.com/robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /mi-cuenta/
+
+# Sitemap location
+Sitemap: https://fabricalaser.com/sitemap.xml

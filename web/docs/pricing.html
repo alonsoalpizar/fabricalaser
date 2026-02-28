@@ -658,7 +658,8 @@
             Formula Principal
           </div>
           <div class="quick-ref-formula">
-            Precio Final = <span class="highlight">MAX</span>(Hybrid, Value) + Setup Fee
+            Precio Final = <span class="highlight">MAX</span>(Hybrid, Value)<br>
+            <span style="font-size: 0.75em; color: var(--text-muted);">// Setup Fee ya incluido en ambos modelos</span>
           </div>
         </div>
 
@@ -687,7 +688,7 @@
               <span class="flow-arrow">→</span>
               <div class="flow-branch">
                 <div class="flow-branch-item hybrid">├ Hybrid: tiempo + material</div>
-                <div class="flow-branch-item value">├ Value: area x tarifa</div>
+                <div class="flow-branch-item value">├ Value: area o perimetro × tarifa</div>
                 <div class="flow-branch-item final">└ Final: MAX + Setup</div>
               </div>
               <span class="flow-arrow">→</span>
@@ -774,10 +775,13 @@ Tiempo Setup  = <span class="code-value">5 min</span> <span class="code-comment"
                 <li>CO2: 0.10mm | FIBRA: 0.03mm | MOPA: 0.04mm | UV: 0.02mm</li>
               </ul>
             </li>
-            <li><strong>Speed multiplier:</strong> Factor por tipo de grabado
+            <li><strong>Speed multiplier</strong> (afecta TIEMPO de produccion):
               <ul>
-                <li>Vectorial: 1.0 | Rasterizado: 0.5 | Fotograbado: 0.25</li>
+                <li>Vectorial: 1.0 (velocidad normal)</li>
+                <li>Rasterizado: 0.5 (mitad de velocidad → doble de tiempo)</li>
+                <li>Fotograbado: 0.25 (cuarto de velocidad → 4x tiempo)</li>
               </ul>
+              <em style="color: var(--text-muted); font-size: 0.875em;">Nota: Este factor ya hace que trabajos rasterizados y fotograbado tomen mas tiempo y por tanto cuesten mas en el modelo Hybrid.</em>
             </li>
           </ul>
 
@@ -808,6 +812,7 @@ Overhead Global:         ₡515/hora   (₡61,800/mes / 120 horas)
 Overhead Maquina CO2:    ₡1,528/hora (₡183,365/mes / 120 horas)
 
 <span class="code-highlight">Costo por minuto = (6,180 + 515 + 1,528) / 60 = ₡137.05/min</span></code></pre>
+          <p style="font-size: 0.875em; color: var(--text-muted); margin-top: 0.5rem;"><em>Nota: Los valores de este ejemplo son ilustrativos. Los valores reales se configuran desde el panel de administracion y se reflejan automaticamente en los campos calculados de cada tecnologia.</em></p>
 
           <div class="info-box info">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -836,6 +841,18 @@ Merma         = <span class="code-value">15%</span> adicional <span class="code-
               x (1 + <span class="code-value">Premium UV%</span>)    <span class="code-comment">// 20% extra si es Laser UV</span>
               x (1 - <span class="code-value">Descuento%</span>)     <span class="code-comment">// Por volumen</span>
               + <span class="code-value">Setup Fee</span>            <span class="code-comment">// ₡4,000 (una vez)</span></code></pre>
+
+          <div class="info-box info">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 16v-4"></path>
+              <path d="M12 8h.01"></path>
+            </svg>
+            <div class="info-box-content">
+              <div class="info-box-title">Factor Grabado vs Speed Multiplier</div>
+              <p style="margin: 0;">El <strong>Factor Grabado</strong> es un ajuste adicional al precio, distinto del speed multiplier. Un trabajo rasterizado ya tarda el doble (speed_mult=0.5) y ademas se multiplica x1.5 al precio por la complejidad del resultado. Ambos factores son acumulativos.</p>
+            </div>
+          </div>
         </section>
 
         <!-- Modelo Value-Based -->
@@ -846,15 +863,35 @@ Merma         = <span class="code-value">15%</span> adicional <span class="code-
             independiente del tiempo de produccion.
           </p>
 
-          <pre><code>Area Total = MAX(area_bounding_box x cantidad, area_minima)
-Valor Base = MAX(<span class="code-value">min_value_base</span>, Area Total x <span class="code-value">precio_por_mm<sup>2</sup></span>)
+          <pre><code><span class="code-comment">// El Value-Based se adapta al tipo de trabajo:</span>
 
+<span class="code-comment">// CON GRABADO (raster o vector): cobra por area</span>
+Area Total = MAX(area_bounding_box x cantidad, area_minima)
+Valor Base = MAX(<span class="code-value">min_value_base</span>, Area Total x <span class="code-value">precio_por_mm2</span>)
+
+<span class="code-comment">// SOLO CORTE (sin grabado): cobra por perimetro</span>
+Perimetro Total = longitud_corte x cantidad
+Valor Base = MAX(<span class="code-value">min_value_base</span>, Perimetro Total x <span class="code-value">price_per_mm_cut</span>)
+
+<span class="code-comment">// En ambos casos:</span>
 Precio Value = Valor Base
              x <span class="code-value">Factor Material</span>    <span class="code-comment">// MDF=1.0, Acrilico=1.2, Vidrio=1.5, Metal=1.8</span>
              x <span class="code-value">Factor Grabado</span>     <span class="code-comment">// Vec=1.0, Raster=1.5, Foto=2.5</span>
              x (1 + Premium UV%)
              x (1 - Descuento%)
              + Setup Fee</code></pre>
+
+          <div class="info-box tip">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <div class="info-box-content">
+              <div class="info-box-title">¿Por que perimetro para solo corte?</div>
+              <p style="margin: 0;">Cuando un trabajo es solo corte, la complejidad esta en el perimetro, no en el area encerrada. Un circulo de 50mm tiene 2,500mm<sup>2</sup> de area pero solo 157mm de corte. Cobrar por area inflaria el precio innecesariamente.<br><br>El precio por perimetro (₡0.25/mm) se deriva de la tarifa de mercado de ₡500/min dividido por la velocidad promedio de corte (~2,000 mm/min).</p>
+            </div>
+          </div>
 
           <h4>Valores actuales:</h4>
           <ul>
@@ -891,12 +928,12 @@ geometria x cantidad → calcular_precio(1 vez)</code></pre>
               <polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
             <div class="info-box-content">
-              <div class="info-box-title">Ejemplo: 10 circulos 50mm, MDF 3mm</div>
+              <div class="info-box-title">Ejemplo: 10 circulos 50mm, MDF 3mm, CO2, Vectorial</div>
               <p style="margin: 0;">
                 Geometria escalada: corte = 1,570mm, area = 25,000mm<sup>2</sup><br>
                 Tiempo: 1,570 / 2,200 = 0.71 min + 5 min setup = 5.71 min<br>
-                Setup: ₡4,000 (una vez, no ₡40,000)<br>
-                <strong>Unitario baja de ~₡7,000 (qty=1) a ~₡1,623 (qty=10)</strong>
+                Setup: ₡4,000 (una vez, no ₡40,000)<br><br>
+                El precio unitario disminuye significativamente con la cantidad, porque el setup se diluye y el descuento por volumen aplica. Los valores exactos dependen de las tarifas configuradas.
               </p>
             </div>
           </div>
@@ -1026,6 +1063,11 @@ geometria x cantidad → calcular_precio(1 vez)</code></pre>
                   <td>₡0.515</td>
                 </tr>
                 <tr>
+                  <td><code>price_per_mm_cut</code></td>
+                  <td>Tarifa por mm lineal para Value-Based en solo corte</td>
+                  <td>₡0.25/mm</td>
+                </tr>
+                <tr>
                   <td><code>min_value_base</code></td>
                   <td>Precio minimo Value-Based</td>
                   <td>₡3,000</td>
@@ -1033,7 +1075,7 @@ geometria x cantidad → calcular_precio(1 vez)</code></pre>
                 <tr>
                   <td><code>base_engrave_line_speed</code></td>
                   <td>Velocidad fallback grabado</td>
-                  <td>1000 mm/min</td>
+                  <td>2500 mm/min</td>
                 </tr>
                 <tr>
                   <td><code>base_cut_speed</code></td>
@@ -1048,12 +1090,12 @@ geometria x cantidad → calcular_precio(1 vez)</code></pre>
                 <tr>
                   <td><code>overhead_alquiler</code></td>
                   <td>Alquiler mensual del taller</td>
-                  <td>₡50,000</td>
+                  <td>₡51,500</td>
                 </tr>
                 <tr>
                   <td><code>overhead_internet</code></td>
                   <td>Internet mensual</td>
-                  <td>₡11,800</td>
+                  <td>₡10,300</td>
                 </tr>
                 <tr>
                   <td><code>horas_trabajo_mes</code></td>
