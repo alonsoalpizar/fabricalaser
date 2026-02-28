@@ -1,0 +1,13 @@
+; Cloudflare DNS Import File for fabricalaser.com
+; ================================================
+; Import via: Cloudflare Dashboard -> DNS -> Records -> Import and Export -> Import DNS Records
+;
+; Format: BIND zone file
+
+; A Records (IPv4)
+fabricalaser.com.       1       IN      A       62.171.188.255
+www.fabricalaser.com.   1       IN      A       62.171.188.255
+
+; AAAA Records (IPv6)
+fabricalaser.com.       1       IN      AAAA    2a02:c207:2276:5028::1
+www.fabricalaser.com.   1       IN      AAAA    2a02:c207:2276:5028::1

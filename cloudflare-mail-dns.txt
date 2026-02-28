@@ -1,0 +1,23 @@
+; =============================================================
+; Cloudflare DNS Import - FabricaLaser.com MAIL Records
+; =============================================================
+; IMPORTANTE: Despues de importar, asegurate que mail.fabricalaser.com
+; tenga la NUBE GRIS (DNS only), NO naranja (Proxied)
+; El proxy de Cloudflare NO funciona para correo
+; =============================================================
+
+; Mail server (NUBE GRIS - DNS Only)
+mail.fabricalaser.com.      1       IN      A       62.171.188.255
+mail.fabricalaser.com.      1       IN      AAAA    2a02:c207:2276:5028::1
+
+; MX Record - donde llega el correo
+fabricalaser.com.           1       IN      MX      10 mail.fabricalaser.com.
+
+; SPF - quien puede enviar correo
+fabricalaser.com.           1       IN      TXT     "v=spf1 mx a ip4:62.171.188.255 ip6:2a02:c207:2276:5028::1 -all"
+
+; DMARC - politica de autenticacion
+_dmarc.fabricalaser.com.    1       IN      TXT     "v=DMARC1; p=quarantine; rua=mailto:postmaster@fabricalaser.com; pct=100; adkim=s; aspf=s"
+
+; DKIM - firma digital
+default._domainkey.fabricalaser.com.    1       IN      TXT     "v=DKIM1; h=sha256; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAphP1IOzXwSCRTwZOC2EI9eJJnM7SkysRw05NxbFI8pQfSXuyldz6+rWqkuHLkOJfeeELsyl65j9WhMen9DOpt/KZhyvYCSx2fvIt31LzM2x2BKfuKb7/PrkWSRv9eF1hwgjaa5oRweRlAe+2j0KiNGYgOgMoh2P+VraAENTA0JwS6VT48mMAznAYX57dL4ugU3aYBpLRd2dtXdC9RpKRmMMhOiqfGfy1jOklPQbywliqkbxfqYu93+dU/10nPPpV/pIq5ZsIolsMBbM/2/H2mjgpXOZ7V8IpIXQY0LwWMvJrOsgK2yGlBc5YJ91riXDsrNJiU3E+WVbSwQMIrHtTuQIDAQAB"
