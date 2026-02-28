@@ -39,8 +39,10 @@ type Quote struct {
 	Thickness float64 `json:"thickness"` // Material thickness in mm (optional)
 
 	// Calculated time estimates (minutes)
-	TimeEngraveMins float64 `json:"time_engrave_mins"`
-	TimeCutMins     float64 `json:"time_cut_mins"`
+	TimeEngraveMins float64 `json:"time_engrave_mins"`  // Combined (vector + raster)
+	TimeVectorMins  float64 `json:"time_vector_mins"`   // Vector only (blue lines)
+	TimeRasterMins  float64 `json:"time_raster_mins"`   // Raster only (black fills)
+	TimeCutMins     float64 `json:"time_cut_mins"`      // Cut (red lines)
 	TimeSetupMins   float64 `json:"time_setup_mins"`
 	TimeTotalMins   float64 `json:"time_total_mins"`
 
@@ -155,6 +157,8 @@ func (q *Quote) ToDetailedJSON() map[string]interface{} {
 
 		"time_breakdown": map[string]interface{}{
 			"engrave_mins": q.TimeEngraveMins,
+			"vector_mins":  q.TimeVectorMins,
+			"raster_mins":  q.TimeRasterMins,
 			"cut_mins":     q.TimeCutMins,
 			"setup_mins":   q.TimeSetupMins,
 			"total_mins":   q.TimeTotalMins,

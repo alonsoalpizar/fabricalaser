@@ -154,9 +154,10 @@ func NewRouter() *chi.Mux {
 		r.Use(middleware.AuthMiddleware)
 
 		// GET endpoints (no quota check)
-		r.Get("/my", quoteHandler.GetMyQuotes)       // List user's quotes
-		r.Get("/analyses", quoteHandler.GetMyAnalyses) // List user's SVG analyses
-		r.Get("/{id}", quoteHandler.GetQuote)        // Get specific quote
+		r.Get("/my", quoteHandler.GetMyQuotes)                  // List user's quotes
+		r.Get("/analyses", quoteHandler.GetMyAnalyses)          // List user's SVG analyses
+		r.Get("/analyses/{id}/svg", quoteHandler.GetAnalysisSVG) // Get SVG content for preview
+		r.Get("/{id}", quoteHandler.GetQuote)                   // Get specific quote
 
 		// POST endpoints (with quota check)
 		r.Group(func(r chi.Router) {
@@ -178,6 +179,23 @@ func NewRouter() *chi.Mux {
 	})
 	r.Get("/landing/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "landing", "index.html"))
+	})
+
+	// SEO files
+	r.Get("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "robots.txt"))
+	})
+	r.Get("/sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "sitemap.xml"))
+	})
+	r.Get("/favicon.svg", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "favicon.svg"))
+	})
+	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "favicon.svg"))
+	})
+	r.Get("/googleeb4aa376b55ad413.html", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "googleeb4aa376b55ad413.html"))
 	})
 
 	// Admin pages (redirect /admin to /admin/ for correct relative paths)

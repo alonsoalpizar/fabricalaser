@@ -9,8 +9,10 @@ import (
 
 // TimeEstimate contains calculated time estimates
 type TimeEstimate struct {
-	EngraveMins  float64 // Time for raster + vector engraving
-	CutMins      float64 // Time for cutting
+	EngraveMins  float64 // Time for raster + vector engraving (combined, for backwards compat)
+	VectorMins   float64 // Time for vector engraving only (blue lines)
+	RasterMins   float64 // Time for raster engraving only (black fills)
+	CutMins      float64 // Time for cutting (red lines)
 	SetupMins    float64 // Setup time (one-time)
 	TotalMins    float64 // Total time
 	UsedFallback bool    // true if specific speed not found
@@ -75,6 +77,7 @@ func (e *TimeEstimator) Estimate(
 	if analysis.RasterAreaMM2 > 0 {
 		effectiveRasterSpeed := engraveSpeedMmMin * spotSize // mm/min × mm = mm²/min
 		rasterTime := analysis.RasterAreaMM2 / effectiveRasterSpeed
+		estimate.RasterMins = rasterTime
 		estimate.EngraveMins += rasterTime
 	}
 
@@ -82,6 +85,7 @@ func (e *TimeEstimator) Estimate(
 	// Vector uses head speed directly (mm/min)
 	if analysis.VectorLengthMM > 0 {
 		vectorTime := analysis.VectorLengthMM / engraveSpeedMmMin
+		estimate.VectorMins = vectorTime
 		estimate.EngraveMins += vectorTime
 	}
 
@@ -108,6 +112,8 @@ func (e *TimeEstimator) Estimate(
 
 	// Adjust engrave and cut times to reflect per-quantity totals
 	estimate.EngraveMins *= float64(quantity)
+	estimate.VectorMins *= float64(quantity)
+	estimate.RasterMins *= float64(quantity)
 	estimate.CutMins *= float64(quantity)
 
 	// Set fallback flag
@@ -167,7 +173,9 @@ func (e *TimeEstimator) EstimateWithGeometry(
 			estimate.UsedFallback = true
 		}
 		effectiveRasterSpeed := engraveSpeedMmMin * spotSize
-		estimate.EngraveMins += rasterAreaMM2 / effectiveRasterSpeed
+		rasterTime := rasterAreaMM2 / effectiveRasterSpeed
+		estimate.RasterMins = rasterTime
+		estimate.EngraveMins += rasterTime
 	}
 
 	// Vector (líneas): velocidad cabezal directa en mm/min
@@ -179,7 +187,9 @@ func (e *TimeEstimator) EstimateWithGeometry(
 			effectiveVectorSpeed = baseEngraveLineSpeed * speedMult / materialFactor
 			estimate.UsedFallback = true
 		}
-		estimate.EngraveMins += vectorLengthMM / effectiveVectorSpeed
+		vectorTime := vectorLengthMM / effectiveVectorSpeed
+		estimate.VectorMins = vectorTime
+		estimate.EngraveMins += vectorTime
 	}
 
 	// Corte

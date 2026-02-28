@@ -491,6 +491,226 @@ body {
   padding: 0.25rem 0;
 }
 
+/* OPERATIONS DETECTED */
+.operations-detected {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.operations-detected-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.operations-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.operation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.operation-badge.cut {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.operation-badge.vector {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.operation-badge.raster {
+  background: rgba(75, 85, 99, 0.15);
+  color: #374151;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.operation-badge .op-value {
+  font-weight: 600;
+}
+
+.operation-badge .op-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.operation-badge.cut .op-dot { background: #ef4444; }
+.operation-badge.vector .op-dot { background: #3b82f6; }
+.operation-badge.raster .op-dot { background: #1f2937; }
+
+/* Engrave type info banner */
+.engrave-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: var(--info-bg);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.engrave-info-banner svg {
+  flex-shrink: 0;
+  color: var(--info);
+  margin-top: 0.125rem;
+}
+
+.engrave-info-banner strong {
+  color: var(--text);
+}
+
+/* SVG PREVIEW */
+.svg-preview-container {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.svg-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.svg-preview-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.svg-preview-title svg {
+  color: var(--accent);
+}
+
+.svg-preview-legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot.red { background: #FF0000; }
+.legend-dot.blue { background: #0000FF; }
+.legend-dot.black { background: #000000; }
+.legend-dot.ignored { background: #999999; border: 1px dashed #ccc; }
+
+.svg-preview-frame {
+  background: #FFFFFF;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 200px;
+  max-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.svg-preview-frame svg {
+  max-width: 100%;
+  max-height: 360px;
+  width: auto;
+  height: auto;
+}
+
+.svg-preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+}
+
+.svg-preview-loading .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.svg-preview-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--error);
+  font-size: 0.875rem;
+}
+
+.svg-preview-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.svg-preview-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.svg-preview-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.svg-preview-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* STEP 2: OPTIONS */
 .options-section {
   margin-bottom: 2rem;
@@ -806,6 +1026,63 @@ body {
   font-weight: 600;
 }
 
+/* TECH DETAIL EXPANDIBLE */
+.tech-detail-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem 0;
+  margin-top: 0.5rem;
+  background: none;
+  border: none;
+  border-top: 1px dashed var(--border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+
+.tech-detail-toggle:hover {
+  color: var(--text);
+}
+
+.tech-detail-chevron {
+  transition: transform 0.3s ease;
+}
+
+.tech-detail-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.tech-detail-panel {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 200px; }
+}
+
+.tech-row {
+  opacity: 0.7;
+  font-size: 0.8125rem;
+}
+
+.tech-row .breakdown-row-label,
+.tech-row .breakdown-row-value {
+  font-size: 0.8125rem;
+}
+
+.discount-value {
+  color: var(--success) !important;
+}
+
 /* SELECTED OPTIONS SUMMARY */
 .selected-summary {
   margin-top: 2rem;
@@ -841,6 +1118,116 @@ body {
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border);
+}
+
+/* CTA Section */
+.cta-section {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: var(--accent-soft);
+  border-radius: 12px;
+  border: 1px solid rgba(184, 84, 62, 0.15);
+}
+
+.cta-main-btn {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.cta-main-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.cta-main-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.share-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(184, 84, 62, 0.2);
+}
+
+.share-label {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.share-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--text-muted);
+}
+
+.share-btn.whatsapp {
+  background: #25D366;
+  border-color: #25D366;
+  color: white;
+}
+
+.share-btn.whatsapp:hover {
+  background: #1DA851;
+  border-color: #1DA851;
+}
+
+.share-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.copy-success {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--text);
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.copy-success.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 
 .btn {
@@ -1059,6 +1446,31 @@ body {
   background: rgba(139, 92, 246, 0.1);
   color: #7c3aed;
   border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+/* STATUS EXPLANATION */
+.status-explanation {
+  margin-top: 0.75rem;
+  padding: 0.625rem 1rem;
+  background: var(--bg-warm);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.status-explanation.review {
+  background: var(--warning-bg);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+.status-explanation.approved {
+  background: var(--success-bg);
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 /* FALLBACK WARNING */
@@ -1353,6 +1765,15 @@ body {
                 </div>
               </div>
             </div>
+
+            <!-- Operations Detected Badges -->
+            <div class="operations-detected" id="operationsDetected">
+              <div class="operations-detected-title">Operaciones detectadas:</div>
+              <div class="operations-badges" id="operationsBadges">
+                <!-- Populated by JavaScript -->
+              </div>
+            </div>
+
             <!-- Warnings -->
             <div class="warnings" id="analysisWarnings" style="display: none;">
               <div class="warnings-title">
@@ -1363,6 +1784,70 @@ body {
                 Advertencias
               </div>
               <ul class="warnings-list" id="warningsList"></ul>
+            </div>
+
+            <!-- SVG Preview -->
+            <div class="svg-preview-container" id="svgPreviewContainer">
+              <div class="svg-preview-header">
+                <div class="svg-preview-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <path d="M21 15l-5-5L5 21"/>
+                  </svg>
+                  Vista previa del diseno
+                </div>
+                <div class="svg-preview-legend">
+                  <div class="legend-item">
+                    <span class="legend-dot red"></span>
+                    Corte
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-dot blue"></span>
+                    Vector
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-dot black"></span>
+                    Raster
+                  </div>
+                  <div class="legend-item" id="legendIgnored" style="display: none;">
+                    <span class="legend-dot ignored"></span>
+                    Ignorados
+                  </div>
+                </div>
+              </div>
+              <div class="svg-preview-frame" id="svgPreviewFrame">
+                <div class="svg-preview-loading" id="svgPreviewLoading">
+                  <div class="spinner"></div>
+                  <span>Cargando preview...</span>
+                </div>
+              </div>
+              <div class="svg-preview-actions">
+                <button class="svg-preview-btn" onclick="zoomSvgPreview(1.2)" title="Acercar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    <line x1="11" y1="8" x2="11" y2="14"/>
+                    <line x1="8" y1="11" x2="14" y2="11"/>
+                  </svg>
+                  Zoom +
+                </button>
+                <button class="svg-preview-btn" onclick="zoomSvgPreview(0.8)" title="Alejar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    <line x1="8" y1="11" x2="14" y2="11"/>
+                  </svg>
+                  Zoom -
+                </button>
+                <button class="svg-preview-btn" onclick="resetSvgPreview()" title="Restablecer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                  </svg>
+                  Reset
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1404,6 +1889,15 @@ body {
         <!-- Engrave Type (hidden if no engrave operations) -->
         <div class="options-section" id="engraveSection">
           <label class="options-label">4. Tipo de grabado</label>
+          <!-- Info banner when SVG has both vector and raster -->
+          <div class="engrave-info-banner" id="engraveInfoBanner" style="display: none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span id="engraveInfoText">Tu diseño tiene grabado vectorial y rasterizado. Selecciona el tipo que mejor se ajuste a tu necesidad.</span>
+          </div>
           <div class="options-grid" id="engraveOptions"></div>
         </div>
 
@@ -1474,6 +1968,10 @@ body {
           <div class="result-price-model" id="resultPriceModel" style="display: none;">
             <span class="price-model-badge" id="priceModelBadge"></span>
           </div>
+          <!-- Status explanation -->
+          <div class="status-explanation" id="statusExplanation" style="display: none;">
+            <span id="statusExplanationText"></span>
+          </div>
         </div>
 
         <!-- Selected Options Summary -->
@@ -1521,15 +2019,28 @@ body {
               </svg>
               Tiempo estimado
             </div>
-            <div class="breakdown-row">
-              <span class="breakdown-row-label">Grabado</span>
-              <span class="breakdown-row-value" id="timeEngrave">- min</span>
-            </div>
-            <div class="breakdown-row">
-              <span class="breakdown-row-label">Corte</span>
+            <div class="breakdown-row" id="timeCutRow">
+              <span class="breakdown-row-label">
+                <span class="op-dot" style="background:#ef4444;width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;"></span>
+                Corte
+              </span>
               <span class="breakdown-row-value" id="timeCut">- min</span>
             </div>
-            <div class="breakdown-row">
+            <div class="breakdown-row" id="timeVectorRow">
+              <span class="breakdown-row-label">
+                <span class="op-dot" style="background:#3b82f6;width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;"></span>
+                Grabado vectorial
+              </span>
+              <span class="breakdown-row-value" id="timeVector">- min</span>
+            </div>
+            <div class="breakdown-row" id="timeRasterRow">
+              <span class="breakdown-row-label">
+                <span class="op-dot" style="background:#1f2937;width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;"></span>
+                Grabado rasterizado
+              </span>
+              <span class="breakdown-row-value" id="timeRaster">- min</span>
+            </div>
+            <div class="breakdown-row" id="timeSetupRow">
               <span class="breakdown-row-label">Setup</span>
               <span class="breakdown-row-value" id="timeSetup">- min</span>
             </div>
@@ -1547,38 +2058,80 @@ body {
               </svg>
               Desglose de costos
             </div>
+
+            <!-- Desglose simplificado (siempre visible) -->
             <div class="breakdown-row">
-              <span class="breakdown-row-label">Costo maquina (tiempo)</span>
+              <span class="breakdown-row-label">Produccion (tiempo maquina)</span>
               <span class="breakdown-row-value" id="costMachine">₡0</span>
             </div>
             <div class="breakdown-row material-cost-row" id="materialCostRow">
-              <span class="breakdown-row-label">Costo material</span>
+              <span class="breakdown-row-label">Material</span>
               <span class="breakdown-row-value" id="costMaterial">₡0</span>
             </div>
-            <div class="breakdown-row">
-              <span class="breakdown-row-label">Factor material</span>
-              <span class="breakdown-row-value" id="factorMaterial">1.0x</span>
-            </div>
-            <div class="breakdown-row">
-              <span class="breakdown-row-label">Factor grabado</span>
-              <span class="breakdown-row-value" id="factorEngrave">1.0x</span>
-            </div>
-            <div class="breakdown-row">
-              <span class="breakdown-row-label">Premium UV</span>
-              <span class="breakdown-row-value" id="factorUV">+0%</span>
-            </div>
-            <div class="breakdown-row">
-              <span class="breakdown-row-label">Descuento volumen</span>
-              <span class="breakdown-row-value" id="factorDiscount">-0%</span>
-            </div>
             <div class="breakdown-row" id="setupFeeRow" style="display: none;">
-              <span class="breakdown-row-label">Preparacion (unico)</span>
+              <span class="breakdown-row-label">Preparacion de maquina</span>
               <span class="breakdown-row-value" id="costSetup">₡0</span>
             </div>
+            <div class="breakdown-row" id="discountRow" style="display: none;">
+              <span class="breakdown-row-label">Descuento volumen</span>
+              <span class="breakdown-row-value discount-value" id="factorDiscount">-0%</span>
+            </div>
             <div class="breakdown-row highlight">
-              <span class="breakdown-row-label">Precio unitario</span>
+              <span class="breakdown-row-label" id="priceUnitLabel">Precio unitario</span>
               <span class="breakdown-row-value" id="priceUnit">₡0</span>
             </div>
+
+            <!-- Detalle tecnico (colapsado por defecto) -->
+            <button type="button" class="tech-detail-toggle" id="techDetailToggle" onclick="toggleTechDetail()">
+              <svg class="tech-detail-chevron" id="techDetailChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+              Detalle tecnico
+            </button>
+            <div class="tech-detail-panel" id="techDetailPanel" style="display: none;">
+              <div class="breakdown-row tech-row">
+                <span class="breakdown-row-label">Factor material</span>
+                <span class="breakdown-row-value" id="factorMaterial">1.0x</span>
+              </div>
+              <div class="breakdown-row tech-row">
+                <span class="breakdown-row-label">Factor grabado</span>
+                <span class="breakdown-row-value" id="factorEngrave">1.0x</span>
+              </div>
+              <div class="breakdown-row tech-row">
+                <span class="breakdown-row-label">Premium UV</span>
+                <span class="breakdown-row-value" id="factorUV">+0%</span>
+              </div>
+              <div class="breakdown-row tech-row">
+                <span class="breakdown-row-label">Modelo de precio</span>
+                <span class="breakdown-row-value" id="techPriceModel">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="cta-section" id="ctaSection">
+          <button class="cta-main-btn" onclick="requestWork()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
+            Solicitar este trabajo
+          </button>
+          <div class="share-row">
+            <span class="share-label">Compartir:</span>
+            <button class="share-btn whatsapp" onclick="shareWhatsApp()">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              WhatsApp
+            </button>
+            <button class="share-btn" onclick="copyQuoteLink()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+              </svg>
+              Copiar enlace
+            </button>
           </div>
         </div>
 
@@ -1621,6 +2174,9 @@ body {
 
 </div>
 
+<!-- Copy success toast -->
+<div class="copy-success" id="copyToast">Enlace copiado al portapapeles</div>
+
 <script>
 const API_BASE = '/api/v1';
 
@@ -1634,6 +2190,10 @@ const state = {
   config: null,
   currentStep: 1,
   analysis: null,
+  // Operation detection flags
+  hasCutOperations: false,
+  hasVectorOperations: false,
+  hasRasterOperations: false,
   hasEngraveOperations: false, // true if SVG has vector or raster engrave
   options: {
     technologyId: null,
@@ -2015,19 +2575,85 @@ function displayAnalysis(filename, cached) {
   document.getElementById('analysisVector').textContent = `${(a.vector_length_mm || 0).toFixed(1)} mm`;
   document.getElementById('analysisRaster').textContent = `${(a.raster_area_mm2 || 0).toFixed(1)} mm²`;
 
-  // Check if SVG has engrave operations (vector blue or raster black)
+  // Set separate operation flags
+  const cutLength = a.cut_length_mm || 0;
   const vectorLength = a.vector_length_mm || 0;
   const rasterArea = a.raster_area_mm2 || 0;
+
+  state.hasCutOperations = cutLength > 0;
+  state.hasVectorOperations = vectorLength > 0;
+  state.hasRasterOperations = rasterArea > 0;
   state.hasEngraveOperations = (vectorLength > 0 || rasterArea > 0);
 
-  // Show/hide engrave section based on analysis
+  // Populate operation badges
+  const badgesContainer = document.getElementById('operationsBadges');
+  const operationsSection = document.getElementById('operationsDetected');
+
+  let badgesHtml = '';
+  if (state.hasCutOperations) {
+    badgesHtml += `
+      <div class="operation-badge cut">
+        <span class="op-dot"></span>
+        <span>Corte</span>
+        <span class="op-value">${cutLength.toFixed(1)} mm</span>
+      </div>
+    `;
+  }
+  if (state.hasVectorOperations) {
+    badgesHtml += `
+      <div class="operation-badge vector">
+        <span class="op-dot"></span>
+        <span>Vectorial</span>
+        <span class="op-value">${vectorLength.toFixed(1)} mm</span>
+      </div>
+    `;
+  }
+  if (state.hasRasterOperations) {
+    badgesHtml += `
+      <div class="operation-badge raster">
+        <span class="op-dot"></span>
+        <span>Rasterizado</span>
+        <span class="op-value">${rasterArea.toFixed(1)} mm²</span>
+      </div>
+    `;
+  }
+
+  if (badgesHtml) {
+    badgesContainer.innerHTML = badgesHtml;
+    operationsSection.style.display = 'block';
+  } else {
+    operationsSection.style.display = 'none';
+  }
+
+  // Show/hide engrave section and info banner based on analysis
   const engraveSection = document.getElementById('engraveSection');
   const engraveSummaryItem = document.getElementById('engraveSummaryItem');
+  const engraveInfoBanner = document.getElementById('engraveInfoBanner');
+
   if (state.hasEngraveOperations) {
     engraveSection.style.display = 'block';
     if (engraveSummaryItem) engraveSummaryItem.style.display = 'flex';
+
+    // Show info banner if SVG has BOTH vector and raster
+    if (state.hasVectorOperations && state.hasRasterOperations) {
+      engraveInfoBanner.style.display = 'flex';
+      document.getElementById('engraveInfoText').textContent =
+        `Tu diseño tiene grabado vectorial (${vectorLength.toFixed(1)} mm) y rasterizado (${rasterArea.toFixed(1)} mm²). ` +
+        'El tipo seleccionado determina el costo y velocidad del proceso.';
+    } else if (state.hasVectorOperations) {
+      engraveInfoBanner.style.display = 'flex';
+      document.getElementById('engraveInfoText').textContent =
+        `Tu diseño tiene grabado vectorial (${vectorLength.toFixed(1)} mm). Ideal para lineas finas y detalles.`;
+    } else if (state.hasRasterOperations) {
+      engraveInfoBanner.style.display = 'flex';
+      document.getElementById('engraveInfoText').textContent =
+        `Tu diseño tiene grabado rasterizado (${rasterArea.toFixed(1)} mm²). Ideal para rellenos y areas solidas.`;
+    } else {
+      engraveInfoBanner.style.display = 'none';
+    }
   } else {
     engraveSection.style.display = 'none';
+    engraveInfoBanner.style.display = 'none';
     if (engraveSummaryItem) engraveSummaryItem.style.display = 'none';
     // Clear any previous engrave selection
     state.options.engraveTypeId = null;
@@ -2042,7 +2668,111 @@ function displayAnalysis(filename, cached) {
     document.getElementById('analysisWarnings').style.display = 'none';
   }
 
+  // Load SVG preview
+  loadSvgPreview(a.id);
+
   document.getElementById('analysisResult').classList.add('show');
+}
+
+// SVG PREVIEW FUNCTIONS
+let svgPreviewScale = 1;
+
+async function loadSvgPreview(analysisId) {
+  const frame = document.getElementById('svgPreviewFrame');
+  if (!frame) return; // Safety check
+
+  // Show loading state
+  frame.innerHTML = `
+    <div class="svg-preview-loading">
+      <div class="spinner"></div>
+      <span>Cargando preview...</span>
+    </div>
+  `;
+
+  try {
+    const res = await fetch(`${API_BASE}/quotes/analyses/${analysisId}/svg`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+
+    if (!res.ok) {
+      throw new Error('Error al cargar el SVG');
+    }
+
+    const svgText = await res.text();
+
+    // Insert SVG into frame
+    frame.innerHTML = svgText;
+
+    // Style the SVG for responsive display
+    const svgEl = frame.querySelector('svg');
+    if (svgEl) {
+      svgEl.style.maxWidth = '100%';
+      svgEl.style.maxHeight = '360px';
+      svgEl.style.width = 'auto';
+      svgEl.style.height = 'auto';
+      svgEl.style.transform = `scale(${svgPreviewScale})`;
+      svgEl.style.transformOrigin = 'center center';
+      svgEl.style.transition = 'transform 0.2s ease';
+
+      // Add background for better visibility
+      frame.style.background = 'repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px';
+    }
+
+    // Show ignored legend if there are ignored elements
+    const a = state.analysis;
+    const legendIgnored = document.getElementById('legendIgnored');
+    if (legendIgnored) {
+      legendIgnored.style.display = (a && a.ignored_count > 0) ? 'flex' : 'none';
+    }
+
+  } catch (error) {
+    console.error('Error loading SVG preview:', error);
+    frame.innerHTML = `
+      <div class="svg-preview-error">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>No se pudo cargar la vista previa</span>
+      </div>
+    `;
+  }
+}
+
+function zoomSvgPreview(factor) {
+  svgPreviewScale *= factor;
+  // Limit zoom between 0.25x and 4x
+  svgPreviewScale = Math.max(0.25, Math.min(4, svgPreviewScale));
+
+  const frame = document.getElementById('svgPreviewFrame');
+  const svgEl = frame.querySelector('svg');
+  if (svgEl) {
+    svgEl.style.transform = `scale(${svgPreviewScale})`;
+  }
+}
+
+function resetSvgPreview() {
+  svgPreviewScale = 1;
+  const frame = document.getElementById('svgPreviewFrame');
+  const svgEl = frame.querySelector('svg');
+  if (svgEl) {
+    svgEl.style.transform = 'scale(1)';
+  }
+}
+
+// TOGGLE TECH DETAIL PANEL
+function toggleTechDetail() {
+  const panel = document.getElementById('techDetailPanel');
+  const chevron = document.getElementById('techDetailChevron');
+
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    chevron.classList.add('expanded');
+  } else {
+    panel.style.display = 'none';
+    chevron.classList.remove('expanded');
+  }
 }
 
 // CALCULATE PRICE
@@ -2140,6 +2870,41 @@ function displayResult() {
   statusEl.className = `result-status ${statusInfo.class}`;
   statusText.textContent = statusInfo.text;
 
+  // Status explanation - provide context for the user
+  const statusExplanation = document.getElementById('statusExplanation');
+  const explanationText = document.getElementById('statusExplanationText');
+  const statusMessages = {
+    'auto_approved': {
+      text: 'Tu cotizacion esta lista. Puedes proceder con tu pedido.',
+      class: 'approved'
+    },
+    'needs_review': {
+      text: 'Nuestro equipo revisara esta cotizacion y te contactara para confirmar el precio. Esto suele tomar menos de 24 horas.',
+      class: 'review'
+    },
+    'approved': {
+      text: 'Cotizacion aprobada por nuestro equipo.',
+      class: 'approved'
+    },
+    'rejected': {
+      text: 'Esta cotizacion fue rechazada. Contactanos para mas informacion.',
+      class: 'review'
+    },
+    'expired': {
+      text: 'Esta cotizacion vencio. Puedes crear una nueva.',
+      class: ''
+    }
+  };
+
+  const statusMsgInfo = statusMessages[q.status];
+  if (statusMsgInfo && q.status !== 'auto_approved') {
+    explanationText.textContent = statusMsgInfo.text;
+    statusExplanation.className = `status-explanation ${statusMsgInfo.class}`;
+    statusExplanation.style.display = 'block';
+  } else {
+    statusExplanation.style.display = 'none';
+  }
+
   // Price (en colones CRC)
   const pricing = q.pricing || q;
   const qty = q.quantity || 1;
@@ -2231,12 +2996,48 @@ function displayResult() {
     fallbackEl.style.display = 'none';
   }
 
-  // Time breakdown
+  // Time breakdown with separate operations
   const time = q.time_breakdown || q;
-  document.getElementById('timeEngrave').textContent = `${(time.engrave_mins || time.time_engrave_mins || 0).toFixed(1)} min`;
-  document.getElementById('timeCut').textContent = `${(time.cut_mins || time.time_cut_mins || 0).toFixed(1)} min`;
-  document.getElementById('timeSetup').textContent = `${(time.setup_mins || time.time_setup_mins || 0).toFixed(1)} min`;
-  document.getElementById('timeTotal').textContent = `${(time.total_mins || time.time_total_mins || 0).toFixed(1)} min`;
+  const engraveTime = time.engrave_mins || time.time_engrave_mins || 0;
+  const cutTime = time.cut_mins || time.time_cut_mins || 0;
+  const setupTime = time.setup_mins || time.time_setup_mins || 0;
+  const totalTime = time.total_mins || time.time_total_mins || 0;
+
+  // Show/hide rows based on detected operations
+  const timeCutRow = document.getElementById('timeCutRow');
+  const timeVectorRow = document.getElementById('timeVectorRow');
+  const timeRasterRow = document.getElementById('timeRasterRow');
+
+  // Cut row
+  if (state.hasCutOperations && cutTime > 0) {
+    document.getElementById('timeCut').textContent = `${cutTime.toFixed(1)} min`;
+    timeCutRow.style.display = 'flex';
+  } else {
+    timeCutRow.style.display = 'none';
+  }
+
+  // Vector and Raster times - now provided separately by backend
+  const vectorTime = time.vector_mins || 0;
+  const rasterTime = time.raster_mins || 0;
+
+  // Vector row - show if there are vector operations and time > 0
+  if (state.hasVectorOperations && vectorTime > 0) {
+    document.getElementById('timeVector').textContent = `${vectorTime.toFixed(1)} min`;
+    timeVectorRow.style.display = 'flex';
+  } else {
+    timeVectorRow.style.display = 'none';
+  }
+
+  // Raster row - show if there are raster operations and time > 0
+  if (state.hasRasterOperations && rasterTime > 0) {
+    document.getElementById('timeRaster').textContent = `${rasterTime.toFixed(1)} min`;
+    timeRasterRow.style.display = 'flex';
+  } else {
+    timeRasterRow.style.display = 'none';
+  }
+
+  document.getElementById('timeSetup').textContent = `${setupTime.toFixed(1)} min`;
+  document.getElementById('timeTotal').textContent = `${totalTime.toFixed(1)} min`;
 
   // Price breakdown with material cost
   const factors = q.factors || q;
@@ -2265,11 +3066,21 @@ function displayResult() {
     materialCostRow.style.display = 'none';
   }
 
-  // Factors
+  // Tech detail factors (hidden by default)
   document.getElementById('factorMaterial').textContent = `${(factors.material || factors.factor_material || 1).toFixed(2)}x`;
   document.getElementById('factorEngrave').textContent = `${(factors.engrave || factors.factor_engrave || 1).toFixed(2)}x`;
   document.getElementById('factorUV').textContent = `+${((factors.uv_premium || factors.factor_uv_premium || 0) * 100).toFixed(0)}%`;
-  document.getElementById('factorDiscount').textContent = `-${((factors.volume_discount || factors.discount_volume_pct || 0) * 100).toFixed(0)}%`;
+  document.getElementById('techPriceModel').textContent = priceModel === 'value' ? 'Por valor' : 'Por tiempo';
+
+  // Discount row - only show if discount > 0
+  const discountRow = document.getElementById('discountRow');
+  const discountPct = factors.volume_discount || factors.discount_volume_pct || 0;
+  if (discountPct > 0) {
+    document.getElementById('factorDiscount').textContent = `-${(discountPct * 100).toFixed(0)}%`;
+    discountRow.style.display = 'flex';
+  } else {
+    discountRow.style.display = 'none';
+  }
 
   // Setup fee row
   const setupFeeRow = document.getElementById('setupFeeRow');
@@ -2281,7 +3092,13 @@ function displayResult() {
     setupFeeRow.style.display = 'none';
   }
 
-  // Unit price
+  // Unit price label - show "Total" when qty=1, "Precio unitario" when qty>1
+  const priceUnitLabel = document.getElementById('priceUnitLabel');
+  if (qty > 1) {
+    priceUnitLabel.textContent = 'Precio unitario';
+  } else {
+    priceUnitLabel.textContent = 'Total';
+  }
   document.getElementById('priceUnit').textContent = `₡${Math.round(unitPrice).toLocaleString('es-CR')}`;
 }
 
@@ -2306,10 +3123,88 @@ function goToStep(step) {
   hideError();
 }
 
+// CTA FUNCTIONS
+function requestWork() {
+  if (!state.quote) return;
+
+  const q = state.quote;
+  const material = document.getElementById('summaryMaterial')?.textContent || '-';
+  const tech = document.getElementById('summaryTech')?.textContent || '-';
+  const qty = q.quantity || 1;
+  const price = Math.round(q.total_price).toLocaleString('es-CR');
+
+  // Build WhatsApp message
+  const message = `Hola! Me interesa solicitar este trabajo:\n\n` +
+    `*Cotizacion #${q.id}*\n` +
+    `Material: ${material}\n` +
+    `Tecnologia: ${tech}\n` +
+    `Cantidad: ${qty} unidad(es)\n` +
+    `Precio: ₡${price}\n\n` +
+    `Validez: ${q.valid_until ? new Date(q.valid_until).toLocaleDateString('es-CR') : '-'}\n\n` +
+    `Por favor confirmen disponibilidad.`;
+
+  // WhatsApp business number (Costa Rica format)
+  const phoneNumber = '50688888888'; // TODO: Configure actual number
+  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+  window.open(whatsappUrl, '_blank');
+}
+
+function shareWhatsApp() {
+  if (!state.quote) return;
+
+  const q = state.quote;
+  const material = document.getElementById('summaryMaterial')?.textContent || '-';
+  const price = Math.round(q.total_price).toLocaleString('es-CR');
+  const qty = q.quantity || 1;
+
+  const message = `Mira esta cotizacion de FabricaLaser:\n\n` +
+    `Material: ${material}\n` +
+    `Cantidad: ${qty} unidad(es)\n` +
+    `Precio: ₡${price}\n\n` +
+    `Ver mas en: ${window.location.origin}/cotizar`;
+
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+  window.open(whatsappUrl, '_blank');
+}
+
+function copyQuoteLink() {
+  if (!state.quote) return;
+
+  // For now, copy the cotizador URL with quote ID as reference
+  const url = `${window.location.origin}/cotizar?ref=${state.quote.id}`;
+
+  navigator.clipboard.writeText(url).then(() => {
+    showCopyToast();
+  }).catch(() => {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = url;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    showCopyToast();
+  });
+}
+
+function showCopyToast() {
+  const toast = document.getElementById('copyToast');
+  if (!toast) return;
+
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2500);
+}
+
 // RESET WIZARD
 function resetWizard() {
   state.analysis = null;
   state.quote = null;
+  state.hasCutOperations = false;
+  state.hasVectorOperations = false;
+  state.hasRasterOperations = false;
   state.hasEngraveOperations = false;
   state.options = {
     technologyId: null,
@@ -2344,6 +3239,12 @@ function resetWizard() {
   // Show engrave section again (will be hidden if needed after next analysis)
   document.getElementById('engraveSection').style.display = 'block';
 
+  // Reset operation badges and info banner
+  const operationsDetected = document.getElementById('operationsDetected');
+  if (operationsDetected) operationsDetected.style.display = 'none';
+  const engraveInfoBanner = document.getElementById('engraveInfoBanner');
+  if (engraveInfoBanner) engraveInfoBanner.style.display = 'none';
+
   // Reset new indicators
   const fallbackWarning = document.getElementById('fallbackWarning');
   if (fallbackWarning) fallbackWarning.style.display = 'none';
@@ -2351,6 +3252,18 @@ function resetWizard() {
   if (resultPriceModel) resultPriceModel.style.display = 'none';
   const setupFeeRow = document.getElementById('setupFeeRow');
   if (setupFeeRow) setupFeeRow.style.display = 'none';
+
+  // Reset tech detail panel
+  const techDetailPanel = document.getElementById('techDetailPanel');
+  if (techDetailPanel) techDetailPanel.style.display = 'none';
+  const techDetailChevron = document.getElementById('techDetailChevron');
+  if (techDetailChevron) techDetailChevron.classList.remove('expanded');
+  const discountRow = document.getElementById('discountRow');
+  if (discountRow) discountRow.style.display = 'none';
+
+  // Reset status explanation
+  const statusExplanation = document.getElementById('statusExplanation');
+  if (statusExplanation) statusExplanation.style.display = 'none';
 
   // Reset price label
   const priceLabelEl = document.querySelector('.result-price-label');

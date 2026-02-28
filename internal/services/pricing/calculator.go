@@ -13,8 +13,10 @@ import (
 // PriceResult contains all calculated pricing information
 type PriceResult struct {
 	// Time breakdown
-	TimeEngraveMins float64
-	TimeCutMins     float64
+	TimeEngraveMins float64 // Combined engrave time (vector + raster)
+	TimeVectorMins  float64 // Vector engrave time only (blue lines)
+	TimeRasterMins  float64 // Raster engrave time only (black fills)
+	TimeCutMins     float64 // Cut time (red lines)
 	TimeSetupMins   float64
 	TimeTotalMins   float64
 
@@ -121,6 +123,8 @@ func (c *Calculator) Calculate(
 	)
 
 	result.TimeEngraveMins = timeEst.EngraveMins
+	result.TimeVectorMins = timeEst.VectorMins
+	result.TimeRasterMins = timeEst.RasterMins
 	result.TimeCutMins = timeEst.CutMins
 	result.TimeSetupMins = timeEst.SetupMins
 	result.TimeTotalMins = timeEst.TotalMins
@@ -336,6 +340,8 @@ func (c *Calculator) ToQuoteModel(
 		Thickness:     thickness,
 
 		TimeEngraveMins: result.TimeEngraveMins,
+		TimeVectorMins:  result.TimeVectorMins,
+		TimeRasterMins:  result.TimeRasterMins,
 		TimeCutMins:     result.TimeCutMins,
 		TimeSetupMins:   result.TimeSetupMins,
 		TimeTotalMins:   result.TimeTotalMins,

@@ -100,8 +100,17 @@ func (h *Handler) AnalyzeSVG(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert to model and save
+	// Convert to model
 	analysis := h.analyzer.ToModel(result, userID, filename, contentStr)
+
+	// Validate: SVG must have at least one type of work (cut, vector, or raster)
+	if !analysis.HasAnyWork() {
+		respondError(w, http.StatusBadRequest, "EMPTY_SVG",
+			"El archivo no contiene elementos procesables. "+
+			"Debe tener al menos: corte (rojo #FF0000), grabado vectorial (azul #0000FF), "+
+			"o grabado raster (negro #000000)")
+		return
+	}
 	if err := h.svgAnalysisRepo.Create(analysis); err != nil {
 		respondError(w, http.StatusInternalServerError, "DB_ERROR", "Error saving analysis")
 		return
@@ -328,6 +337,37 @@ func (h *Handler) GetMyAnalyses(w http.ResponseWriter, r *http.Request) {
 		"limit":  limit,
 		"offset": offset,
 	})
+}
+
+// GetAnalysisSVG handles GET /api/v1/quotes/analyses/:id/svg
+// Returns the raw SVG content for preview/visualization
+func (h *Handler) GetAnalysisSVG(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID").(uint)
+
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_ID", "ID inválido")
+		return
+	}
+
+	analysis, err := h.svgAnalysisRepo.FindByID(uint(id))
+	if err != nil {
+		respondError(w, http.StatusNotFound, "NOT_FOUND", "Análisis no encontrado")
+		return
+	}
+
+	// Verify ownership
+	if analysis.UserID != userID {
+		respondError(w, http.StatusForbidden, "FORBIDDEN", "No tiene permiso para ver este análisis")
+		return
+	}
+
+	// Return SVG as image/svg+xml
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "private, max-age=3600")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(analysis.SVGData))
 }
 
 // Helper functions for responses
