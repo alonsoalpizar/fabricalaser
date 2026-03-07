@@ -59,13 +59,15 @@ body {
 }
 
 .nav-logo {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text);
+  display: flex;
+  align-items: center;
   text-decoration: none;
 }
 
-.nav-logo span { color: var(--accent); }
+.nav-logo img {
+  height: 32px;
+  width: auto;
+}
 
 .nav-user {
   display: flex;
@@ -581,6 +583,41 @@ body {
   color: var(--text);
 }
 
+/* Technology cut warning */
+.tech-cut-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.tech-cut-warning svg {
+  flex-shrink: 0;
+  color: #ef4444;
+  margin-top: 0.125rem;
+}
+
+.tech-cut-warning-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tech-cut-warning-content strong {
+  color: #ef4444;
+}
+
+.tech-cut-warning-content p {
+  margin: 0;
+  line-height: 1.4;
+}
+
 /* SVG PREVIEW */
 .svg-preview-container {
   margin-top: 1.5rem;
@@ -794,6 +831,11 @@ body {
   background: var(--warning-bg);
 }
 
+.option-card.compat-warning {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
 .option-card.compat-incompatible {
   border-color: var(--error);
   background: var(--error-bg);
@@ -819,6 +861,11 @@ body {
 
 .compat-indicator.possible {
   background: var(--warning);
+  color: #000;
+}
+
+.compat-indicator.warning {
+  background: #f59e0b;
   color: #000;
 }
 
@@ -1589,7 +1636,7 @@ body {
 
 <!-- NAV -->
 <nav class="nav">
-  <a href="/" class="nav-logo">FABRICA<span>LASER</span>.COM</a>
+  <a href="/" class="nav-logo"><img src="/logo.png" alt="FabricaLaser.com"></a>
 
   <div class="nav-links">
     <a href="/" class="nav-link">Inicio</a>
@@ -1878,6 +1925,18 @@ body {
           <div class="options-grid" id="techOptions">
             <div class="options-placeholder">Selecciona un material primero</div>
           </div>
+          <!-- Warning: Technology cannot cut but design has cut lines -->
+          <div class="tech-cut-warning" id="techCutWarning" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div class="tech-cut-warning-content">
+              <strong>Tu diseño tiene lineas de corte (rojas)</strong>
+              <p id="techCutWarningText">Esta tecnologia solo puede grabar, no cortar. Las lineas rojas no se procesaran.</p>
+            </div>
+          </div>
         </div>
 
         <!-- Thickness (THIRD - based on tech+material combo) -->
@@ -1886,17 +1945,17 @@ body {
           <div class="options-grid" id="thicknessOptions"></div>
         </div>
 
-        <!-- Engrave Type (hidden if no engrave operations) -->
+        <!-- Engrave Type (hidden if no raster operations - vector uses auto) -->
         <div class="options-section" id="engraveSection">
-          <label class="options-label">4. Tipo de grabado</label>
-          <!-- Info banner when SVG has both vector and raster -->
+          <label class="options-label" id="engraveSectionLabel">4. Tipo de relleno</label>
+          <!-- Info banner explaining the situation -->
           <div class="engrave-info-banner" id="engraveInfoBanner" style="display: none;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="16" x2="12" y2="12"/>
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
-            <span id="engraveInfoText">Tu diseño tiene grabado vectorial y rasterizado. Selecciona el tipo que mejor se ajuste a tu necesidad.</span>
+            <span id="engraveInfoText">Selecciona como procesar los rellenos negros de tu diseño.</span>
           </div>
           <div class="options-grid" id="engraveOptions"></div>
         </div>
@@ -2320,9 +2379,11 @@ function renderOptions() {
   // Thickness placeholder (hidden until technology is selected)
   document.getElementById('thicknessSection').style.display = 'none';
 
-  // Engrave Types
+  // Engrave Types - Only show raster-appropriate options (exclude Vectorial ID=1)
+  // Vector operations always use default speed, raster needs type selection
   const engGrid = document.getElementById('engraveOptions');
-  engGrid.innerHTML = state.config.engrave_types.map(e => `
+  const rasterEngraveTypes = state.config.engrave_types.filter(e => e.id !== 1);
+  engGrid.innerHTML = rasterEngraveTypes.map(e => `
     <div class="option-card" data-id="${e.id}" onclick="selectEngrave(${e.id}, this)">
       <div class="option-card-name">${e.name}</div>
       <div class="option-card-desc">${e.description || 'Factor: ' + e.factor + 'x'}</div>
@@ -2346,6 +2407,9 @@ async function selectMaterial(materialId, el) {
   // Reset technology and thickness sections
   document.getElementById('techOptions').innerHTML = '<div class="options-placeholder">Cargando tecnologias...</div>';
   document.getElementById('thicknessSection').style.display = 'none';
+  // Hide cut warning (will be shown again if needed when tech is selected)
+  const cutWarning = document.getElementById('techCutWarning');
+  if (cutWarning) cutWarning.style.display = 'none';
 
   try {
     // Fetch compatible technologies from database
@@ -2376,11 +2440,17 @@ async function selectMaterial(materialId, el) {
       if (t.can_engrave) capabilities.push('Grabado');
       const capText = capabilities.join(' + ') || 'Solo marcado';
 
+      // Check if design has cut but tech can't cut
+      const hasCutConflict = state.hasCutOperations && !t.can_cut;
+      const cardClass = hasCutConflict ? 'option-card compat-warning' : 'option-card compat-optimal';
+      const indicatorClass = hasCutConflict ? 'compat-indicator warning' : 'compat-indicator optimal';
+      const indicatorIcon = hasCutConflict ? '⚠' : '✓';
+
       return `
-        <div class="option-card compat-optimal" data-id="${t.id}" onclick="selectTechnology(${t.id}, this)">
+        <div class="${cardClass}" data-id="${t.id}" onclick="selectTechnology(${t.id}, this)">
           <div class="option-card-name">${t.name}</div>
           <div class="option-card-desc">${t.code}</div>
-          <div class="compat-indicator optimal">✓ ${capText}</div>
+          <div class="${indicatorClass}">${indicatorIcon} ${capText}</div>
         </div>
       `;
     }).join('');
@@ -2413,6 +2483,18 @@ function selectTechnology(techId, el) {
   if (!tech) {
     console.error('Technology not found in compatible list');
     return;
+  }
+
+  // Check if technology can cut vs design has cut operations
+  const cutWarning = document.getElementById('techCutWarning');
+  if (state.hasCutOperations && !tech.can_cut) {
+    // Show warning - design has red lines but technology can't cut
+    cutWarning.style.display = 'flex';
+    const cutLength = state.analysis?.cut_length_mm || 0;
+    document.getElementById('techCutWarningText').textContent =
+      `${tech.name} solo puede grabar, no cortar. Las ${cutLength.toFixed(1)} mm de lineas rojas seran ignoradas.`;
+  } else {
+    cutWarning.style.display = 'none';
   }
 
   // Show thickness options if available
@@ -2629,37 +2711,44 @@ function displayAnalysis(filename, cached) {
     operationsSection.style.display = 'none';
   }
 
-  // Show/hide engrave section and info banner based on analysis
+  // Show/hide engrave section based on analysis
+  // NEW LOGIC: Only show selector if there are RASTER operations
+  // Vector operations always use automatic processing (no selection needed)
   const engraveSection = document.getElementById('engraveSection');
   const engraveSummaryItem = document.getElementById('engraveSummaryItem');
   const engraveInfoBanner = document.getElementById('engraveInfoBanner');
+  const engraveSectionLabel = document.getElementById('engraveSectionLabel');
 
-  if (state.hasEngraveOperations) {
+  if (state.hasRasterOperations) {
+    // Has raster operations - show selector for raster type
     engraveSection.style.display = 'block';
+    engraveInfoBanner.style.display = 'flex';
     if (engraveSummaryItem) engraveSummaryItem.style.display = 'flex';
 
-    // Show info banner if SVG has BOTH vector and raster
-    if (state.hasVectorOperations && state.hasRasterOperations) {
-      engraveInfoBanner.style.display = 'flex';
+    if (state.hasVectorOperations) {
+      // Both vector AND raster
+      engraveSectionLabel.textContent = '4. Tipo de relleno';
       document.getElementById('engraveInfoText').textContent =
-        `Tu diseño tiene grabado vectorial (${vectorLength.toFixed(1)} mm) y rasterizado (${rasterArea.toFixed(1)} mm²). ` +
-        'El tipo seleccionado determina el costo y velocidad del proceso.';
-    } else if (state.hasVectorOperations) {
-      engraveInfoBanner.style.display = 'flex';
-      document.getElementById('engraveInfoText').textContent =
-        `Tu diseño tiene grabado vectorial (${vectorLength.toFixed(1)} mm). Ideal para lineas finas y detalles.`;
-    } else if (state.hasRasterOperations) {
-      engraveInfoBanner.style.display = 'flex';
-      document.getElementById('engraveInfoText').textContent =
-        `Tu diseño tiene grabado rasterizado (${rasterArea.toFixed(1)} mm²). Ideal para rellenos y areas solidas.`;
+        `Las lineas azules (${vectorLength.toFixed(1)} mm) se procesan automaticamente. ` +
+        `Selecciona como grabar los rellenos negros (${rasterArea.toFixed(1)} mm²):`;
     } else {
-      engraveInfoBanner.style.display = 'none';
+      // Only raster
+      engraveSectionLabel.textContent = '4. Tipo de grabado';
+      document.getElementById('engraveInfoText').textContent =
+        `Tu diseño tiene rellenos (${rasterArea.toFixed(1)} mm²). Selecciona el tipo de procesamiento:`;
     }
-  } else {
+  } else if (state.hasVectorOperations) {
+    // ONLY vector operations - auto-select Vectorial (ID 1), hide section
     engraveSection.style.display = 'none';
     engraveInfoBanner.style.display = 'none';
     if (engraveSummaryItem) engraveSummaryItem.style.display = 'none';
-    // Clear any previous engrave selection
+    // Auto-select Vectorial type
+    state.options.engraveTypeId = 1;
+  } else {
+    // No engrave operations at all
+    engraveSection.style.display = 'none';
+    engraveInfoBanner.style.display = 'none';
+    if (engraveSummaryItem) engraveSummaryItem.style.display = 'none';
     state.options.engraveTypeId = null;
   }
 
@@ -2857,6 +2946,10 @@ async function calculatePrice() {
 // DISPLAY RESULT
 function displayResult() {
   const q = state.quote;
+  if (!q) {
+    console.warn('displayResult called without quote data');
+    return;
+  }
 
   // Status
   const statusEl = document.getElementById('resultStatus');
@@ -2981,11 +3074,22 @@ function displayResult() {
 
   // Show engrave summary only if there are engrave operations
   const engraveSummaryItem = document.getElementById('engraveSummaryItem');
-  if (state.hasEngraveOperations) {
-    const eng = state.config.engrave_types.find(e => e.id === state.options.engraveTypeId);
-    document.getElementById('summaryEngrave').textContent = eng?.name || '-';
+  const summaryEngraveEl = document.getElementById('summaryEngrave');
+  const summaryEngraveLabelEl = engraveSummaryItem?.querySelector('.summary-item-label');
+
+  if (state.hasEngraveOperations && engraveSummaryItem && summaryEngraveEl) {
+    if (state.hasRasterOperations) {
+      // Has raster - show selected type
+      const eng = state.config.engrave_types.find(e => e.id === state.options.engraveTypeId);
+      if (summaryEngraveLabelEl) summaryEngraveLabelEl.textContent = 'Relleno:';
+      summaryEngraveEl.textContent = eng?.name || 'Rasterizado';
+    } else {
+      // Only vector - show automatic
+      if (summaryEngraveLabelEl) summaryEngraveLabelEl.textContent = 'Grabado:';
+      summaryEngraveEl.textContent = 'Vectorial (auto)';
+    }
     engraveSummaryItem.style.display = 'flex';
-  } else {
+  } else if (engraveSummaryItem) {
     engraveSummaryItem.style.display = 'none';
   }
 
@@ -3034,13 +3138,20 @@ function displayResult() {
   const timeCutRow = document.getElementById('timeCutRow');
   const timeVectorRow = document.getElementById('timeVectorRow');
   const timeRasterRow = document.getElementById('timeRasterRow');
+  const timeCutEl = document.getElementById('timeCut');
+  const timeVectorEl = document.getElementById('timeVector');
+  const timeRasterEl = document.getElementById('timeRaster');
+  const timeSetupEl = document.getElementById('timeSetup');
+  const timeTotalEl = document.getElementById('timeTotal');
 
   // Cut row
-  if (state.hasCutOperations && cutTime > 0) {
-    document.getElementById('timeCut').textContent = `${cutTime.toFixed(1)} min`;
-    timeCutRow.style.display = 'flex';
-  } else {
-    timeCutRow.style.display = 'none';
+  if (timeCutRow) {
+    if (state.hasCutOperations && cutTime > 0) {
+      if (timeCutEl) timeCutEl.textContent = `${cutTime.toFixed(1)} min`;
+      timeCutRow.style.display = 'flex';
+    } else {
+      timeCutRow.style.display = 'none';
+    }
   }
 
   // Vector and Raster times - now provided separately by backend
@@ -3048,23 +3159,27 @@ function displayResult() {
   const rasterTime = time.raster_mins || 0;
 
   // Vector row - show if there are vector operations and time > 0
-  if (state.hasVectorOperations && vectorTime > 0) {
-    document.getElementById('timeVector').textContent = `${vectorTime.toFixed(1)} min`;
-    timeVectorRow.style.display = 'flex';
-  } else {
-    timeVectorRow.style.display = 'none';
+  if (timeVectorRow) {
+    if (state.hasVectorOperations && vectorTime > 0) {
+      if (timeVectorEl) timeVectorEl.textContent = `${vectorTime.toFixed(1)} min`;
+      timeVectorRow.style.display = 'flex';
+    } else {
+      timeVectorRow.style.display = 'none';
+    }
   }
 
   // Raster row - show if there are raster operations and time > 0
-  if (state.hasRasterOperations && rasterTime > 0) {
-    document.getElementById('timeRaster').textContent = `${rasterTime.toFixed(1)} min`;
-    timeRasterRow.style.display = 'flex';
-  } else {
-    timeRasterRow.style.display = 'none';
+  if (timeRasterRow) {
+    if (state.hasRasterOperations && rasterTime > 0) {
+      if (timeRasterEl) timeRasterEl.textContent = `${rasterTime.toFixed(1)} min`;
+      timeRasterRow.style.display = 'flex';
+    } else {
+      timeRasterRow.style.display = 'none';
+    }
   }
 
-  document.getElementById('timeSetup').textContent = `${setupTime.toFixed(1)} min`;
-  document.getElementById('timeTotal').textContent = `${totalTime.toFixed(1)} min`;
+  if (timeSetupEl) timeSetupEl.textContent = `${setupTime.toFixed(1)} min`;
+  if (timeTotalEl) timeTotalEl.textContent = `${totalTime.toFixed(1)} min`;
 
   // Price breakdown with material cost
   const factors = q.factors || q;
@@ -3073,60 +3188,74 @@ function displayResult() {
 
   // Machine cost (base cost from time) - read from cost_breakdown, not pricing
   const machineCost = costBreakdown.base || q.cost_base || 0;
-  document.getElementById('costMachine').textContent = `₡${Math.round(machineCost).toLocaleString('es-CR')}`;
+  const costMachineEl = document.getElementById('costMachine');
+  if (costMachineEl) costMachineEl.textContent = `₡${Math.round(machineCost).toLocaleString('es-CR')}`;
 
   // Material cost - read with fallback for compatibility
   const materialIncluded = q.material_included !== undefined ? q.material_included : (materialCost.included !== undefined ? materialCost.included : true);
   const materialCostRow = document.getElementById('materialCostRow');
   const costMaterialEl = document.getElementById('costMaterial');
-  if (materialIncluded && materialCost.with_waste > 0) {
-    costMaterialEl.textContent = `₡${Math.round(materialCost.with_waste).toLocaleString('es-CR')}`;
-    costMaterialEl.style.fontSize = '';
-    materialCostRow.style.display = 'flex';
-    materialCostRow.classList.add('material-cost-row');
-  } else if (!materialIncluded) {
-    costMaterialEl.textContent = '₡0 (cliente provee)';
-    costMaterialEl.style.fontSize = '0.75rem';
-    materialCostRow.style.display = 'flex';
-    materialCostRow.classList.remove('material-cost-row');
-  } else {
-    materialCostRow.style.display = 'none';
+  if (materialCostRow && costMaterialEl) {
+    if (materialIncluded && materialCost.with_waste > 0) {
+      costMaterialEl.textContent = `₡${Math.round(materialCost.with_waste).toLocaleString('es-CR')}`;
+      costMaterialEl.style.fontSize = '';
+      materialCostRow.style.display = 'flex';
+      materialCostRow.classList.add('material-cost-row');
+    } else if (!materialIncluded) {
+      costMaterialEl.textContent = '₡0 (cliente provee)';
+      costMaterialEl.style.fontSize = '0.75rem';
+      materialCostRow.style.display = 'flex';
+      materialCostRow.classList.remove('material-cost-row');
+    } else {
+      materialCostRow.style.display = 'none';
+    }
   }
 
   // Tech detail factors (hidden by default)
-  document.getElementById('factorMaterial').textContent = `${(factors.material || factors.factor_material || 1).toFixed(2)}x`;
-  document.getElementById('factorEngrave').textContent = `${(factors.engrave || factors.factor_engrave || 1).toFixed(2)}x`;
-  document.getElementById('factorUV').textContent = `+${((factors.uv_premium || factors.factor_uv_premium || 0) * 100).toFixed(0)}%`;
-  document.getElementById('techPriceModel').textContent = priceModel === 'value' ? 'Por valor' : 'Por tiempo';
+  const factorMaterialEl = document.getElementById('factorMaterial');
+  const factorEngraveEl = document.getElementById('factorEngrave');
+  const factorUVEl = document.getElementById('factorUV');
+  const techPriceModelEl = document.getElementById('techPriceModel');
+  if (factorMaterialEl) factorMaterialEl.textContent = `${(factors.material || factors.factor_material || 1).toFixed(2)}x`;
+  if (factorEngraveEl) factorEngraveEl.textContent = `${(factors.engrave || factors.factor_engrave || 1).toFixed(2)}x`;
+  if (factorUVEl) factorUVEl.textContent = `+${((factors.uv_premium || factors.factor_uv_premium || 0) * 100).toFixed(0)}%`;
+  if (techPriceModelEl) techPriceModelEl.textContent = priceModel === 'value' ? 'Por valor' : 'Por tiempo';
 
   // Discount row - only show if discount > 0
   const discountRow = document.getElementById('discountRow');
   const discountPct = factors.volume_discount || factors.discount_volume_pct || 0;
-  if (discountPct > 0) {
-    document.getElementById('factorDiscount').textContent = `-${(discountPct * 100).toFixed(0)}%`;
-    discountRow.style.display = 'flex';
-  } else {
-    discountRow.style.display = 'none';
+  if (discountRow) {
+    if (discountPct > 0) {
+      const factorDiscountEl = document.getElementById('factorDiscount');
+      if (factorDiscountEl) factorDiscountEl.textContent = `-${(discountPct * 100).toFixed(0)}%`;
+      discountRow.style.display = 'flex';
+    } else {
+      discountRow.style.display = 'none';
+    }
   }
 
   // Setup fee row
   const setupFeeRow = document.getElementById('setupFeeRow');
   const setupFee = pricing.setup_fee || pricing.cost_setup || 0;
-  if (setupFee > 0) {
-    document.getElementById('costSetup').textContent = `₡${Math.round(setupFee).toLocaleString('es-CR')}`;
-    setupFeeRow.style.display = 'flex';
-  } else {
-    setupFeeRow.style.display = 'none';
+  if (setupFeeRow) {
+    if (setupFee > 0) {
+      const costSetupEl = document.getElementById('costSetup');
+      if (costSetupEl) costSetupEl.textContent = `₡${Math.round(setupFee).toLocaleString('es-CR')}`;
+      setupFeeRow.style.display = 'flex';
+    } else {
+      setupFeeRow.style.display = 'none';
+    }
   }
 
   // Unit price label - show "Total" when qty=1, "Precio unitario" when qty>1
   const priceUnitLabel = document.getElementById('priceUnitLabel');
-  if (qty > 1) {
-    priceUnitLabel.textContent = 'Precio unitario';
-  } else {
-    priceUnitLabel.textContent = 'Total';
+  const priceUnitValue = document.getElementById('priceUnit');
+  if (priceUnitLabel) {
+    priceUnitLabel.textContent = qty > 1 ? 'Precio unitario' : 'Total';
   }
-  document.getElementById('priceUnit').textContent = `₡${Math.round(unitPrice).toLocaleString('es-CR')}`;
+  if (priceUnitValue) {
+    priceUnitValue.textContent = `₡${Math.round(unitPrice).toLocaleString('es-CR')}`;
+  }
 }
 
 // GO TO STEP
@@ -3263,14 +3392,19 @@ function resetWizard() {
   document.getElementById('thicknessSection').style.display = 'none';
   document.getElementById('thicknessOptions').innerHTML = '';
 
-  // Show engrave section again (will be hidden if needed after next analysis)
-  document.getElementById('engraveSection').style.display = 'block';
+  // Hide engrave section (will be shown based on analysis)
+  document.getElementById('engraveSection').style.display = 'none';
+  // Reset engrave label
+  const engraveSectionLabel = document.getElementById('engraveSectionLabel');
+  if (engraveSectionLabel) engraveSectionLabel.textContent = '4. Tipo de relleno';
 
   // Reset operation badges and info banner
   const operationsDetected = document.getElementById('operationsDetected');
   if (operationsDetected) operationsDetected.style.display = 'none';
   const engraveInfoBanner = document.getElementById('engraveInfoBanner');
   if (engraveInfoBanner) engraveInfoBanner.style.display = 'none';
+  const techCutWarning = document.getElementById('techCutWarning');
+  if (techCutWarning) techCutWarning.style.display = 'none';
 
   // Reset new indicators
   const fallbackWarning = document.getElementById('fallbackWarning');
