@@ -191,6 +191,12 @@ func NewRouter() *chi.Mux {
 	r.Get("/favicon.svg", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "favicon.svg"))
 	})
+	r.Get("/logo-oficial.svg", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "logo-oficial.svg"))
+	})
+	r.Get("/logo.png", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "logo.png"))
+	})
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "favicon.svg"))
 	})
