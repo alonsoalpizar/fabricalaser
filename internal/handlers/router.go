@@ -9,6 +9,7 @@ import (
 
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/admin"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/auth"
+	"github.com/alonsoalpizar/fabricalaser/internal/handlers/chat"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/config"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/quote"
 	"github.com/alonsoalpizar/fabricalaser/internal/middleware"
@@ -146,6 +147,13 @@ func NewRouter() *chi.Mux {
 		r.Put("/material-costs/{id}", materialCostHandler.UpdateMaterialCost)
 		r.Delete("/material-costs/{id}", materialCostHandler.DeleteMaterialCost)
 		r.Post("/material-costs/{id}/recalculate", materialCostHandler.RecalculateMaterialCost)
+	})
+
+	// Chat route (protected - requires auth)
+	chatHandler := chat.NewHandler()
+	r.Route("/api/v1/chat", func(r chi.Router) {
+		r.Use(middleware.AuthMiddleware)
+		r.Post("/", chatHandler.HandleChat)
 	})
 
 	// Quote routes (Fase 1 - Cotizador)
