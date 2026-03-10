@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Velocidades | Admin FabricaLaser</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../admin.css">
 </head>
 <body>
@@ -19,7 +19,7 @@
           <div class="content-breadcrumb">
             <a href="/admin/">Dashboard</a>
             <span>/</span>
-            <a href="/admin/config/technologies.html">Configuracion</a>
+            <a href="/admin/config/technologies.html">Configuraci&oacute;n</a>
             <span>/</span>
             <span>Velocidades</span>
           </div>
@@ -46,7 +46,7 @@
       <!-- Filters -->
       <div class="filters-bar">
         <select class="filter-select" id="techFilter" onchange="loadSpeeds()">
-          <option value="">Todas las tecnologias</option>
+          <option value="">Todas las tecnolog&iacute;as</option>
         </select>
         <select class="filter-select" id="materialFilter" onchange="loadSpeeds()">
           <option value="">Todos los materiales</option>
@@ -71,7 +71,7 @@
   <div class="modal-overlay" id="speedModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 class="modal-title" id="modalTitle">Nueva Configuracion de Velocidad</h3>
+        <h3 class="modal-title" id="modalTitle">Nueva Configuraci&oacute;n de Velocidad</h3>
         <button class="modal-close" onclick="closeModal('speedModal')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -85,7 +85,7 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
-              <label class="form-label">Tecnologia *</label>
+              <label class="form-label">Tecnolog&iacute;a *</label>
               <select class="form-select" id="speedTechId" required>
                 <option value="">Seleccionar...</option>
               </select>
@@ -110,14 +110,14 @@
             <div class="form-group">
               <label class="form-label">Velocidad Corte (mm/min)</label>
               <input type="number" class="form-input" id="speedCut"
-                     min="0" step="0.1" placeholder="Dejar vacio si no corta">
+                     min="0" step="0.1" placeholder="Dejar vac&iacute;o si no corta">
               <span class="form-hint">NULL = no soporta corte</span>
             </div>
 
             <div class="form-group">
               <label class="form-label">Velocidad Grabado (mm/min)</label>
               <input type="number" class="form-input" id="speedEngrave"
-                     min="0" step="0.1" placeholder="Dejar vacio si no graba">
+                     min="0" step="0.1" placeholder="Dejar vac&iacute;o si no graba">
               <span class="form-hint">NULL = no soporta grabado</span>
             </div>
           </div>
@@ -125,17 +125,17 @@
           <div class="form-group">
             <label class="form-label">
               <input type="checkbox" id="speedCompatible" checked style="margin-right: 0.5rem;">
-              Combinacion compatible
+              Combinaci&oacute;n compatible
             </label>
             <span class="form-hint" style="display: block; margin-top: 0.25rem;">
-              Desmarcar para indicar que esta combinacion NO es posible
+              Desmarcar para indicar que esta combinaci&oacute;n NO es posible
             </span>
           </div>
 
           <div class="form-group">
             <label class="form-label">Notas</label>
             <textarea class="form-textarea" id="speedNotes" rows="2"
-                      placeholder="Notas adicionales (calibracion, advertencias, etc.)"></textarea>
+                      placeholder="Notas adicionales (calibraci&oacute;n, advertencias, etc.)"></textarea>
           </div>
         </div>
         <div class="modal-footer">
@@ -162,7 +162,7 @@
         <div class="modal-body">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
-              <label class="form-label">Tecnologia *</label>
+              <label class="form-label">Tecnolog&iacute;a *</label>
               <select class="form-select" id="bulkTechId" required>
                 <option value="">Seleccionar...</option>
               </select>
@@ -180,7 +180,7 @@
             <label class="form-label">Grosores separados por coma (mm) *</label>
             <input type="text" class="form-input" id="bulkThicknesses" required
                    placeholder="Ej: 3, 5, 6, 10">
-            <span class="form-hint">Se creara un registro para cada grosor</span>
+            <span class="form-hint">Se crear&aacute; un registro para cada grosor</span>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -215,7 +215,7 @@
   <div class="modal-overlay" id="deleteModal">
     <div class="modal" style="max-width: 400px;">
       <div class="modal-header">
-        <h3 class="modal-title">Confirmar eliminacion</h3>
+        <h3 class="modal-title">Confirmar eliminaci&oacute;n</h3>
         <button class="modal-close" onclick="closeModal('deleteModal')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -224,9 +224,9 @@
         </button>
       </div>
       <div class="modal-body">
-        <p>Esta seguro de eliminar esta configuracion de velocidad?</p>
+        <p>&iquest;Est&aacute; seguro de eliminar esta configuraci&oacute;n de velocidad?</p>
         <p id="deleteInfo" class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;"></p>
-        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta accion no se puede deshacer.</p>
+        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta acci&oacute;n no se puede deshacer.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancelar</button>
@@ -338,7 +338,7 @@
               <path d="M2 12l10 5 10-5"></path>
             </svg>
             <p>No hay configuraciones de velocidad</p>
-            <p class="text-muted" style="font-size: 0.875rem;">Cree una nueva configuracion o use la carga masiva</p>
+            <p class="text-muted" style="font-size: 0.875rem;">Cree una nueva configuraci&oacute;n o use la carga masiva</p>
           </div>
         `;
         return;
@@ -348,7 +348,7 @@
         <table class="table">
           <thead>
             <tr>
-              <th>Tecnologia</th>
+              <th>Tecnolog&iacute;a</th>
               <th>Material</th>
               <th>Grosor</th>
               <th>Corte mm/min</th>
@@ -406,7 +406,7 @@
     // CREATE / EDIT
     // ================================================
     function openCreateModal() {
-      document.getElementById('modalTitle').textContent = 'Nueva Configuracion de Velocidad';
+      document.getElementById('modalTitle').textContent = 'Nueva Configuraci\u00f3n de Velocidad';
       document.getElementById('speedForm').reset();
       document.getElementById('speedId').value = '';
       document.getElementById('speedThickness').value = '0';
@@ -424,11 +424,11 @@
     function editSpeed(id) {
       const speed = speedsData.find(s => s.id === id);
       if (!speed) {
-        showToast('Configuracion no encontrada', 'error');
+        showToast('Configuraci\u00f3n no encontrada', 'error');
         return;
       }
 
-      document.getElementById('modalTitle').textContent = 'Editar Configuracion de Velocidad';
+      document.getElementById('modalTitle').textContent = 'Editar Configuraci\u00f3n de Velocidad';
       document.getElementById('speedId').value = speed.id;
       document.getElementById('speedTechId').value = speed.technology_id;
       document.getElementById('speedTechId').disabled = true;
@@ -469,17 +469,17 @@
       try {
         if (isNew) {
           await apiPost('/admin/tech-material-speeds', body);
-          showToast('Configuracion creada exitosamente', 'success');
+          showToast('Configuraci\u00f3n creada exitosamente', 'success');
         } else {
           await apiPut(`/admin/tech-material-speeds/${id}`, body);
-          showToast('Configuracion actualizada exitosamente', 'success');
+          showToast('Configuraci\u00f3n actualizada exitosamente', 'success');
         }
 
         closeModal('speedModal');
         loadSpeeds();
       } catch (err) {
         console.error('Failed to save speed:', err);
-        showToast(err.message || 'Error al guardar configuracion', 'error');
+        showToast(err.message || 'Error al guardar configuraci\u00f3n', 'error');
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Guardar';
@@ -502,7 +502,7 @@
         .filter(t => !isNaN(t));
 
       if (thicknesses.length === 0) {
-        showToast('Ingrese al menos un grosor valido', 'error');
+        showToast('Ingrese al menos un grosor v\u00e1lido', 'error');
         return;
       }
 
@@ -528,7 +528,7 @@
         loadSpeeds();
       } catch (err) {
         console.error('Failed to bulk create:', err);
-        showToast(err.message || 'Error al crear configuraciones', 'error');
+        showToast(err.message || 'Error al crear configuraci\u00f3nes', 'error');
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = 'Crear Registros';
@@ -553,12 +553,12 @@
 
       try {
         await apiDelete(`/admin/tech-material-speeds/${deleteSpeedId}`);
-        showToast('Configuracion eliminada', 'success');
+        showToast('Configuraci\u00f3n eliminada', 'success');
         closeModal('deleteModal');
         loadSpeeds();
       } catch (err) {
         console.error('Failed to delete speed:', err);
-        showToast(err.message || 'Error al eliminar configuracion', 'error');
+        showToast(err.message || 'Error al eliminar configuraci\u00f3n', 'error');
       }
 
       deleteSpeedId = null;

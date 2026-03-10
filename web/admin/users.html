@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Usuarios | Admin FabricaLaser</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
     <main class="main-content">
       <header class="content-header">
         <div>
-          <h1 class="content-title">Gestion de Usuarios</h1>
+          <h1 class="content-title">Gesti&oacute;n de Usuarios</h1>
           <div class="content-breadcrumb">
             <a href="/admin/">Dashboard</a>
             <span>/</span>
@@ -38,7 +38,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text" id="searchInput" placeholder="Buscar por nombre, cedula o email..." oninput="handleSearch()">
+          <input type="text" id="searchInput" placeholder="Buscar por nombre, c&eacute;dula o email..." oninput="handleSearch()">
         </div>
         <select class="filter-select" id="roleFilter" onchange="loadUsers()">
           <option value="">Todos los roles</option>
@@ -83,11 +83,11 @@
           <input type="hidden" id="userId" value="">
 
           <div class="form-group">
-            <label class="form-label">Cedula *</label>
+            <label class="form-label">C&eacute;dula *</label>
             <input type="text" class="form-input" id="userCedula" required
-                   pattern="[0-9]{9,12}" title="Cedula debe tener 9-12 digitos"
+                   pattern="[0-9]{9,12}" title="C&eacute;dula debe tener 9-12 d&iacute;gitos"
                    placeholder="Ej: 123456789">
-            <span class="form-hint">Fisica (9 digitos) o Juridica (10-12 digitos)</span>
+            <span class="form-hint">F&iacute;sica (9 d&iacute;gitos) o Jur&iacute;dica (10-12 d&iacute;gitos)</span>
           </div>
 
           <div class="form-group">
@@ -101,7 +101,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Telefono</label>
+            <label class="form-label">Tel&eacute;fono</label>
             <input type="tel" class="form-input" id="userPhone" placeholder="8888-8888">
           </div>
 
@@ -124,9 +124,9 @@
           </div>
 
           <div class="form-group" id="passwordGroup">
-            <label class="form-label">Contrasena</label>
+            <label class="form-label">Contrase&ntilde;a</label>
             <input type="password" class="form-input" id="userPassword" placeholder="Dejar vacio para no cambiar">
-            <span class="form-hint" id="passwordHint">Minimo 6 caracteres</span>
+            <span class="form-hint" id="passwordHint">M&iacute;nimo 6 caracteres</span>
           </div>
 
           <div class="form-group">
@@ -147,7 +147,7 @@
   <div class="modal-overlay" id="deleteModal">
     <div class="modal" style="max-width: 400px;">
       <div class="modal-header">
-        <h3 class="modal-title">Confirmar eliminacion</h3>
+        <h3 class="modal-title">Confirmar eliminaci&oacute;n</h3>
         <button class="modal-close" onclick="closeModal('deleteModal')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -156,8 +156,8 @@
         </button>
       </div>
       <div class="modal-body">
-        <p>Esta seguro de eliminar al usuario <strong id="deleteUserName"></strong>?</p>
-        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta accion no se puede deshacer.</p>
+        <p>&iquest;Est&aacute; seguro de eliminar al usuario <strong id="deleteUserName"></strong>?</p>
+        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta acci&oacute;n no se puede deshacer.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancelar</button>
@@ -240,7 +240,7 @@
           <thead>
             <tr>
               <th>Usuario</th>
-              <th>Cedula</th>
+              <th>C&eacute;dula</th>
               <th>Email</th>
               <th>Rol</th>
               <th>Cuota</th>
@@ -332,7 +332,7 @@
       return `
         <div class="pagination">
           ${buttons.join('')}
-          <span class="pagination-info">Pagina ${current} de ${total}</span>
+          <span class="pagination-info">P\u00e1gina ${current} de ${total}</span>
         </div>
       `;
     }
@@ -354,7 +354,7 @@
       document.getElementById('userForm').reset();
       document.getElementById('userId').value = '';
       document.getElementById('userCedula').disabled = false;
-      document.getElementById('passwordHint').textContent = 'Minimo 6 caracteres (requerido)';
+      document.getElementById('passwordHint').textContent = 'M\u00ednimo 6 caracteres (requerido)';
       document.getElementById('userPassword').required = true;
       document.getElementById('userQuota').value = 3;
       openModal('userModal');
@@ -381,7 +381,7 @@
         document.getElementById('userQuota').value = user.quote_limit || 3;
         document.getElementById('userPassword').value = '';
         document.getElementById('userPassword').required = false;
-        document.getElementById('passwordHint').textContent = 'Dejar vacio para mantener la actual';
+        document.getElementById('passwordHint').textContent = 'Dejar vac\u00edo para mantener la actual';
 
         openModal('userModal');
       } catch (err) {
@@ -409,12 +409,12 @@
       const password = document.getElementById('userPassword').value;
       if (password) {
         if (password.length < 6) {
-          showToast('La contrasena debe tener al menos 6 caracteres', 'error');
+          showToast('La contrase\u00f1a debe tener al menos 6 caracteres', 'error');
           return;
         }
         body.password = password;
       } else if (isNew) {
-        showToast('La contrasena es requerida para nuevos usuarios', 'error');
+        showToast('La contrase\u00f1a es requerida para nuevos usuarios', 'error');
         return;
       }
 

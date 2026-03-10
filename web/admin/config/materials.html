@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Materiales | Admin FabricaLaser</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../admin.css">
 </head>
 <body>
@@ -19,7 +19,7 @@
           <div class="content-breadcrumb">
             <a href="/admin/">Dashboard</a>
             <span>/</span>
-            <span>Configuracion</span>
+            <span>Configuraci&oacute;n</span>
             <span>/</span>
             <span>Materiales</span>
           </div>
@@ -36,11 +36,11 @@
       <div class="content-body">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Catalogo de Materiales</h3>
+            <h3 class="card-title">Cat&aacute;logo de Materiales</h3>
           </div>
           <div class="card-body">
             <p class="text-muted" style="padding: 0 1.5rem; margin-bottom: 1rem; font-size: 0.875rem;">
-              El factor de cada material multiplica el costo base. Ej: Factor 1.2 = 20% mas caro que madera (factor 1.0).
+              El factor de cada material multiplica el costo base. Ej: Factor 1.2 = 20% m&aacute;s caro que madera (factor 1.0).
             </p>
             <div id="dataTable">
               <div class="loading"><div class="spinner"></div></div>
@@ -70,18 +70,18 @@
           <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
             <div class="form-group">
               <label class="form-label">Nombre *</label>
-              <input type="text" class="form-input" id="itemName" required placeholder="Ej: Acrilico transparente">
+              <input type="text" class="form-input" id="itemName" required placeholder="Ej: Acr&iacute;lico transparente">
             </div>
 
             <div class="form-group">
-              <label class="form-label">Categoria</label>
+              <label class="form-label">Categor&iacute;a</label>
               <select class="form-select" id="itemCategory">
                 <option value="madera">Madera</option>
-                <option value="acrilico">Acrilico</option>
-                <option value="plastico">Plastico</option>
+                <option value="acrilico">Acr&iacute;lico</option>
+                <option value="plastico">Pl&aacute;stico</option>
                 <option value="cuero">Cuero</option>
                 <option value="vidrio">Vidrio</option>
-                <option value="ceramica">Ceramica</option>
+                <option value="ceramica">Cer&aacute;mica</option>
                 <option value="metal">Metal</option>
                 <option value="otro">Otro</option>
               </select>
@@ -92,7 +92,7 @@
             <div class="form-group">
               <label class="form-label">Factor de Costo *</label>
               <input type="number" class="form-input" id="itemFactor" required min="0.1" max="10" step="0.1" value="1.0" placeholder="Ej: 1.2">
-              <span class="form-hint">1.0 = precio base (madera). 1.2 = 20% mas caro</span>
+              <span class="form-hint">1.0 = precio base (madera). 1.2 = 20% m&aacute;s caro</span>
             </div>
 
             <div class="form-group">
@@ -127,7 +127,7 @@
   <div class="modal-overlay" id="deleteModal">
     <div class="modal" style="max-width: 400px;">
       <div class="modal-header">
-        <h3 class="modal-title">Confirmar eliminacion</h3>
+        <h3 class="modal-title">Confirmar eliminaci&oacute;n</h3>
         <button class="modal-close" onclick="closeModal('deleteModal')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -136,8 +136,8 @@
         </button>
       </div>
       <div class="modal-body">
-        <p>Esta seguro de eliminar <strong id="deleteItemName"></strong>?</p>
-        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta accion no se puede deshacer.</p>
+        <p>&iquest;Est&aacute; seguro de eliminar <strong id="deleteItemName"></strong>?</p>
+        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta acci&oacute;n no se puede deshacer.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancelar</button>
@@ -191,7 +191,7 @@
           <thead>
             <tr>
               <th>Material</th>
-              <th>Categoria</th>
+              <th>Categor&iacute;a</th>
               <th>Factor</th>
               <th>Espesores</th>
               <th>Estado</th>

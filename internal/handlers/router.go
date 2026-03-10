@@ -234,7 +234,8 @@ func NewRouter() *chi.Mux {
 		http.Redirect(w, r, "/docs/pricing", http.StatusMovedPermanently)
 	})
 
-	// Static assets (if needed in future)
+	// Static assets
+	r.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir(filepath.Join(webDir, "assets")))))
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(webDir, "static")))))
 
 	return r

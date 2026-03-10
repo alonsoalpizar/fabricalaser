@@ -5,34 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mi Cuenta - FabricaLaser.com</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #F6F4F0;
-  --bg-warm: #EDEAE4;
-  --bg-card: #FFFFFF;
-  --bg-dark: #1C1C1E;
-  --border: #D8D4CC;
-  --border-light: #E8E5DF;
-  --text: #1C1C1E;
-  --text-secondary: #5A5754;
-  --text-muted: #8A8681;
-  --accent: #B8543E;
-  --accent-soft: rgba(184, 84, 62, 0.08);
-  --accent-hover: #9C4533;
+  /* Paleta OSCURA premium — consistente con landing y cotizar */
+  --bg: #000000;
+  --bg-warm: #111111;
+  --bg-card: #1A1A1A;
+  --bg-dark: #0A0A0A;
+  --border: #2A2A2A;
+  --border-light: #333333;
+  --text: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-muted: #666666;
+  --accent: #9B2020;
+  --accent-soft: rgba(155, 32, 32, 0.15);
+  --accent-hover: #B82E2E;
   --white: #FFFFFF;
 
   --success: #10b981;
-  --success-soft: rgba(16, 185, 129, 0.1);
+  --success-soft: rgba(16, 185, 129, 0.12);
   --info: #06b6d4;
-  --info-soft: rgba(6, 182, 212, 0.1);
+  --info-soft: rgba(6, 182, 212, 0.12);
   --warning: #f59e0b;
-  --warning-soft: rgba(245, 158, 11, 0.1);
+  --warning-soft: rgba(245, 158, 11, 0.12);
 
   --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -59,22 +60,23 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(246, 244, 240, 0.9);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-light);
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
 }
 
 .nav-logo {
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--text);
+  display: flex;
+  align-items: center;
   cursor: pointer;
 }
 
-.nav-logo span { color: var(--accent); }
+.nav-logo img {
+  height: 32px;
+  width: auto;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
 
 .nav-actions {
   display: flex;
@@ -284,12 +286,13 @@ a { color: inherit; text-decoration: none; }
   background: var(--bg);
   border: 1px solid var(--border);
   transition: all 0.2s var(--ease);
+  color-scheme: dark;
 }
 
 .form-input:focus {
   outline: none;
   border-color: var(--accent);
-  background: var(--white);
+  background: var(--bg-warm);
 }
 
 .form-input:disabled {
@@ -308,7 +311,8 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border);
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235A5754' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23B0B0B0' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  color-scheme: dark;
   background-repeat: no-repeat;
   background-position: right 1rem center;
 }
@@ -316,7 +320,7 @@ a { color: inherit; text-decoration: none; }
 .form-select:focus {
   outline: none;
   border-color: var(--accent);
-  background-color: var(--white);
+  background-color: var(--bg-warm);
 }
 
 .form-hint {
@@ -365,7 +369,7 @@ a { color: inherit; text-decoration: none; }
   transition: all 0.3s var(--ease);
 }
 
-.btn-secondary:hover { border-color: var(--text-secondary); background: var(--white); }
+.btn-secondary:hover { border-color: var(--text-secondary); background: var(--bg-card); }
 
 .btn-outline-danger {
   padding: 0.85rem 1.75rem;
@@ -402,7 +406,7 @@ a { color: inherit; text-decoration: none; }
 .action-card:hover {
   border-color: var(--border);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 
 .action-card.primary {
@@ -528,10 +532,10 @@ a { color: inherit; text-decoration: none; }
 
 <!-- NAV -->
 <nav class="nav">
-  <div class="nav-logo" onclick="window.location.href='/'">FABRICA<span>LASER</span>.COM</div>
+  <div class="nav-logo" onclick="window.location.href='/'"><img src="/assets/img/nav.png" alt="FabricaLaser.com"></div>
   <div class="nav-actions">
     <span class="nav-link" id="adminLink" style="display: none;" onclick="window.location.href='/admin/'">Panel Admin</span>
-    <span class="nav-link" onclick="logout()">Cerrar sesion</span>
+    <span class="nav-link" onclick="logout()">Cerrar sesi&oacute;n</span>
     <button class="nav-cta" onclick="window.location.href='/cotizar'">COTIZAR</button>
   </div>
 </nav>
@@ -545,7 +549,7 @@ a { color: inherit; text-decoration: none; }
 <main class="main" id="mainContent" style="display: none;">
   <div class="page-header">
     <h1 class="page-title">Mi Cuenta</h1>
-    <p class="page-subtitle">Administra tu perfil y cotizaciones</p>
+    <p class="page-subtitle">Administr&aacute; tu perfil y cotizaciones</p>
   </div>
 
   <!-- Action Cards -->
@@ -556,7 +560,7 @@ a { color: inherit; text-decoration: none; }
       </div>
       <div class="action-content">
         <h4>Cotizar proyecto</h4>
-        <p>Subi tu SVG y cotiza al instante</p>
+        <p>Sub&iacute; tu SVG y cotiz&aacute; al instante</p>
       </div>
     </div>
     <div class="action-card" onclick="window.location.href='/mis-cotizaciones'">
@@ -587,7 +591,7 @@ a { color: inherit; text-decoration: none; }
   <!-- Profile Card -->
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Informacion personal</h2>
+      <h2 class="card-title">Informaci&oacute;n personal</h2>
     </div>
 
     <div class="profile-grid">
@@ -596,7 +600,7 @@ a { color: inherit; text-decoration: none; }
         <div class="profile-value" id="profileNombre">-</div>
       </div>
       <div class="profile-item">
-        <div class="profile-label">Cedula</div>
+        <div class="profile-label">C&eacute;dula</div>
         <div class="profile-value" id="profileCedula">-</div>
       </div>
       <div class="profile-item">
@@ -604,7 +608,7 @@ a { color: inherit; text-decoration: none; }
         <div class="profile-value" id="profileEmail">-</div>
       </div>
       <div class="profile-item">
-        <div class="profile-label">Telefono</div>
+        <div class="profile-label">Tel&eacute;fono</div>
         <div class="profile-value" id="profileTelefono">-</div>
       </div>
     </div>
@@ -613,7 +617,7 @@ a { color: inherit; text-decoration: none; }
   <!-- Address Card (Editable) -->
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Direccion de entrega</h2>
+      <h2 class="card-title">Direcci&oacute;n de entrega</h2>
     </div>
 
     <form id="addressForm">
@@ -621,19 +625,19 @@ a { color: inherit; text-decoration: none; }
         <div class="form-group">
           <label class="form-label">Provincia</label>
           <select class="form-select" id="inputProvincia" onchange="loadCantones()">
-            <option value="">Selecciona provincia</option>
-            <option value="San Jose">San Jose</option>
+            <option value="">Seleccion&aacute; provincia</option>
+            <option value="San José">San Jos&eacute;</option>
             <option value="Alajuela">Alajuela</option>
             <option value="Cartago">Cartago</option>
             <option value="Heredia">Heredia</option>
             <option value="Guanacaste">Guanacaste</option>
             <option value="Puntarenas">Puntarenas</option>
-            <option value="Limon">Limon</option>
+            <option value="Limón">Lim&oacute;n</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Canton</label>
-          <input type="text" class="form-input" id="inputCanton" placeholder="Ej: Central, Escazu...">
+          <label class="form-label">Cant&oacute;n</label>
+          <input type="text" class="form-input" id="inputCanton" placeholder="Ej: Central, Escaz&uacute;...">
         </div>
       </div>
 
@@ -643,16 +647,16 @@ a { color: inherit; text-decoration: none; }
           <input type="text" class="form-input" id="inputDistrito" placeholder="Ej: Carmen, San Rafael...">
         </div>
         <div class="form-group">
-          <label class="form-label">Telefono de contacto</label>
+          <label class="form-label">Tel&eacute;fono de contacto</label>
           <input type="tel" class="form-input" id="inputTelefono" placeholder="8888-8888">
         </div>
       </div>
 
       <div class="form-row single">
         <div class="form-group">
-          <label class="form-label">Direccion exacta</label>
+          <label class="form-label">Direcci&oacute;n exacta</label>
           <input type="text" class="form-input" id="inputDireccion" placeholder="Calle, avenida, referencias...">
-          <p class="form-hint">Incluye referencias para facilitar la entrega</p>
+          <p class="form-hint">Inclu&iacute; referencias para facilitar la entrega</p>
         </div>
       </div>
 
@@ -690,7 +694,7 @@ a { color: inherit; text-decoration: none; }
   <div class="card" style="background: transparent; border-color: var(--border);">
     <div class="btn-row" style="margin: 0; justify-content: space-between;">
       <button class="btn-secondary" onclick="window.location.href='/'">Volver al inicio</button>
-      <button class="btn-outline-danger" onclick="logout()">Cerrar sesion</button>
+      <button class="btn-outline-danger" onclick="logout()">Cerrar sesi&oacute;n</button>
     </div>
   </div>
 </main>
@@ -744,7 +748,7 @@ async function loadProfile() {
     displayProfile(currentUser);
 
   } catch (error) {
-    showToast('Error de conexion', 'error');
+    showToast('Error de conexión', 'error');
   }
 }
 
@@ -846,7 +850,7 @@ document.getElementById('addressForm').addEventListener('submit', async function
       errorEl.textContent = result.error.message;
       errorEl.style.display = 'block';
     } else {
-      showToast('Direccion actualizada', 'success');
+      showToast('Dirección actualizada', 'success');
       // Update local storage
       if (result.data && result.data.usuario) {
         localStorage.setItem('fl_user', JSON.stringify(result.data.usuario));
@@ -854,7 +858,7 @@ document.getElementById('addressForm').addEventListener('submit', async function
     }
 
   } catch (error) {
-    errorEl.textContent = 'Error de conexion';
+    errorEl.textContent = 'Error de conexión';
     errorEl.style.display = 'block';
   }
 
@@ -873,7 +877,7 @@ document.getElementById('emailForm').addEventListener('submit', async function(e
   const email = document.getElementById('inputEmail').value.trim();
 
   if (!email || !email.includes('@')) {
-    errorEl.textContent = 'Ingresa un email valido';
+    errorEl.textContent = 'Ingresá un email válido';
     errorEl.style.display = 'block';
     return;
   }
@@ -896,7 +900,7 @@ document.getElementById('emailForm').addEventListener('submit', async function(e
 
     if (result.error) {
       if (result.error.code === 'EMAIL_EXISTS') {
-        errorEl.textContent = 'Este email ya esta en uso';
+        errorEl.textContent = 'Este email ya está en uso';
       } else {
         errorEl.textContent = result.error.message;
       }
@@ -911,7 +915,7 @@ document.getElementById('emailForm').addEventListener('submit', async function(e
     }
 
   } catch (error) {
-    errorEl.textContent = 'Error de conexion';
+    errorEl.textContent = 'Error de conexión';
     errorEl.style.display = 'block';
   }
 
@@ -945,7 +949,7 @@ function loadCantones() {
   const cantonInput = document.getElementById('inputCanton');
 
   if (provincia) {
-    cantonInput.placeholder = 'Ingresa tu canton';
+    cantonInput.placeholder = 'Ingresá tu cantón';
   } else {
     cantonInput.placeholder = 'Selecciona provincia primero';
   }

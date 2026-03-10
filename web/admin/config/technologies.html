@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tecnologias | Admin FabricaLaser</title>
+  <title>Tecnolog&iacute;as | Admin FabricaLaser</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../admin.css">
 </head>
 <body>
@@ -15,13 +15,13 @@
     <main class="main-content">
       <header class="content-header">
         <div>
-          <h1 class="content-title">Tecnologias Laser</h1>
+          <h1 class="content-title">Tecnolog&iacute;as L&aacute;ser</h1>
           <div class="content-breadcrumb">
             <a href="/admin/">Dashboard</a>
             <span>/</span>
-            <span>Configuracion</span>
+            <span>Configuraci&oacute;n</span>
             <span>/</span>
-            <span>Tecnologias</span>
+            <span>Tecnolog&iacute;as</span>
           </div>
         </div>
         <button class="btn btn-primary" onclick="openCreateModal()">
@@ -29,7 +29,7 @@
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          Nueva Tecnologia
+          Nueva Tecnolog&iacute;a
         </button>
       </header>
 
@@ -49,7 +49,7 @@
   <div class="modal-overlay" id="itemModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 class="modal-title" id="modalTitle">Nueva Tecnologia</h3>
+        <h3 class="modal-title" id="modalTitle">Nueva Tecnolog&iacute;a</h3>
         <button class="modal-close" onclick="closeModal('itemModal')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -67,15 +67,15 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Descripcion</label>
-            <textarea class="form-textarea" id="itemDescription" placeholder="Descripcion de la tecnologia..."></textarea>
+            <label class="form-label">Descripci&oacute;n</label>
+            <textarea class="form-textarea" id="itemDescription" placeholder="Descripci&oacute;n de la tecnolog&iacute;a..."></textarea>
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div class="form-group">
               <label class="form-label">Orden</label>
               <input type="number" class="form-input" id="itemOrder" min="0" value="0" placeholder="0">
-              <span class="form-hint">Orden de aparicion</span>
+              <span class="form-hint">Orden de aparici&oacute;n</span>
             </div>
 
             <div class="form-group">
@@ -99,7 +99,7 @@
   <div class="modal-overlay" id="deleteModal">
     <div class="modal" style="max-width: 400px;">
       <div class="modal-header">
-        <h3 class="modal-title">Confirmar eliminacion</h3>
+        <h3 class="modal-title">Confirmar eliminaci&oacute;n</h3>
         <button class="modal-close" onclick="closeModal('deleteModal')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -108,8 +108,8 @@
         </button>
       </div>
       <div class="modal-body">
-        <p>Esta seguro de eliminar <strong id="deleteItemName"></strong>?</p>
-        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta accion no se puede deshacer.</p>
+        <p>&iquest;Est&aacute; seguro de eliminar <strong id="deleteItemName"></strong>?</p>
+        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta acci&oacute;n no se puede deshacer.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancelar</button>
@@ -121,7 +121,7 @@
   <script src="../admin.js"></script>
   <script>
     const ENDPOINT = '/admin/technologies';
-    const ENTITY_NAME = 'Tecnologia';
+    const ENTITY_NAME = 'Tecnolog\u00eda';
     let items = [];
     let deleteItemId = null;
 
@@ -150,7 +150,7 @@
               <path d="M2 17l10 5 10-5"></path>
               <path d="M2 12l10 5 10-5"></path>
             </svg>
-            <p>No hay tecnologias configuradas</p>
+            <p>No hay tecnolog&iacute;as configuradas</p>
           </div>
         `;
         return;
@@ -162,7 +162,7 @@
             <tr>
               <th>ID</th>
               <th>Nombre</th>
-              <th>Descripcion</th>
+              <th>Descripci&oacute;n</th>
               <th>Orden</th>
               <th>Estado</th>
               <th></th>

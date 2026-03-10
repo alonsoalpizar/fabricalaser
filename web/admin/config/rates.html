@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tarifas | Admin FabricaLaser</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../admin.css">
   <style>
     .field-calculated {
@@ -36,11 +36,11 @@
     <main class="main-content">
       <header class="content-header">
         <div>
-          <h1 class="content-title">Tarifas por Tecnologia</h1>
+          <h1 class="content-title">Tarifas por Tecnolog&iacute;a</h1>
           <div class="content-breadcrumb">
             <a href="/admin/">Dashboard</a>
             <span>/</span>
-            <span>Configuracion</span>
+            <span>Configuraci&oacute;n</span>
             <span>/</span>
             <span>Tarifas</span>
           </div>
@@ -61,7 +61,7 @@
           </div>
           <div class="card-body">
             <p class="text-muted" style="padding: 0 1.5rem; margin-bottom: 1rem; font-size: 0.875rem;">
-              Cada tecnologia tiene tarifas por hora para grabado y corte. Los costos por minuto se calculan automaticamente.
+              Cada tecnolog&iacute;a tiene tarifas por hora para grabado y corte. Los costos por minuto se calculan autom&aacute;ticamente.
             </p>
             <div id="dataTable">
               <div class="loading"><div class="spinner"></div></div>
@@ -89,9 +89,9 @@
           <input type="hidden" id="itemId" value="">
 
           <div class="form-group">
-            <label class="form-label">Tecnologia *</label>
+            <label class="form-label">Tecnolog&iacute;a *</label>
             <select class="form-select" id="itemTechnology" required>
-              <option value="">Seleccione tecnologia...</option>
+              <option value="">Seleccione tecnolog&iacute;a...</option>
             </select>
           </div>
 
@@ -109,15 +109,15 @@
 
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
             <div class="form-group">
-              <label class="form-label">Tarifa Operador Diseno (₡/hora)</label>
+              <label class="form-label">Tarifa Operador Dise&ntilde;o (₡/hora)</label>
               <input type="number" class="form-input" id="itemDesignRate" min="0" step="1" placeholder="Ej: 7725">
-              <span class="form-hint" style="font-style: normal;">Informativo — no afecta el calculo actual</span>
+              <span class="form-hint" style="font-style: normal;">Informativo — no afecta el c&aacute;lculo actual</span>
             </div>
 
             <div class="form-group">
               <label class="form-label">Setup Fee (₡)</label>
               <input type="number" class="form-input" id="itemSetupFee" min="0" step="1" placeholder="Ej: 2575">
-              <span class="form-hint">Cargo unico por trabajo</span>
+              <span class="form-hint">Cargo &uacute;nico por trabajo</span>
             </div>
 
             <div class="form-group">
@@ -168,7 +168,7 @@
               <div class="form-group">
                 <label class="form-label" style="font-size: 0.75rem;">Costos Fijos/Hora (₡)</label>
                 <input type="text" class="form-input field-calculated" id="itemOverheadHora" readonly value="0">
-                <span class="field-calculated-hint">Global + maquina</span>
+                <span class="field-calculated-hint">Global + m&aacute;quina</span>
               </div>
               <div class="form-group">
                 <label class="form-label" style="font-size: 0.75rem;">Costo/Min Grabado (₡)</label>
@@ -203,7 +203,7 @@
   <div class="modal-overlay" id="deleteModal">
     <div class="modal" style="max-width: 400px;">
       <div class="modal-header">
-        <h3 class="modal-title">Confirmar eliminacion</h3>
+        <h3 class="modal-title">Confirmar eliminaci&oacute;n</h3>
         <button class="modal-close" onclick="closeModal('deleteModal')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -212,8 +212,8 @@
         </button>
       </div>
       <div class="modal-body">
-        <p>Esta seguro de eliminar esta tarifa?</p>
-        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta accion no se puede deshacer.</p>
+        <p>&iquest;Est&aacute; seguro de eliminar esta tarifa?</p>
+        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta acci&oacute;n no se puede deshacer.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancelar</button>
@@ -308,7 +308,7 @@
 
     function populateTechSelect() {
       const techSelect = document.getElementById('itemTechnology');
-      techSelect.innerHTML = '<option value="">Seleccione tecnologia...</option>' +
+      techSelect.innerHTML = '<option value="">Seleccione tecnolog\u00eda...</option>' +
         technologies.filter(t => t.is_active).map(t =>
           `<option value="${t.id}">${t.name || t.nombre}</option>`
         ).join('');
@@ -339,7 +339,7 @@
         <table class="table">
           <thead>
             <tr>
-              <th>Tecnologia</th>
+              <th>Tecnolog&iacute;a</th>
               <th>Grabado/hr</th>
               <th>Corte/hr</th>
               <th>Overhead/mes</th>
@@ -359,7 +359,7 @@
                 <td class="font-semibold">${item.technology?.name || getTechName(item.technology_id)}</td>
                 <td class="font-mono">₡${Math.round(item.engrave_rate_hour || 0).toLocaleString('es-CR')}</td>
                 <td class="font-mono">₡${Math.round(item.cut_rate_hour || 0).toLocaleString('es-CR')}</td>
-                <td class="font-mono text-muted" title="Electricidad + Mantenimiento + Depreciación + Seguro + Consumibles">
+                <td class="font-mono text-muted" title="Electricidad + Mantenimiento + Depreciaci&oacute;n + Seguro + Consumibles">
                   ₡${Math.round(overheadMes).toLocaleString('es-CR')}
                 </td>
                 <td class="font-semibold">${((item.margin_percent || 0) * 100).toFixed(0)}%</td>
