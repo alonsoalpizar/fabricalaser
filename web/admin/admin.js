@@ -290,7 +290,7 @@ function renderPagination(current, total, onPageChange) {
   return `
     <div class="pagination">
       ${pages.join('')}
-      <span class="pagination-info">Pagina ${current} de ${total}</span>
+      <span class="pagination-info">P\u00e1gina ${current} de ${total}</span>
     </div>
   `;
 }
@@ -425,7 +425,7 @@ function renderSidebar(activePage = 'dashboard') {
   sidebarEl.innerHTML = `
     <div class="sidebar-header">
       <a href="/admin/" class="sidebar-logo">
-        FABRICA<span>LASER</span>
+        <img src="/assets/img/nav.png" alt="FabricaLaser" style="height: 28px; width: auto; -webkit-mask-image: none; display: block;">
         <span class="sidebar-badge">Admin</span>
       </a>
     </div>
@@ -448,14 +448,14 @@ function renderSidebar(activePage = 'dashboard') {
       </div>
 
       <div class="nav-section">
-        <div class="nav-section-title">Configuracion</div>
+        <div class="nav-section-title">Configuraci\u00f3n</div>
         <a href="/admin/config/general.html" class="nav-item ${activePage === 'general' ? 'active' : ''}" data-page="general">
           ${icons.settings}
           <span>General</span>
         </a>
         <a href="/admin/config/technologies.html" class="nav-item ${activePage === 'technologies' ? 'active' : ''}" data-page="technologies">
           ${icons.tech}
-          <span>Tecnologias</span>
+          <span>Tecnolog\u00edas</span>
         </a>
         <a href="/admin/config/materials.html" class="nav-item ${activePage === 'materials' ? 'active' : ''}" data-page="materials">
           ${icons.materials}
@@ -484,7 +484,7 @@ function renderSidebar(activePage = 'dashboard') {
       </div>
 
       <div class="nav-section">
-        <div class="nav-section-title">Accesos rapidos</div>
+        <div class="nav-section-title">Accesos r\u00e1pidos</div>
         <a href="/cotizar/" class="nav-item" target="_blank" style="color: var(--accent);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           <span>Ir al Cotizador</span>
@@ -507,7 +507,7 @@ function renderSidebar(activePage = 'dashboard') {
           <div class="sidebar-user-name">Admin</div>
           <div class="sidebar-user-role">Administrador</div>
         </div>
-        <button class="sidebar-logout" onclick="logout()" title="Cerrar sesion">
+        <button class="sidebar-logout" onclick="logout()" title="Cerrar sesi\u00f3n">
           ${icons.logout}
         </button>
       </div>

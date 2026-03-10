@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Costos de Material | Admin FabricaLaser</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../admin.css">
 </head>
 <body>
@@ -19,7 +19,7 @@
           <div class="content-breadcrumb">
             <a href="/admin/">Dashboard</a>
             <span>/</span>
-            <span>Configuracion</span>
+            <span>Configuraci&oacute;n</span>
             <span>/</span>
             <span>Costos de Material</span>
           </div>
@@ -46,8 +46,8 @@
           </div>
           <div class="card-body">
             <p class="text-muted" style="padding: 0 1.5rem; margin-bottom: 1rem; font-size: 0.875rem;">
-              Costos de laminas de materia prima. El costo por mm2 se calcula automaticamente: cost_per_mm2 = sheet_cost / (width x height).
-              Lamina estandar: 1220 x 2440 mm = 2,976,800 mm2.
+              Costos de l&aacute;minas de materia prima. El costo por mm2 se calcula autom&aacute;ticamente: cost_per_mm2 = sheet_cost / (width x height).
+              L&aacute;mina est&aacute;ndar: 1220 x 2440 mm = 2,976,800 mm2.
             </p>
             <div id="dataTable">
               <div class="loading"><div class="spinner"></div></div>
@@ -89,12 +89,12 @@
           </div>
 
           <div class="form-group" style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-            <h4 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">Datos de Lamina (para calculo automatico)</h4>
+            <h4 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary);">Datos de L&aacute;mina (para c&aacute;lculo autom&aacute;tico)</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
               <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label">Costo Lamina (CRC)</label>
+                <label class="form-label">Costo L&aacute;mina (CRC)</label>
                 <input type="number" class="form-input" id="itemSheetCost" min="0" step="0.01" placeholder="Ej: 15000">
-                <span class="form-hint">Precio de una lamina completa</span>
+                <span class="form-hint">Precio de una l&aacute;mina completa</span>
               </div>
               <div class="form-group" style="margin-bottom: 0;">
                 <label class="form-label">Ancho (mm)</label>
@@ -114,7 +114,7 @@
             <div class="form-group">
               <label class="form-label">Costo por mm2 (CRC) *</label>
               <input type="number" class="form-input" id="itemCostPerMm2" required min="0" step="0.00000001" placeholder="0.00503935">
-              <span class="form-hint">Si llena datos de lamina arriba, se calcula automaticamente</span>
+              <span class="form-hint">Si llena datos de l&aacute;mina arriba, se calcula autom&aacute;ticamente</span>
             </div>
 
             <div class="form-group">
@@ -149,7 +149,7 @@
   <div class="modal-overlay" id="deleteModal">
     <div class="modal" style="max-width: 400px;">
       <div class="modal-header">
-        <h3 class="modal-title">Confirmar eliminacion</h3>
+        <h3 class="modal-title">Confirmar eliminaci&oacute;n</h3>
         <button class="modal-close" onclick="closeModal('deleteModal')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -158,8 +158,8 @@
         </button>
       </div>
       <div class="modal-body">
-        <p>Esta seguro de eliminar <strong id="deleteItemName"></strong>?</p>
-        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta accion no se puede deshacer.</p>
+        <p>&iquest;Est&aacute; seguro de eliminar <strong id="deleteItemName"></strong>?</p>
+        <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.875rem;">Esta acci&oacute;n no se puede deshacer.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancelar</button>
@@ -261,7 +261,7 @@
               <th>Grosor</th>
               <th>Costo/mm2</th>
               <th>Merma</th>
-              <th>Costo Lamina</th>
+              <th>Costo L&aacute;mina</th>
               <th>Estado</th>
               <th></th>
             </tr>

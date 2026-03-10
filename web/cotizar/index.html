@@ -3,39 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cotizador | FabricaLaser</title>
+  <title>Cotizador | FabricaLaser.com</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
   <style>
 :root {
-  /* Paleta CLARA consistente con landing */
-  --bg: #F6F4F0;
-  --bg-warm: #EDEAE4;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #F8F6F2;
-  --border: #D8D4CC;
-  --border-light: #E8E5DF;
-  --text: #1C1C1E;
-  --text-secondary: #5A5754;
-  --text-muted: #8A8681;
-  --accent: #B8543E;
-  --accent-soft: rgba(184, 84, 62, 0.08);
-  --accent-hover: #9C4533;
+  /* Paleta OSCURA premium — consistente con landing */
+  --bg: #000000;
+  --bg-warm: #111111;
+  --bg-card: #1A1A1A;
+  --bg-card-hover: #222222;
+  --border: #2A2A2A;
+  --border-light: #333333;
+  --text: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-muted: #666666;
+  --text-dim: #444444;
+  --accent: #9B2020;
+  --accent-soft: rgba(155, 32, 32, 0.15);
+  --accent-hover: #B82E2E;
   --white: #FFFFFF;
   --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.1);
+  --success-bg: rgba(16, 185, 129, 0.12);
   --warning: #eab308;
-  --warning-bg: rgba(234, 179, 8, 0.1);
+  --warning-bg: rgba(234, 179, 8, 0.12);
   --error: #ef4444;
-  --error-bg: rgba(239, 68, 68, 0.1);
+  --error-bg: rgba(239, 68, 68, 0.12);
   --info: #3b82f6;
-  --info-bg: rgba(59, 130, 246, 0.1);
+  --info-bg: rgba(59, 130, 246, 0.12);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -53,8 +54,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2rem;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
 }
 
@@ -67,6 +68,8 @@ body {
 .nav-logo img {
   height: 32px;
   width: auto;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
 }
 
 .nav-user {
@@ -127,10 +130,10 @@ body {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  background: var(--white);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   min-width: 180px;
   opacity: 0;
   visibility: hidden;
@@ -445,7 +448,7 @@ body {
 
 .analysis-item-icon.red { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
 .analysis-item-icon.blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-.analysis-item-icon.black { background: rgba(255, 255, 255, 0.1); color: #a3a3a3; }
+.analysis-item-icon.black { background: rgba(160, 160, 160, 0.15); color: #a3a3a3; }
 .analysis-item-icon.dim { background: var(--bg-warm); color: var(--text-muted); }
 
 .analysis-item-content {
@@ -540,9 +543,9 @@ body {
 }
 
 .operation-badge.raster {
-  background: rgba(75, 85, 99, 0.15);
-  color: #374151;
-  border: 1px solid rgba(75, 85, 99, 0.3);
+  background: rgba(156, 163, 175, 0.15);
+  color: #9ca3af;
+  border: 1px solid rgba(156, 163, 175, 0.3);
 }
 
 .operation-badge .op-value {
@@ -557,7 +560,7 @@ body {
 
 .operation-badge.cut .op-dot { background: #ef4444; }
 .operation-badge.vector .op-dot { background: #3b82f6; }
-.operation-badge.raster .op-dot { background: #1f2937; }
+.operation-badge.raster .op-dot { background: #9ca3af; }
 
 /* Engrave type info banner */
 .engrave-info-banner {
@@ -667,8 +670,8 @@ body {
 
 .legend-dot.red { background: #FF0000; }
 .legend-dot.blue { background: #0000FF; }
-.legend-dot.black { background: #000000; }
-.legend-dot.ignored { background: #999999; border: 1px dashed #ccc; }
+.legend-dot.black { background: #a3a3a3; }
+.legend-dot.ignored { background: #555555; border: 1px dashed #777; }
 
 .svg-preview-frame {
   background: #FFFFFF;
@@ -907,6 +910,7 @@ body {
   color: var(--text);
   font-size: 1rem;
   font-family: inherit;
+  color-scheme: dark;
 }
 
 .input-group input:focus,
@@ -1173,7 +1177,7 @@ body {
   padding: 1.25rem;
   background: var(--accent-soft);
   border-radius: 12px;
-  border: 1px solid rgba(184, 84, 62, 0.15);
+  border: 1px solid rgba(155, 32, 32, 0.3);
 }
 
 .cta-main-btn {
@@ -1211,7 +1215,7 @@ body {
   gap: 0.75rem;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px dashed rgba(184, 84, 62, 0.2);
+  border-top: 1px dashed rgba(155, 32, 32, 0.3);
 }
 
 .share-label {
@@ -1261,8 +1265,9 @@ body {
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%) translateY(100px);
-  background: var(--text);
-  color: white;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
   padding: 0.75rem 1.25rem;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -1334,7 +1339,7 @@ body {
 .loading-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(246, 244, 240, 0.95);
+  background: rgba(0, 0, 0, 0.95);
   display: none;
   align-items: center;
   justify-content: center;
@@ -1636,7 +1641,7 @@ body {
 
 <!-- NAV -->
 <nav class="nav">
-  <a href="/" class="nav-logo"><img src="/logo.png" alt="FabricaLaser.com"></a>
+  <a href="/" class="nav-logo"><img src="/assets/img/nav.png" alt="FabricaLaser.com" class="nav-logo-img"></a>
 
   <div class="nav-links">
     <a href="/" class="nav-link">Inicio</a>
@@ -1684,7 +1689,7 @@ body {
             <polyline points="16 17 21 12 16 7"/>
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
-          Cerrar Sesion
+          Cerrar Sesi&oacute;n
         </a>
       </div>
     </div>
@@ -1704,7 +1709,7 @@ body {
 
   <!-- TAB SWITCHER -->
   <div class="tab-switcher">
-    <button class="tab-btn active" onclick="showTab('wizard')">Nueva Cotizacion</button>
+    <button class="tab-btn active" onclick="showTab('wizard')">Nueva Cotizaci&oacute;n</button>
     <button class="tab-btn" onclick="showTab('history')">Historial</button>
   </div>
 
@@ -1713,7 +1718,7 @@ body {
     <!-- WIZARD HEADER -->
     <div class="wizard-header">
       <h1 class="wizard-title">Cotiza tu proyecto <em>online</em></h1>
-      <p class="wizard-subtitle">Sube tu archivo SVG y obtiene un precio en segundos</p>
+      <p class="wizard-subtitle">Sub&iacute; tu archivo SVG y obt&eacute;n un precio en segundos</p>
     </div>
 
     <!-- PROGRESS STEPS -->
@@ -1743,9 +1748,9 @@ body {
           <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
           </svg>
-          <div class="dropzone-text">Arrastra tu archivo SVG aqui</div>
-          <div class="dropzone-hint">o <span onclick="document.getElementById('fileInput').click()">selecciona un archivo</span></div>
-          <div class="dropzone-hint" style="margin-top: 0.5rem; font-size: 0.75rem;">Max 5MB - Solo archivos .svg</div>
+          <div class="dropzone-text">Arrastr&aacute; tu archivo SVG aqu&iacute;</div>
+          <div class="dropzone-hint">o <span onclick="document.getElementById('fileInput').click()">seleccion&aacute; un archivo</span></div>
+          <div class="dropzone-hint" style="margin-top: 0.5rem; font-size: 0.75rem;">M&aacute;x 5MB - Solo archivos .svg</div>
         </div>
         <input type="file" id="fileInput" accept=".svg">
 
@@ -1842,7 +1847,7 @@ body {
                     <circle cx="8.5" cy="8.5" r="1.5"/>
                     <path d="M21 15l-5-5L5 21"/>
                   </svg>
-                  Vista previa del diseno
+                  Vista previa del dise&ntilde;o
                 </div>
                 <div class="svg-preview-legend">
                   <div class="legend-item">
@@ -1915,15 +1920,15 @@ body {
       <div class="wizard-step" data-step="2">
         <!-- Material (FIRST - triggers technology filtering) -->
         <div class="options-section">
-          <label class="options-label">1. Selecciona el Material</label>
+          <label class="options-label">1. Seleccion&aacute; el Material</label>
           <div class="options-grid" id="materialOptions"></div>
         </div>
 
         <!-- Technology (SECOND - filtered by material compatibility) -->
         <div class="options-section" id="techSection">
-          <label class="options-label">2. Selecciona la Tecnologia</label>
+          <label class="options-label">2. Seleccion&aacute; la Tecnolog&iacute;a</label>
           <div class="options-grid" id="techOptions">
-            <div class="options-placeholder">Selecciona un material primero</div>
+            <div class="options-placeholder">Seleccion&aacute; un material primero</div>
           </div>
           <!-- Warning: Technology cannot cut but design has cut lines -->
           <div class="tech-cut-warning" id="techCutWarning" style="display: none;">
@@ -1933,15 +1938,15 @@ body {
               <line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             <div class="tech-cut-warning-content">
-              <strong>Tu diseño tiene lineas de corte (rojas)</strong>
-              <p id="techCutWarningText">Esta tecnologia solo puede grabar, no cortar. Las lineas rojas no se procesaran.</p>
+              <strong>Tu dise&ntilde;o tiene l&iacute;neas de corte (rojas)</strong>
+              <p id="techCutWarningText">Esta tecnolog&iacute;a solo puede grabar, no cortar. Las l&iacute;neas rojas no se procesar&aacute;n.</p>
             </div>
           </div>
         </div>
 
         <!-- Thickness (THIRD - based on tech+material combo) -->
         <div class="options-section" id="thicknessSection" style="display: none;">
-          <label class="options-label">3. Selecciona el Grosor</label>
+          <label class="options-label">3. Seleccion&aacute; el Grosor</label>
           <div class="options-grid" id="thicknessOptions"></div>
         </div>
 
@@ -1955,7 +1960,7 @@ body {
               <line x1="12" y1="16" x2="12" y2="12"/>
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
-            <span id="engraveInfoText">Selecciona como procesar los rellenos negros de tu diseño.</span>
+            <span id="engraveInfoText">Seleccion&aacute; c&oacute;mo procesar los rellenos negros de tu dise&ntilde;o.</span>
           </div>
           <div class="options-grid" id="engraveOptions"></div>
         </div>
@@ -1970,14 +1975,14 @@ body {
             <label>Material incluido</label>
             <div class="toggle-group" style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
               <button type="button" class="toggle-btn active" id="materialYes" onclick="setMaterialIncluded(true)">
-                Si, nosotros lo proveemos
+                S&iacute;, nosotros lo proveemos
               </button>
               <button type="button" class="toggle-btn" id="materialNo" onclick="setMaterialIncluded(false)">
                 No, cliente provee
               </button>
             </div>
             <span class="form-hint" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">
-              Si seleccionas "No", el costo del material no se incluye en la cotizacion
+              Si seleccion&aacute;s &ldquo;No&rdquo;, el costo del material no se incluye en la cotizaci&oacute;n
             </span>
           </div>
         </div>
@@ -1999,7 +2004,7 @@ body {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
-            Atras
+            Atr&aacute;s
           </button>
           <button class="btn btn-primary" id="btnCalculate" onclick="calculatePrice()">
             Calcular precio
@@ -2018,11 +2023,11 @@ body {
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
               <polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
-            <span id="resultStatusText">Cotizacion aprobada</span>
+            <span id="resultStatusText">Cotizaci&oacute;n aprobada</span>
           </div>
           <div class="result-price">₡<span id="resultPrice">0</span></div>
           <div class="result-price-label"><span id="resultQty">1</span> unidad(es) - Precio total</div>
-          <div class="result-validity">Valido hasta: <span id="resultValidity">-</span></div>
+          <div class="result-validity">V&aacute;lido hasta: <span id="resultValidity">-</span></div>
           <!-- Price model indicator -->
           <div class="result-price-model" id="resultPriceModel" style="display: none;">
             <span class="price-model-badge" id="priceModelBadge"></span>
@@ -2040,7 +2045,7 @@ body {
             <span class="summary-item-value" id="summaryMaterial">-</span>
           </div>
           <div class="summary-item">
-            <span class="summary-item-label">Tecnologia:</span>
+            <span class="summary-item-label">Tecnolog&iacute;a:</span>
             <span class="summary-item-value" id="summaryTech">-</span>
           </div>
           <div class="summary-item" id="thicknessSummaryItem" style="display: none;">
@@ -2052,7 +2057,7 @@ body {
             <span class="summary-item-value" id="summaryEngrave">-</span>
           </div>
           <div class="summary-item" id="areaSummaryItem">
-            <span class="summary-item-label">Tamaño:</span>
+            <span class="summary-item-label">Tama&ntilde;o:</span>
             <span class="summary-item-value" id="summaryArea">-</span>
           </div>
         </div>
@@ -2098,7 +2103,7 @@ body {
             </div>
             <div class="breakdown-row" id="timeRasterRow">
               <span class="breakdown-row-label">
-                <span class="op-dot" style="background:#1f2937;width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;"></span>
+                <span class="op-dot" style="background:#9ca3af;width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;"></span>
                 Grabado rasterizado
               </span>
               <span class="breakdown-row-value" id="timeRaster">- min</span>
@@ -2124,7 +2129,7 @@ body {
 
             <!-- Desglose simplificado (siempre visible) -->
             <div class="breakdown-row">
-              <span class="breakdown-row-label">Produccion (tiempo maquina)</span>
+              <span class="breakdown-row-label">Producci&oacute;n (tiempo m&aacute;quina)</span>
               <span class="breakdown-row-value" id="costMachine">₡0</span>
             </div>
             <div class="breakdown-row material-cost-row" id="materialCostRow">
@@ -2132,7 +2137,7 @@ body {
               <span class="breakdown-row-value" id="costMaterial">₡0</span>
             </div>
             <div class="breakdown-row" id="setupFeeRow" style="display: none;">
-              <span class="breakdown-row-label">Preparacion de maquina</span>
+              <span class="breakdown-row-label">Preparaci&oacute;n de m&aacute;quina</span>
               <span class="breakdown-row-value" id="costSetup">₡0</span>
             </div>
             <div class="breakdown-row" id="discountRow" style="display: none;">
@@ -2149,7 +2154,7 @@ body {
               <svg class="tech-detail-chevron" id="techDetailChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
-              Detalle tecnico
+              Detalle t&eacute;cnico
             </button>
             <div class="tech-detail-panel" id="techDetailPanel" style="display: none;">
               <div class="breakdown-row tech-row">
@@ -2210,7 +2215,7 @@ body {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 5v14M5 12h14"/>
             </svg>
-            Nueva cotizacion
+            Nueva cotizaci&oacute;n
           </button>
         </div>
       </div>
@@ -2221,7 +2226,7 @@ body {
   <div id="historyTab" style="display: none;">
     <div class="wizard-header">
       <h1 class="wizard-title">Mis <em>cotizaciones</em></h1>
-      <p class="wizard-subtitle">Historial de cotizaciones anteriores</p>
+      <p class="wizard-subtitle">Historial de tus cotizaciones anteriores</p>
     </div>
 
     <div class="history-list" id="historyList">
@@ -2230,7 +2235,7 @@ body {
           <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
           <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
         </svg>
-        <div>No tienes cotizaciones todavia</div>
+        <div>No ten&eacute;s cotizaciones todav&iacute;a</div>
       </div>
     </div>
   </div>
@@ -2238,7 +2243,7 @@ body {
 </div>
 
 <!-- Copy success toast -->
-<div class="copy-success" id="copyToast">Enlace copiado al portapapeles</div>
+<div class="copy-success" id="copyToast">Enlace copiado al portapapeles &#10003;</div>
 
 <script>
 const API_BASE = '/api/v1';
@@ -2291,7 +2296,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadHistory();
   } catch (error) {
     console.error('Init error:', error);
-    showError('Error al inicializar. Por favor recarga la pagina.');
+    showError('Error al inicializar. Por favor recargá la página.');
   }
 });
 
@@ -2328,7 +2333,7 @@ async function loadUser() {
 
   // Check quota
   if (state.user.quote_quota !== -1 && state.user.quotes_used >= state.user.quote_quota) {
-    showError('Has agotado tu cuota de cotizaciones. Contacta al administrador para obtener mas.');
+    showError('Has agotado tu cuota de cotizaciones. Contactá al administrador para obtener más.');
     document.getElementById('dropzone').style.pointerEvents = 'none';
     document.getElementById('dropzone').style.opacity = '0.5';
   }
@@ -2374,7 +2379,7 @@ function renderOptions() {
 
   // Technologies placeholder (will be populated when material is selected)
   const techGrid = document.getElementById('techOptions');
-  techGrid.innerHTML = '<div class="options-placeholder">Selecciona un material primero</div>';
+  techGrid.innerHTML = '<div class="options-placeholder">Seleccioná un material primero</div>';
 
   // Thickness placeholder (hidden until technology is selected)
   document.getElementById('thicknessSection').style.display = 'none';
@@ -2405,7 +2410,7 @@ async function selectMaterial(materialId, el) {
   el.classList.add('selected');
 
   // Reset technology and thickness sections
-  document.getElementById('techOptions').innerHTML = '<div class="options-placeholder">Cargando tecnologias...</div>';
+  document.getElementById('techOptions').innerHTML = '<div class="options-placeholder">Cargando tecnologías...</div>';
   document.getElementById('thicknessSection').style.display = 'none';
   // Hide cut warning (will be shown again if needed when tech is selected)
   const cutWarning = document.getElementById('techCutWarning');
@@ -2417,7 +2422,7 @@ async function selectMaterial(materialId, el) {
     const data = await res.json();
 
     if (!data.success) {
-      throw new Error(data.error?.message || 'Error al cargar opciones');
+      throw new Error(data.error?.message || 'Error al cargar las opciones');
     }
 
     compatibleTechnologies = data.data.technologies || [];
@@ -2425,7 +2430,7 @@ async function selectMaterial(materialId, el) {
     if (compatibleTechnologies.length === 0) {
       document.getElementById('techOptions').innerHTML = `
         <div class="options-placeholder" style="color: var(--warning);">
-          No hay tecnologias configuradas para este material.<br>
+          No hay tecnologías configuradas para este material.<br>
           Contacta al administrador.
         </div>
       `;
@@ -2492,7 +2497,7 @@ function selectTechnology(techId, el) {
     cutWarning.style.display = 'flex';
     const cutLength = state.analysis?.cut_length_mm || 0;
     document.getElementById('techCutWarningText').textContent =
-      `${tech.name} solo puede grabar, no cortar. Las ${cutLength.toFixed(1)} mm de lineas rojas seran ignoradas.`;
+      `${tech.name} solo puede grabar, no cortar. Las ${cutLength.toFixed(1)} mm de líneas rojas serán ignoradas.`;
   } else {
     cutWarning.style.display = 'none';
   }
@@ -2612,12 +2617,12 @@ function setupDropzone() {
 async function handleFile(file) {
   // Validate
   if (!file.name.toLowerCase().endsWith('.svg')) {
-    showError('Solo se permiten archivos SVG');
+    showError('Solo se permiten archivos .svg');
     return;
   }
 
   if (file.size > 5 * 1024 * 1024) {
-    showError('El archivo excede el limite de 5MB');
+    showError('El archivo excede el límite de 5MB');
     return;
   }
 
@@ -2637,7 +2642,7 @@ async function handleFile(file) {
     const data = await res.json();
 
     if (data.error) {
-      throw new Error(data.error.message || 'Error al analizar SVG');
+      throw new Error(data.error.message || 'Error al analizar el SVG');
     }
 
     state.analysis = data.data;
@@ -2729,13 +2734,13 @@ function displayAnalysis(filename, cached) {
       // Both vector AND raster
       engraveSectionLabel.textContent = '4. Tipo de relleno';
       document.getElementById('engraveInfoText').textContent =
-        `Las lineas azules (${vectorLength.toFixed(1)} mm) se procesan automaticamente. ` +
-        `Selecciona como grabar los rellenos negros (${rasterArea.toFixed(1)} mm²):`;
+        `Las líneas azules (${vectorLength.toFixed(1)} mm) se procesan automáticamente. ` +
+        `Seleccioná cómo grabar los rellenos negros (${rasterArea.toFixed(1)} mm²):`;
     } else {
       // Only raster
       engraveSectionLabel.textContent = '4. Tipo de grabado';
       document.getElementById('engraveInfoText').textContent =
-        `Tu diseño tiene rellenos (${rasterArea.toFixed(1)} mm²). Selecciona el tipo de procesamiento:`;
+        `Tu diseño tiene rellenos (${rasterArea.toFixed(1)} mm²). Seleccioná el tipo de procesamiento:`;
     }
   } else if (state.hasVectorOperations) {
     // ONLY vector operations - auto-select Vectorial (ID 1), hide section
@@ -2872,11 +2877,11 @@ function toggleTechDetail() {
 async function calculatePrice() {
   // Validate selections (in order of the new flow)
   if (!state.options.materialId) {
-    showError('Selecciona un material');
+    showError('Seleccioná un material');
     return;
   }
   if (!state.options.technologyId) {
-    showError('Selecciona una tecnologia');
+    showError('Seleccioná una tecnología');
     return;
   }
 
@@ -2884,13 +2889,13 @@ async function calculatePrice() {
   const tech = compatibleTechnologies.find(t => t.id === state.options.technologyId);
   const validThicknesses = tech?.thicknesses?.filter(t => t > 0) || [];
   if (validThicknesses.length > 0 && (state.options.thickness === null || state.options.thickness === undefined)) {
-    showError('Selecciona un grosor');
+    showError('Seleccioná un grosor');
     return;
   }
 
   // Only validate engrave type if SVG has engrave operations
   if (state.hasEngraveOperations && !state.options.engraveTypeId) {
-    showError('Selecciona un tipo de grabado');
+    showError('Seleccioná un tipo de grabado');
     return;
   }
 
@@ -2955,10 +2960,10 @@ function displayResult() {
   const statusEl = document.getElementById('resultStatus');
   const statusText = document.getElementById('resultStatusText');
   const statusMap = {
-    'auto_approved': { class: 'approved', text: 'Aprobada automaticamente' },
+    'auto_approved': { class: 'approved', text: 'Aprobada automáticamente' },
     'approved': { class: 'approved', text: 'Aprobada' },
-    'needs_review': { class: 'review', text: 'Requiere revision' },
-    'rejected': { class: 'rejected', text: 'Diseno complejo - Contactenos' },
+    'needs_review': { class: 'review', text: 'Requiere revisión' },
+    'rejected': { class: 'rejected', text: 'Diseño complejo - Contáctenos' },
     'expired': { class: 'expired', text: 'Expirada' },
     'converted': { class: 'approved', text: 'Convertida a pedido' },
     'draft': { class: 'review', text: 'Borrador' }
@@ -2972,23 +2977,23 @@ function displayResult() {
   const explanationText = document.getElementById('statusExplanationText');
   const statusMessages = {
     'auto_approved': {
-      text: 'Tu cotizacion esta lista. Puedes proceder con tu pedido.',
+      text: 'Tu cotización está lista. Podés proceder con tu pedido.',
       class: 'approved'
     },
     'needs_review': {
-      text: 'Nuestro equipo revisara esta cotizacion y te contactara para confirmar el precio. Esto suele tomar menos de 24 horas.',
+      text: 'Nuestro equipo revisará esta cotización y te contactará para confirmar el precio. Esto suele tomar menos de 24 horas.',
       class: 'review'
     },
     'approved': {
-      text: 'Cotizacion aprobada por nuestro equipo.',
+      text: 'Cotización aprobada por nuestro equipo.',
       class: 'approved'
     },
     'rejected': {
-      text: 'Esta cotizacion fue rechazada. Contactanos para mas informacion.',
+      text: 'Esta cotización fue rechazada. Contactanos para más información.',
       class: 'review'
     },
     'expired': {
-      text: 'Esta cotizacion vencio. Puedes crear una nueva.',
+      text: 'Esta cotización venció. Podés crear una nueva.',
       class: ''
     }
   };
@@ -3036,14 +3041,14 @@ function displayResult() {
   if (model) {
     let modelText, modelClass;
     if (model === 'hybrid') {
-      modelText = '⏱️ Precio por tiempo de produccion';
+      modelText = '⏱️ Precio por tiempo de producción';
       modelClass = 'hybrid';
     } else if (model === 'value') {
       // Para value, mostrar detalle (área vs perímetro)
       if (modelDetail === 'perimeter') {
-        modelText = '📏 Precio por perimetro de corte';
+        modelText = '📏 Precio por perímetro de corte';
       } else {
-        modelText = '📐 Precio por area';
+        modelText = '📐 Precio por área';
       }
       modelClass = 'value';
     } else {
@@ -3120,7 +3125,7 @@ function displayResult() {
   const fallbackEl = document.getElementById('fallbackWarning');
   const usedFallback = q.used_fallback_speeds || q.usedFallbackSpeeds || false;
   if (usedFallback) {
-    const warningText = q.fallback_warning || 'Este precio usa velocidades aproximadas. El precio final puede variar. Contactenos para un precio exacto.';
+    const warningText = q.fallback_warning || 'Este precio usa velocidades aproximadas. El precio final puede variar. Contáctenos para un precio exacto.';
     document.getElementById('fallbackWarningText').textContent = warningText;
     fallbackEl.style.display = 'flex';
   } else {
@@ -3290,17 +3295,17 @@ function requestWork() {
   const price = Math.round(q.total_price).toLocaleString('es-CR');
 
   // Build WhatsApp message
-  const message = `Hola! Me interesa solicitar este trabajo:\n\n` +
-    `*Cotizacion #${q.id}*\n` +
+  const message = `¡Hola! Me interesa solicitar este trabajo:\n\n` +
+    `*Cotización #${q.id}*\n` +
     `Material: ${material}\n` +
-    `Tecnologia: ${tech}\n` +
+    `Tecnología: ${tech}\n` +
     `Cantidad: ${qty} unidad(es)\n` +
     `Precio: ₡${price}\n\n` +
     `Validez: ${q.valid_until ? new Date(q.valid_until).toLocaleDateString('es-CR') : '-'}\n\n` +
     `Por favor confirmen disponibilidad.`;
 
   // WhatsApp business number (Costa Rica format)
-  const phoneNumber = '50688888888'; // TODO: Configure actual number
+  const phoneNumber = '50670183073';
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
   window.open(whatsappUrl, '_blank');
@@ -3314,7 +3319,7 @@ function shareWhatsApp() {
   const price = Math.round(q.total_price).toLocaleString('es-CR');
   const qty = q.quantity || 1;
 
-  const message = `Mira esta cotizacion de FabricaLaser:\n\n` +
+  const message = `Mirá esta cotización de FabricaLaser:\n\n` +
     `Material: ${material}\n` +
     `Cantidad: ${qty} unidad(es)\n` +
     `Precio: ₡${price}\n\n` +
@@ -3386,7 +3391,7 @@ function resetWizard() {
   document.getElementById('discountPreview').style.display = 'none';
 
   // Reset technology section to placeholder
-  document.getElementById('techOptions').innerHTML = '<div class="options-placeholder">Selecciona un material primero</div>';
+  document.getElementById('techOptions').innerHTML = '<div class="options-placeholder">Seleccioná un material primero</div>';
 
   // Hide thickness section
   document.getElementById('thicknessSection').style.display = 'none';
@@ -3478,7 +3483,7 @@ async function loadHistory() {
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
             <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
           </svg>
-          <div>No tienes cotizaciones todavia</div>
+          <div>No tenés cotizaciones todavía</div>
         </div>
       `;
       return;
@@ -3489,7 +3494,7 @@ async function loadHistory() {
       const statusMap = {
         'auto_approved': { class: 'approved', text: 'Aprobado' },
         'approved': { class: 'approved', text: 'Aprobado' },
-        'needs_review': { class: 'review', text: 'En revision' },
+        'needs_review': { class: 'review', text: 'En revisión' },
         'rejected': { class: 'expired', text: 'Complejo' },
         'expired': { class: 'expired', text: 'Expirado' },
         'converted': { class: 'approved', text: 'Pedido' },
@@ -3506,7 +3511,7 @@ async function loadHistory() {
             </svg>
           </div>
           <div class="history-info">
-            <div class="history-filename">Cotizacion #${q.id}</div>
+            <div class="history-filename">Cotización #${q.id}</div>
             <div class="history-meta">${date.toLocaleDateString('es-CR')} - ${q.quantity} unidad(es)</div>
           </div>
           <div class="history-price">₡${Math.round(q.price_final || q.price_hybrid_total || 0).toLocaleString('es-CR')}</div>
