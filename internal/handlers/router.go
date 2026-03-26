@@ -149,11 +149,12 @@ func NewRouter() *chi.Mux {
 		r.Post("/material-costs/{id}/recalculate", materialCostHandler.RecalculateMaterialCost)
 	})
 
-	// Chat route (protected - requires auth)
+	// Chat route (public - auth optional, enriches context if logged in)
 	chatHandler := chat.NewHandler()
 	r.Route("/api/v1/chat", func(r chi.Router) {
-		r.Use(middleware.AuthMiddleware)
+		r.Use(middleware.AuthOptional)
 		r.Post("/", chatHandler.HandleChat)
+		r.Post("/summary", chatHandler.HandleSummary)
 	})
 
 	// Quote routes (Fase 1 - Cotizador)
@@ -206,7 +207,7 @@ func NewRouter() *chi.Mux {
 		http.ServeFile(w, r, filepath.Join(webDir, "logo.png"))
 	})
 	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, filepath.Join(webDir, "favicon.svg"))
+		http.ServeFile(w, r, filepath.Join(webDir, "favicon.ico"))
 	})
 	r.Get("/googleeb4aa376b55ad413.html", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "googleeb4aa376b55ad413.html"))
@@ -240,6 +241,14 @@ func NewRouter() *chi.Mux {
 	})
 	r.Get("/docs/pricing/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/docs/pricing", http.StatusMovedPermanently)
+	})
+
+	// Catálogo de Blanks
+	r.Get("/catalogo", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/catalogo/", http.StatusMovedPermanently)
+	})
+	r.Get("/catalogo/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "catalogo", "index.html"))
 	})
 
 	// Static assets

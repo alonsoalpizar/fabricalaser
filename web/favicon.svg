@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <!-- Glow effect for laser beam -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <!-- Subtle gradient background -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e1e1e"/>
+      <stop offset="100%" stop-color="#111111"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background with rounded corners -->
+  <rect width="32" height="32" rx="6" ry="6" fill="url(#bg)"/>
+
+  <!-- "F" letter - bold, clean -->
+  <text x="5" y="23" font-family="Arial Black, Arial, sans-serif" font-weight="900"
+        font-size="20" fill="#ffffff" letter-spacing="-1">F</text>
+
+  <!-- "L" letter slightly smaller / offset -->
+  <text x="15.5" y="23" font-family="Arial Black, Arial, sans-serif" font-weight="900"
+        font-size="20" fill="#B8543E" letter-spacing="-1">L</text>
+
+  <!-- Laser beam line — horizontal cutting across bottom -->
+  <line x1="3" y1="26.5" x2="29" y2="26.5" stroke="#B8543E" stroke-width="1.2"
+        stroke-linecap="round" filter="url(#glow)" opacity="0.9"/>
+
+  <!-- Laser spark dot at right end -->
+  <circle cx="29" cy="26.5" r="1.4" fill="#FF8060" filter="url(#glow)" opacity="0.95"/>
+
+  <!-- Subtle top highlight line -->
+  <line x1="6" y1="5.5" x2="26" y2="5.5" stroke="#333333" stroke-width="0.5"/>
+</svg>

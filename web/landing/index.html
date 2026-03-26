@@ -588,6 +588,122 @@ img { max-width: 100%; height: auto; display: block; }
   margin-top: 4px;
 }
 
+/* ===== CATALOG SLIDER ===== */
+.catalog-section {
+  background: var(--bg-primary);
+}
+
+.catalog-slider-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.catalog-slider-track {
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.catalog-slide {
+  min-width: 100%;
+  position: relative;
+  aspect-ratio: 4/3;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.catalog-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 24px;
+  transition: transform 0.5s;
+}
+
+.catalog-slide:hover img {
+  transform: scale(1.04);
+}
+
+.catalog-slide-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 24px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+}
+
+.catalog-slide-caption h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 2px;
+  font-family: 'Inter', sans-serif;
+}
+
+.catalog-slide-caption p {
+  font-size: 13px;
+  color: rgba(255,255,255,0.65);
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.catalog-slider-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.catalog-nav-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.catalog-nav-btn:hover {
+  border-color: var(--red-laser);
+  background: rgba(155, 32, 32, 0.1);
+  color: var(--red-laser);
+}
+
+.catalog-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.catalog-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  padding: 0;
+}
+
+.catalog-dot.active {
+  background: var(--red-laser);
+  width: 24px;
+  border-radius: 4px;
+}
 
 /* ===== TECHNOLOGIES ===== */
 .tech-grid {
@@ -864,6 +980,65 @@ footer {
 
 .footer-social a:hover { color: var(--red-laser); }
 
+/* ===== FOOTER SOCIAL STRIP ===== */
+.footer-social-strip {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 32px 0;
+  margin-bottom: 32px;
+}
+
+.footer-social-strip h4 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.social-link:hover {
+  border-color: var(--red-laser);
+  color: var(--text-primary);
+  background: rgba(155, 32, 32, 0.06);
+}
+
+.social-link svg {
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.social-link:hover svg {
+  color: var(--red-laser);
+}
+
+@media (max-width: 600px) {
+  .social-links { gap: 8px; }
+  .social-link { padding: 8px 14px; font-size: 12px; }
+}
+
 /* ===== AUTH MODAL ===== */
 .modal-overlay {
   display: none;
@@ -1112,6 +1287,8 @@ footer {
     <li><a href="#galeria">Galer&iacute;a</a></li>
     <li><a href="#tecnologia">Tecnolog&iacute;a</a></li>
     <li><a href="#proceso">Proceso</a></li>
+    <li><a href="/catalogo/">Cat&aacute;logo</a></li>
+    <li><a href="#registro">Registrate</a></li>
     <li><a href="#contacto">Contacto</a></li>
   </ul>
   <div class="nav-actions" id="navActions">
@@ -1136,10 +1313,10 @@ footer {
   <p class="hero-sub">Transformamos materiales en piezas &uacute;nicas con precisi&oacute;n milim&eacute;trica. Trabajamos metal, cuero, madera, acr&iacute;lico, vidrio y m&aacute;s — con la calidad que tu marca merece.</p>
 
   <div class="hero-actions">
-    <a href="https://wa.me/50670183073?text=Hola%2C%20me%20interesa%20un%20trabajo%20de%20grabado%20l%C3%A1ser" class="btn-primary" target="_blank" rel="noopener">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      Escribinos por WhatsApp
-    </a>
+    <button class="btn-primary" onclick="flOpenChat()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/><path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
+      Consultá con el Asistente
+    </button>
     <button class="btn-secondary" onclick="handleCotizar()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       Cotizar Online
@@ -1270,6 +1447,69 @@ footer {
         </div>
       </div>
     </div>
+
+    <!-- CATALOG SLIDER -->
+    <div style="margin-top: 48px;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <p class="section-eyebrow">Cat&aacute;logo de Piezas</p>
+        <h3 style="font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 8px 0 0; font-family: 'Inter', sans-serif;">Blancos para personalizar</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); margin: 8px 0 0; font-family: 'Inter', sans-serif;">Acr&iacute;lico cortado con precisi&oacute;n — listo para tu dise&ntilde;o</p>
+      </div>
+
+      <div class="catalog-slider-wrapper" id="catalogSlider">
+        <div class="catalog-slider-track" id="catalogTrack">
+
+          <div class="catalog-slide">
+            <img src="/assets/blanks/Transparente/Llaveros3.png" alt="Llaveros de acrílico transparente crystal 3mm" loading="lazy">
+            <div class="catalog-slide-caption">
+              <h4>Llaveros Transparentes</h4>
+              <p>Crystal 3mm &bull; Formas variadas &bull; Desde 25 unidades</p>
+            </div>
+          </div>
+
+          <div class="catalog-slide">
+            <img src="/assets/blanks/Transparente/MedallasTransparentes.png" alt="Medallas de acrílico transparente 7cm" loading="lazy">
+            <div class="catalog-slide-caption">
+              <h4>Medallas Transparentes</h4>
+              <p>Crystal 3mm &bull; 7cm &bull; Desde 50 unidades</p>
+            </div>
+          </div>
+
+          <div class="catalog-slide">
+            <img src="/assets/blanks/Blanco/MedallasBlancas2.png" alt="Medallas de acrílico blanco sublimable" loading="lazy">
+            <div class="catalog-slide-caption">
+              <h4>Medallas Blancas</h4>
+              <p>Blanco sublimable &bull; 7cm &bull; Desde 50 unidades</p>
+            </div>
+          </div>
+
+          <div class="catalog-slide">
+            <img src="/assets/blanks/Blanco/LlaverosRedondosBlancos.png" alt="Llaveros redondos de acrílico blanco sublimable" loading="lazy">
+            <div class="catalog-slide-caption">
+              <h4>Llaveros Redondos Blancos</h4>
+              <p>Blanco sublimable &bull; 5cm &bull; Desde 25 unidades</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="catalog-slider-nav">
+        <button class="catalog-nav-btn" id="catalogPrev" aria-label="Anterior">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="catalog-dots" id="catalogDots">
+          <button class="catalog-dot active" data-index="0"></button>
+          <button class="catalog-dot" data-index="1"></button>
+          <button class="catalog-dot" data-index="2"></button>
+          <button class="catalog-dot" data-index="3"></button>
+        </div>
+        <button class="catalog-nav-btn" id="catalogNext" aria-label="Siguiente">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -1413,6 +1653,60 @@ footer {
 
 <div class="laser-divider"></div>
 
+<!-- REGISTRO -->
+<section class="section" id="registro">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-eyebrow">Clientes registrados</p>
+      <h2 class="section-title">Registrate &mdash; es f&aacute;cil y r&aacute;pido</h2>
+      <p class="section-subtitle">Solo necesit&aacute;s tu c&eacute;dula costarricense. En menos de un minuto ten&eacute;s acceso a todo.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;margin-top:48px;">
+      <div style="background:var(--bg-secondary);border:1px solid var(--border-primary);border-radius:12px;padding:28px 24px;display:flex;flex-direction:column;gap:12px;">
+        <div style="width:44px;height:44px;background:rgba(155,32,32,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B2020" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+        </div>
+        <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);font-family:'Inter',sans-serif;">Cat&aacute;logo completo</h3>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;font-family:'Inter',sans-serif;">Ver precios, disponibilidad y opciones de llaveros, medallas y m&aacute;s — con todos los detalles.</p>
+      </div>
+
+      <div style="background:var(--bg-secondary);border:1px solid var(--border-primary);border-radius:12px;padding:28px 24px;display:flex;flex-direction:column;gap:12px;">
+        <div style="width:44px;height:44px;background:rgba(155,32,32,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B2020" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);font-family:'Inter',sans-serif;">Cotizador instant&aacute;neo</h3>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;font-family:'Inter',sans-serif;">Sub&iacute; tu dise&ntilde;o SVG y recib&iacute; precio en segundos para cualquier material y tecnolog&iacute;a.</p>
+      </div>
+
+      <div style="background:var(--bg-secondary);border:1px solid var(--border-primary);border-radius:12px;padding:28px 24px;display:flex;flex-direction:column;gap:12px;">
+        <div style="width:44px;height:44px;background:rgba(155,32,32,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B2020" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);font-family:'Inter',sans-serif;">Atenci&oacute;n personalizada</h3>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;font-family:'Inter',sans-serif;">Chat con asistente que te conoce, sabe tus pedidos anteriores y te ayuda a definir exactamente lo que necesit&aacute;s.</p>
+      </div>
+
+      <div style="background:var(--bg-secondary);border:1px solid var(--border-primary);border-radius:12px;padding:28px 24px;display:flex;flex-direction:column;gap:12px;">
+        <div style="width:44px;height:44px;background:rgba(155,32,32,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B2020" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);font-family:'Inter',sans-serif;">Identidad verificada</h3>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;font-family:'Inter',sans-serif;">Tu c&eacute;dula nos garantiza qui&eacute;n sos. Tus datos y pedidos siempre protegidos, sin complicaciones.</p>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:40px;">
+      <button onclick="openAuthModal()" style="background:var(--red-laser);color:#fff;border:none;border-radius:8px;padding:14px 36px;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:background 0.2s;" onmouseover="this.style.background='#B52525'" onmouseout="this.style.background='var(--red-laser)'">
+        Crear cuenta gratis
+      </button>
+      <p style="margin-top:14px;font-size:12px;color:var(--text-muted);font-family:'Inter',sans-serif;">Solo tu c&eacute;dula costarricense &bull; 100% gratis &bull; Sin tarjeta</p>
+    </div>
+  </div>
+</section>
+
+<div class="laser-divider"></div>
+
 <!-- CTA -->
 <section class="section cta-section" id="contacto">
   <div class="container">
@@ -1422,10 +1716,10 @@ footer {
       <p class="section-subtitle">Escribinos y hacemos realidad tu idea. Respuesta r&aacute;pida, asesor&iacute;a incluida, calidad garantizada.</p>
 
       <div class="cta-actions">
-        <a href="https://wa.me/50670183073?text=Hola%2C%20me%20interesa%20un%20trabajo%20de%20grabado%20l%C3%A1ser" class="btn-whatsapp" target="_blank" rel="noopener">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          WhatsApp: 7018-3073
-        </a>
+        <button class="btn-whatsapp" onclick="flOpenChat()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/><path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
+          Chatear con el Asistente
+        </button>
         <button class="btn-secondary" onclick="handleCotizar()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Cotizar Online
@@ -1479,11 +1773,77 @@ footer {
       </div>
     </div>
 
+    <!-- Social Media Strip -->
+    <div class="footer-social-strip">
+      <h4>Seguinos en redes sociales</h4>
+      <div class="social-links">
+
+        <!-- Instagram -->
+        <a href="https://www.instagram.com/fabricalasercr" target="_blank" rel="noopener" class="social-link" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          Instagram
+        </a>
+
+        <!-- Facebook -->
+        <a href="https://www.facebook.com/profile.php?id=61585072686315" target="_blank" rel="noopener" class="social-link" aria-label="Facebook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          Facebook
+        </a>
+
+        <!-- YouTube -->
+        <a href="https://www.youtube.com/@FabricaLaserCR" target="_blank" rel="noopener" class="social-link" aria-label="YouTube">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          YouTube
+        </a>
+
+        <!-- TikTok -->
+        <a href="https://www.tiktok.com/@fabricalasercr" target="_blank" rel="noopener" class="social-link" aria-label="TikTok">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
+          TikTok
+        </a>
+
+        <!-- Pinterest -->
+        <a href="https://www.pinterest.com/fabricalaser/" target="_blank" rel="noopener" class="social-link" aria-label="Pinterest">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+          Pinterest
+        </a>
+
+        <!-- Google Business -->
+        <a href="https://share.google/6GCcOQazGeRFrWA9C" target="_blank" rel="noopener" class="social-link" aria-label="Google Business">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
+          Google
+        </a>
+
+        <!-- WhatsApp -->
+        <a href="https://wa.me/50670183073" target="_blank" rel="noopener" class="social-link" aria-label="WhatsApp">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          WhatsApp
+        </a>
+
+      </div>
+    </div>
+
     <div class="footer-bottom">
       <p>&copy; 2026 FabricaLaser.com — Todos los derechos reservados</p>
       <div class="footer-social">
-        <a href="https://wa.me/50670183073" target="_blank" rel="noopener" aria-label="WhatsApp">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <!-- Icon-only links for bottom bar -->
+        <a href="https://www.instagram.com/fabricalasercr" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=61585072686315" target="_blank" rel="noopener" aria-label="Facebook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a href="https://www.youtube.com/@FabricaLaserCR" target="_blank" rel="noopener" aria-label="YouTube">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </a>
+        <a href="https://www.tiktok.com/@fabricalasercr" target="_blank" rel="noopener" aria-label="TikTok">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
+        </a>
+        <a href="https://www.pinterest.com/fabricalaser/" target="_blank" rel="noopener" aria-label="Pinterest">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+        </a>
+        <a href="https://share.google/6GCcOQazGeRFrWA9C" target="_blank" rel="noopener" aria-label="Google Business">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
         </a>
       </div>
     </div>
@@ -1645,6 +2005,18 @@ let redirectAfterAuth = null;
 document.addEventListener('DOMContentLoaded', function() {
   updateNavForAuth();
 
+  // Auto-open auth modal si vienen del catálogo o cotizador sin login
+  const params = new URLSearchParams(window.location.search);
+  const loginParam = params.get('login');
+  if (loginParam) {
+    if (loginParam === 'catalogo') {
+      redirectAfterAuth = '/catalogo/';
+    } else if (loginParam === '1') {
+      redirectAfterAuth = '/cotizar';
+    }
+    openAuthModal();
+  }
+
   // Enable/disable cedula submit based on input
   const cedulaInput = document.getElementById('cedulaInput');
   cedulaInput.addEventListener('input', function() {
@@ -1691,6 +2063,40 @@ function updateNavForAuth() {
     `;
   }
 }
+
+// ===== CATALOG SLIDER =====
+(function() {
+  var current = 0;
+  var total = 4;
+  var track, dots;
+
+  function init() {
+    track = document.getElementById('catalogTrack');
+    dots = document.querySelectorAll('.catalog-dot');
+    if (!track) return;
+
+    document.getElementById('catalogPrev').addEventListener('click', function() { go(current - 1); });
+    document.getElementById('catalogNext').addEventListener('click', function() { go(current + 1); });
+    dots.forEach(function(dot) {
+      dot.addEventListener('click', function() { go(parseInt(this.dataset.index)); });
+    });
+
+    // Auto-advance every 4s
+    setInterval(function() { go((current + 1) % total); }, 4000);
+  }
+
+  function go(idx) {
+    current = (idx + total) % total;
+    track.style.transform = 'translateX(-' + (current * 100) + '%)';
+    dots.forEach(function(d, i) { d.classList.toggle('active', i === current); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
 
 // Handle cotizar button - check auth first
 function handleCotizar() {
@@ -2079,7 +2485,7 @@ const videoObserver = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.auto-video').forEach(v => videoObserver.observe(v));
 </script>
-<script src="/static/chat-widget.js"></script>
+<script src="/static/chat-widget.js?v=3"></script>
 
 </body>
 </html>
