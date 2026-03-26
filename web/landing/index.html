@@ -1903,8 +1903,9 @@ footer {
       </div>
 
       <div class="form-group">
-        <label class="form-label">Tel&eacute;fono</label>
+        <label class="form-label">Tel&eacute;fono *</label>
         <input type="tel" class="form-input" id="registerTelefono" placeholder="8888-8888">
+        <p class="form-error" id="registerTelefonoError" style="display: none;"></p>
       </div>
 
       <div class="form-group">
@@ -2263,11 +2264,19 @@ async function registrar() {
   const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
 
   document.getElementById('registerEmailError').style.display = 'none';
+  document.getElementById('registerTelefonoError').style.display = 'none';
   document.getElementById('registerPasswordError').style.display = 'none';
 
   if (!email || !email.includes('@')) {
     document.getElementById('registerEmailError').textContent = 'Ingresa un email valido';
     document.getElementById('registerEmailError').style.display = 'block';
+    return;
+  }
+
+  if (!telefono) {
+    document.getElementById('registerTelefonoError').textContent = 'Por favor ingresa un número de teléfono válido';
+    document.getElementById('registerTelefonoError').style.display = 'block';
+    document.getElementById('registerTelefono').focus();
     return;
   }
 
@@ -2306,9 +2315,18 @@ async function registrar() {
     const result = await response.json();
 
     if (result.error) {
-      if (result.error.code === 'EMAIL_EXISTS') {
-        document.getElementById('registerEmailError').textContent = 'Este email ya esta registrado';
+      const code = result.error.code;
+      if (code === 'EMAIL_EXISTS') {
+        document.getElementById('registerEmailError').textContent = 'Este email ya está registrado';
         document.getElementById('registerEmailError').style.display = 'block';
+      } else if (code === 'TELEFONO_EXISTS') {
+        document.getElementById('registerTelefonoError').textContent = 'Este número de teléfono ya está registrado';
+        document.getElementById('registerTelefonoError').style.display = 'block';
+        document.getElementById('registerTelefono').focus();
+      } else if (code === 'INVALID_TELEFONO' || code === 'MISSING_TELEFONO') {
+        document.getElementById('registerTelefonoError').textContent = 'Por favor ingresa un número de teléfono válido (8 dígitos)';
+        document.getElementById('registerTelefonoError').style.display = 'block';
+        document.getElementById('registerTelefono').focus();
       } else {
         document.getElementById('registerPasswordError').textContent = result.error.message;
         document.getElementById('registerPasswordError').style.display = 'block';

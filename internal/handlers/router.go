@@ -7,19 +7,22 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/admin"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/auth"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/chat"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/config"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/quote"
 	"github.com/alonsoalpizar/fabricalaser/internal/middleware"
+	"github.com/alonsoalpizar/fabricalaser/internal/whatsapp"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/redis/go-redis/v9"
 )
 
 const Version = "1.0.0"
 
-func NewRouter() *chi.Mux {
+func NewRouter(redisClient *redis.Client) *chi.Mux {
 	r := chi.NewRouter()
 
 	// Global middleware
@@ -147,6 +150,23 @@ func NewRouter() *chi.Mux {
 		r.Put("/material-costs/{id}", materialCostHandler.UpdateMaterialCost)
 		r.Delete("/material-costs/{id}", materialCostHandler.DeleteMaterialCost)
 		r.Post("/material-costs/{id}/recalculate", materialCostHandler.RecalculateMaterialCost)
+
+		// WhatsApp conversations (read-only bitácora) + digest manual
+		waAdminHandler := admin.NewWhatsappHandler(redisClient)
+		r.Get("/whatsapp/conversations", waAdminHandler.GetConversations)
+		r.Get("/whatsapp/conversations/{phone}", waAdminHandler.GetConversation)
+		r.Post("/whatsapp/digest/send", waAdminHandler.SendDigest)
+	})
+
+	// WhatsApp webhook
+	waHandler := whatsapp.NewHandler(
+		whatsapp.NewRedisAdapter(redisClient),
+		whatsapp.NewPGAdapter(database.Get()),
+		whatsapp.NewGeminiAdapter(),
+	)
+	r.Route("/api/v1/whatsapp", func(r chi.Router) {
+		r.Get("/webhook", waHandler.VerifyWebhook)
+		r.Post("/webhook", waHandler.HandleMessage)
 	})
 
 	// Chat route (public - auth optional, enriches context if logged in)

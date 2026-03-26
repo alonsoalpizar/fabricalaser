@@ -74,3 +74,16 @@ func IsCedulaFisica(cedula string) bool {
 func IsCedulaJuridica(cedula string) bool {
 	return cedulaJuridicaRegex.MatchString(CleanCedula(cedula))
 }
+
+var telefonoCRRegex = regexp.MustCompile(`^[2-9]\d{7}$`)
+
+// ValidateTelefonoCR validates a Costa Rican phone number (8 digits, does not start with 0 or 1)
+func ValidateTelefonoCR(telefono string) bool {
+	cleaned := onlyDigitsRegex.ReplaceAllString(strings.TrimSpace(telefono), "")
+	return telefonoCRRegex.MatchString(cleaned)
+}
+
+// CleanTelefono removes all non-digit characters from a phone string
+func CleanTelefono(telefono string) string {
+	return onlyDigitsRegex.ReplaceAllString(strings.TrimSpace(telefono), "")
+}

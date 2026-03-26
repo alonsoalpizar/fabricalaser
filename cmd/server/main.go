@@ -8,6 +8,7 @@ import (
 	"github.com/alonsoalpizar/fabricalaser/internal/config"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers"
+	"github.com/alonsoalpizar/fabricalaser/internal/whatsapp"
 	"github.com/joho/godotenv"
 )
 
@@ -41,8 +42,17 @@ func main() {
 
 	log.Println("Database connection established")
 
+	// Connect to Redis
+	redisClient, err := database.ConnectRedis()
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+
+	// Start WhatsApp digest email scheduler (every 4 hours)
+	whatsapp.StartDigestScheduler(redisClient)
+
 	// Setup router
-	router := handlers.NewRouter()
+	router := handlers.NewRouter(redisClient)
 
 	// Start server
 	addr := ":" + cfg.Port

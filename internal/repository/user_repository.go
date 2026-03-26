@@ -91,6 +91,15 @@ func (r *UserRepository) ExistsByEmailWithPassword(email string) (bool, error) {
 	return count > 0, nil
 }
 
+// ExistsByTelefonoWithPassword checks if a user with password exists for the given telefono
+func (r *UserRepository) ExistsByTelefonoWithPassword(telefono string) (bool, error) {
+	var count int64
+	if err := r.db.Model(&models.User{}).Where("telefono = ? AND password_hash IS NOT NULL", telefono).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 // Create creates a new user
 func (r *UserRepository) Create(user *models.User) error {
 	return r.db.Create(user).Error
