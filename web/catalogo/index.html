@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo de Blanks — FabricaLaser.com</title>
+
+<meta name="description" content="Blanks de acrílico para personalizar con grabado láser. Llaveros, medallas y accesorios. Calidad premium, disponibles en blanco y transparente. Costa Rica.">
+<meta name="keywords" content="blanks acrilico, llaveros acrilico, medallas acrilico, sublimacion, grabado laser, personalizar, costa rica">
+<meta name="author" content="FabricaLaser">
+<link rel="canonical" href="https://fabricalaser.com/catalogo/">
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================
+   FABRICALASER — Catálogo Blanks
+   Sistema de diseño heredado del landing
+   Palette: #000 / #0A0A0A / #1A1A1A / #9B2020 / #B0B0B0 / #FFF
+   ============================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: #0A0A0A;
+  --bg-card: #1A1A1A;
+  --bg-elevated: #222222;
+  --red-laser: #9B2020;
+  --red-bright: #B82E2E;
+  --red-glow: rgba(155, 32, 32, 0.4);
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-muted: #666666;
+  --chrome: #909090;
+  --border: #2A2A2A;
+  --border-light: #333333;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-brand: 'Audiowide', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: var(--red-laser); text-decoration: none; transition: color 0.2s; }
+a:hover { color: var(--red-bright); }
+img { max-width: 100%; height: auto; display: block; }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== NAVBAR (idéntico al landing) ===== */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo a { display: flex; align-items: center; text-decoration: none; }
+.nav-logo-img {
+  height: 38px; width: auto;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+.nav-links { display: flex; list-style: none; gap: 32px; }
+.nav-links a {
+  color: var(--text-secondary);
+  font-size: 14px; font-weight: 500;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover,
+.nav-links a.active { color: var(--text-primary); }
+.nav-links a.active { color: var(--red-laser); }
+
+.nav-actions { display: flex; align-items: center; gap: 12px; }
+
+.nav-cta {
+  background: var(--red-laser); color: white;
+  border: none; padding: 8px 20px; border-radius: 6px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  letter-spacing: 0.5px; transition: all 0.2s;
+}
+.nav-cta:hover { background: var(--red-bright); box-shadow: 0 0 20px var(--red-glow); }
+
+.nav-login {
+  background: none; border: 1px solid var(--border-light);
+  color: var(--text-secondary); padding: 8px 20px; border-radius: 6px;
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+}
+.nav-login:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+.nav-toggle {
+  display: none; background: none; border: none;
+  color: var(--text-primary); cursor: pointer; padding: 8px;
+}
+
+/* ===== LASER DIVIDER ===== */
+.laser-divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--red-laser), transparent);
+  position: relative;
+}
+.laser-divider::after {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px; height: 6px;
+  background: var(--red-bright); border-radius: 50%;
+  box-shadow: 0 0 12px var(--red-bright), 0 0 24px var(--red-glow);
+}
+
+/* ===== PAGE HERO (compacto, no full-screen) ===== */
+.page-hero {
+  padding: 120px 0 64px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.page-hero::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center top, rgba(155, 32, 32, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.section-eyebrow {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--red-laser); margin-bottom: 12px;
+}
+
+.page-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 500; color: var(--text-primary);
+  margin-bottom: 16px; letter-spacing: 0.5px;
+  animation: fadeInUp 0.8s ease-out both;
+}
+
+.page-hero-sub {
+  font-size: 16px; color: var(--text-secondary);
+  max-width: 560px; margin: 0 auto;
+  line-height: 1.7;
+  animation: fadeInUp 0.8s ease-out 0.15s both;
+}
+
+/* ===== CATEGORY TABS ===== */
+.cat-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 400px;
+  margin: 40px auto 0;
+  animation: fadeInUp 0.8s ease-out 0.3s both;
+}
+
+.cat-tab {
+  flex: 1;
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  font-family: var(--font-body);
+  letter-spacing: 0.3px;
+}
+.cat-tab:not(:last-child) { border-right: 1px solid var(--border); }
+.cat-tab:hover { color: var(--text-secondary); background: var(--bg-card); }
+.cat-tab.active {
+  background: var(--red-laser); color: white;
+  font-weight: 600;
+}
+
+/* ===== MAIN CONTENT ===== */
+.catalog-section { padding: 80px 0; }
+
+.section-header { margin-bottom: 56px; }
+.section-header .section-eyebrow { margin-bottom: 8px; }
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 500; color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.section-subtitle {
+  font-size: 15px; color: var(--text-secondary);
+  max-width: 560px; line-height: 1.7;
+}
+
+/* ===== PRODUCT CARD ===== */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.product-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.product-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--red-laser);
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+
+.product-card:hover {
+  border-color: var(--border-light);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+}
+.product-card:hover::before { transform: scaleX(1); }
+
+/* Imagen del producto */
+.product-img-wrap {
+  aspect-ratio: 4/3;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.product-img-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+.product-card:hover .product-img-wrap img { transform: scale(1.04); }
+
+/* Badge de variantes */
+.product-variants {
+  position: absolute;
+  top: 12px; left: 12px;
+  display: flex; gap: 6px;
+}
+
+.variant-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(8px);
+}
+.variant-badge.white {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+}
+.variant-badge.clear {
+  background: rgba(200,230,255,0.12);
+  border: 1px solid rgba(200,230,255,0.3);
+  color: #c8e6ff;
+}
+.variant-badge.color {
+  background: rgba(155,32,32,0.2);
+  border: 1px solid rgba(155,32,32,0.4);
+  color: #ff9999;
+}
+
+/* Cuerpo del card */
+.product-body { padding: 28px; }
+
+.product-name {
+  font-size: 20px; font-weight: 600;
+  color: var(--text-primary); margin-bottom: 6px;
+}
+
+.product-desc {
+  font-size: 14px; color: var(--text-secondary);
+  line-height: 1.6; margin-bottom: 20px;
+}
+
+/* Formas disponibles */
+.product-shapes {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 24px;
+}
+
+.shape-tag {
+  padding: 5px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px; color: var(--text-muted);
+}
+.shape-tag.featured {
+  border-color: var(--red-laser);
+  color: var(--text-secondary);
+}
+
+/* Tabla de precios */
+.price-table {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.price-table-header {
+  display: grid;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.price-table-header.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.price-table-header.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.price-row {
+  display: grid;
+  padding: 14px 16px;
+  align-items: center;
+  transition: background 0.2s;
+}
+.price-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+.price-row:hover { background: var(--bg-elevated); }
+
+.price-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.price-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.price-qty {
+  font-size: 14px; font-weight: 600;
+  color: var(--text-primary);
+}
+
+.price-amount {
+  font-size: 15px; font-weight: 700;
+  color: var(--red-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.price-unit {
+  font-size: 12px; color: var(--text-muted);
+}
+
+/* Nota de argollas */
+.addon-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px; color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.addon-note svg { flex-shrink: 0; color: var(--text-muted); }
+.addon-note strong { color: var(--text-secondary); }
+
+/* Botón CTA del card */
+.btn-chat-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+  background: var(--red-laser);
+  color: white;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 14px; font-weight: 600;
+  border: none; cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  font-family: var(--font-body);
+}
+.btn-chat-card:hover {
+  background: var(--red-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px var(--red-glow);
+  color: white;
+}
+
+/* ===== SECCIÓN SOLO UNA COLUMNA (futura) ===== */
+.products-grid-single {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* ===== INFO STRIP ===== */
+.info-strip {
+  padding: 64px 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.info-card {
+  text-align: center;
+  padding: 32px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.info-icon {
+  width: 48px; height: 48px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--red-laser);
+}
+
+.info-card h3 {
+  font-size: 16px; font-weight: 600;
+  color: var(--text-primary); margin-bottom: 8px;
+}
+
+.info-card p {
+  font-size: 14px; color: var(--text-secondary); line-height: 1.6;
+}
+
+/* ===== COLORES PEDIDO ESPECIAL ===== */
+.custom-order-section {
+  padding: 64px 0;
+}
+
+.custom-order-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+}
+
+.custom-order-card h3 {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 500;
+  color: var(--text-primary); margin-bottom: 8px;
+}
+
+.custom-order-card p {
+  font-size: 15px; color: var(--text-secondary); line-height: 1.6;
+}
+
+.color-swatches {
+  display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap;
+}
+
+.color-swatch {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--border);
+  cursor: default;
+  title: attr(data-color);
+}
+
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--red-laser); color: white;
+  padding: 14px 28px; border-radius: 8px;
+  font-size: 14px; font-weight: 600;
+  border: none; cursor: pointer; white-space: nowrap;
+  transition: all 0.3s; text-decoration: none;
+}
+.btn-primary:hover {
+  background: var(--red-bright);
+  box-shadow: 0 0 24px var(--red-glow);
+  color: white;
+}
+
+/* ===== FOOTER (idéntico al landing, simplificado) ===== */
+footer {
+  padding: 48px 0 32px;
+  border-top: 1px solid var(--border);
+}
+
+.footer-bottom {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.footer-bottom p { font-size: 13px; color: var(--text-muted); }
+
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { font-size: 13px; color: var(--text-muted); transition: color 0.2s; }
+.footer-links a:hover { color: var(--text-secondary); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .info-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-toggle { display: block; }
+
+  .page-hero { padding: 100px 0 48px; }
+
+  .products-grid { grid-template-columns: 1fr; }
+
+  .info-grid { grid-template-columns: 1fr; gap: 16px; }
+
+  .custom-order-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .color-swatches { justify-content: center; }
+
+  .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .cat-tabs { max-width: 100%; }
+  .price-table-header.cols-4,
+  .price-row.cols-4 { grid-template-columns: 1fr 1fr 1fr; }
+  .price-row.cols-4 .price-unit { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav">
+  <div class="nav-logo">
+    <a href="/"><img src="/assets/img/nav.png" alt="FabricaLaser.com" class="nav-logo-img"></a>
+  </div>
+  <ul class="nav-links">
+    <li><a href="/#servicios">Servicios</a></li>
+    <li><a href="/#galeria">Galería</a></li>
+    <li><a href="/#tecnologia">Tecnología</a></li>
+    <li><a href="/catalogo/" class="active">Catálogo</a></li>
+    <li><a href="/#contacto">Contacto</a></li>
+  </ul>
+  <div class="nav-actions" id="navActions">
+    <button class="nav-login" onclick="openAuthModal()">Ingresar</button>
+    <button class="nav-cta" onclick="handleCotizar()">COTIZAR</button>
+  </div>
+  <button class="nav-toggle" onclick="toggleMobileMenu()" aria-label="Menú">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 12h18M3 6h18M3 18h18"/>
+    </svg>
+  </button>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="container">
+    <p class="section-eyebrow">Catálogo · Piezas para Personalizar</p>
+    <h1 class="page-hero-title">Piezas listas para <em style="color: var(--red-laser); font-style: italic;">personalizar</em></h1>
+    <p class="page-hero-sub">Piezas de acrílico cortadas con precisión láser, listas para personalizar con grabado, sublimación o pintura. Inventario permanente en blanco y transparente.</p>
+
+    <div class="cat-tabs">
+      <button class="cat-tab active" onclick="scrollToSection(event, 'llaveros')">Llaveros</button>
+      <button class="cat-tab" onclick="scrollToSection(event, 'medallas')">Medallas</button>
+    </div>
+  </div>
+</section>
+
+<div class="laser-divider"></div>
+
+<!-- ===== LLAVEROS ===== -->
+<section class="catalog-section" id="llaveros">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-eyebrow">Categoría 01</p>
+      <h2 class="section-title">Llaveros de Acrílico</h2>
+      <p class="section-subtitle">5cm de diámetro/lado. Disponibles en 6 formas diferentes. Stock permanente en blanco y transparente. Precio único por forma.</p>
+    </div>
+
+    <div class="products-grid">
+
+      <!-- CARD: Llaveros Blancos -->
+      <div class="product-card">
+        <div class="product-img-wrap">
+          <img src="/assets/img/blanks/llaveros-blancos.jpg" alt="Llaveros de acrílico blanco para grabado láser" loading="lazy">
+          <div class="product-variants">
+            <span class="variant-badge white">Blanco</span>
+            <span class="variant-badge color">Color desde 50 unidades</span>
+          </div>
+        </div>
+        <div class="product-body">
+          <h3 class="product-name">Llaveros Blancos Sublimables</h3>
+          <p class="product-desc">Acrílico blanco opaco, superficie lisa ideal para sublimación y grabado láser CO₂. Bordes pulidos, sin imperfecciones.</p>
+
+          <div class="product-shapes">
+            <span class="shape-tag featured">⬤ Redondo</span>
+            <span class="shape-tag featured">■ Cuadrado</span>
+            <span class="shape-tag">⬡ Hexágono</span>
+            <span class="shape-tag">♥ Corazón</span>
+            <span class="shape-tag">▬ Rectángulo</span>
+            <span class="shape-tag">✦ Escudo</span>
+          </div>
+
+          <div class="price-table">
+            <div class="price-table-header cols-3">
+              <span>Cantidad</span>
+              <span>Total</span>
+              <span>c/u</span>
+            </div>
+            <div class="price-row cols-3">
+              <span class="price-qty">25 uds</span>
+              <span class="price-amount">₡6,000</span>
+              <span class="price-unit">₡240 c/u</span>
+            </div>
+            <div class="price-row cols-3">
+              <span class="price-qty">50 uds</span>
+              <span class="price-amount">₡11,000</span>
+              <span class="price-unit">₡220 c/u</span>
+            </div>
+            <div class="price-row cols-3">
+              <span class="price-qty">100 uds</span>
+              <span class="price-amount">₡18,000</span>
+              <span class="price-unit">₡180 c/u</span>
+            </div>
+          </div>
+
+          <div class="addon-note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span>Argolla metálica opcional: <strong>+₡150 por unidad</strong></span>
+          </div>
+
+          <button onclick="flOpenChat('Hola, me interesan los llaveros blancos, ¿me podés dar más info?')" class="btn-chat-card">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Consultá por Chat
+          </button>
+        </div>
+      </div>
+
+      <!-- CARD: Llaveros Transparentes -->
+      <div class="product-card">
+        <div class="product-img-wrap">
+          <img src="/assets/img/blanks/llaveros-transparentes.jpg" alt="Llaveros de acrílico transparente para grabado láser" loading="lazy">
+          <div class="product-variants">
+            <span class="variant-badge clear">Transparente</span>
+            <span class="variant-badge color">Color desde 50 unidades</span>
+          </div>
+        </div>
+        <div class="product-body">
+          <h3 class="product-name">Llaveros Transparentes</h3>
+          <p class="product-desc">Acrílico crystal de 3mm. El grabado láser crea un efecto esmerilado con profundidad visual única. Elegante y moderno.</p>
+
+          <div class="product-shapes">
+            <span class="shape-tag featured">⬤ Redondo</span>
+            <span class="shape-tag featured">■ Cuadrado</span>
+            <span class="shape-tag">⬡ Hexágono</span>
+            <span class="shape-tag">♥ Corazón</span>
+            <span class="shape-tag">▬ Rectángulo</span>
+            <span class="shape-tag">✦ Escudo</span>
+          </div>
+
+          <div class="price-table">
+            <div class="price-table-header cols-3">
+              <span>Cantidad</span>
+              <span>Total</span>
+              <span>c/u</span>
+            </div>
+            <div class="price-row cols-3">
+              <span class="price-qty">25 uds</span>
+              <span class="price-amount">₡6,000</span>
+              <span class="price-unit">₡240 c/u</span>
+            </div>
+            <div class="price-row cols-3">
+              <span class="price-qty">50 uds</span>
+              <span class="price-amount">₡11,000</span>
+              <span class="price-unit">₡220 c/u</span>
+            </div>
+            <div class="price-row cols-3">
+              <span class="price-qty">100 uds</span>
+              <span class="price-amount">₡18,000</span>
+              <span class="price-unit">₡180 c/u</span>
+            </div>
+          </div>
+
+          <div class="addon-note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span>Argolla metálica opcional: <strong>+₡150 por unidad</strong></span>
+          </div>
+
+          <button onclick="flOpenChat('Hola, me interesan los llaveros transparentes, ¿me podés dar más info?')" class="btn-chat-card">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Consultá por Chat
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="laser-divider"></div>
+
+<!-- ===== MEDALLAS ===== -->
+<section class="catalog-section" id="medallas" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-eyebrow">Categoría 02</p>
+      <h2 class="section-title">Medallas de Acrílico</h2>
+      <p class="section-subtitle">7cm. Forma clásica de medalla con ranura para cinta o colgante. Mínimo 50 unidades. Ideales para eventos, torneos y reconocimientos.</p>
+    </div>
+
+    <div class="products-grid">
+
+      <!-- CARD: Medallas Transparentes -->
+      <div class="product-card">
+        <div class="product-img-wrap">
+          <img src="/assets/img/blanks/medallas-transparentes.jpg" alt="Medallas de acrílico transparente para grabado láser" loading="lazy">
+          <div class="product-variants">
+            <span class="variant-badge clear">Transparente</span>
+          </div>
+        </div>
+        <div class="product-body">
+          <h3 class="product-name">Medallas Transparentes</h3>
+          <p class="product-desc">Acrílico crystal 3mm. El grabado crea un efecto esmerilado de alta elegancia. Ideales para premios corporativos y deportivos.</p>
+
+          <div class="price-table">
+            <div class="price-table-header cols-4">
+              <span>Cantidad</span>
+              <span>Total</span>
+              <span>c/u</span>
+              <span>Nota</span>
+            </div>
+            <div class="price-row cols-4">
+              <span class="price-qty">50 uds</span>
+              <span class="price-amount">₡18,750</span>
+              <span class="price-unit">₡375 c/u</span>
+              <span class="price-unit">Mínimo</span>
+            </div>
+            <div class="price-row cols-4">
+              <span class="price-qty">100 uds</span>
+              <span class="price-amount">₡37,500</span>
+              <span class="price-unit">₡375 c/u</span>
+              <span class="price-unit"></span>
+            </div>
+            <div class="price-row cols-4">
+              <span class="price-qty">+100 uds</span>
+              <span class="price-amount">₡350 c/u</span>
+              <span class="price-unit">Variable</span>
+              <span class="price-unit">Cotizar</span>
+            </div>
+          </div>
+
+          <button onclick="flOpenChat('Hola, me interesan las medallas transparentes, ¿me podés dar más info?')" class="btn-chat-card">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Consultá por Chat
+          </button>
+        </div>
+      </div>
+
+      <!-- CARD: Medallas Blancas -->
+      <div class="product-card">
+        <div class="product-img-wrap">
+          <img src="/assets/img/blanks/medallas-blancas.jpg" alt="Medallas de acrílico blanco sublimable para grabado láser" loading="lazy">
+          <div class="product-variants">
+            <span class="variant-badge white">Blanco Sublimable</span>
+          </div>
+        </div>
+        <div class="product-body">
+          <h3 class="product-name">Medallas Blancas Sublimables</h3>
+          <p class="product-desc">Acrílico blanco opaco con superficie tratada para sublimación. Permite impresión a todo color con resultados fotográficos.</p>
+
+          <div class="price-table">
+            <div class="price-table-header cols-4">
+              <span>Cantidad</span>
+              <span>Total</span>
+              <span>c/u</span>
+              <span>Nota</span>
+            </div>
+            <div class="price-row cols-4">
+              <span class="price-qty">50 uds</span>
+              <span class="price-amount">₡18,750</span>
+              <span class="price-unit">₡375 c/u</span>
+              <span class="price-unit">Mínimo</span>
+            </div>
+            <div class="price-row cols-4">
+              <span class="price-qty">100 uds</span>
+              <span class="price-amount">₡37,500</span>
+              <span class="price-unit">₡375 c/u</span>
+              <span class="price-unit"></span>
+            </div>
+            <div class="price-row cols-4">
+              <span class="price-qty">+100 uds</span>
+              <span class="price-amount">₡350 c/u</span>
+              <span class="price-unit">Variable</span>
+              <span class="price-unit">Cotizar</span>
+            </div>
+          </div>
+
+          <button onclick="flOpenChat('Hola, me interesan las medallas blancas sublimables, ¿me podés dar más info?')" class="btn-chat-card">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Consultá por Chat
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="laser-divider"></div>
+
+<!-- ===== INFO STRIP ===== -->
+<section class="info-strip">
+  <div class="container">
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Corte láser de precisión</h3>
+        <p>Cada blank se corta con láser CO₂. Bordes limpios, sin rebaba, tolerancias consistentes en cada pieza.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
+        <h3>Inventario permanente</h3>
+        <p>Llaveros redondos disponibles siempre. Otras formas y medallas sujetas a disponibilidad. Consultá antes de pedir.</p>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <h3>Retiro o envío a todo CR</h3>
+        <p>Podés retirar tu pedido en nuestro taller en San José, o coordinamos envío por Correos de Costa Rica o mensajería a cualquier punto del país.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="laser-divider"></div>
+
+<!-- ===== PEDIDOS ESPECIALES ===== -->
+<section class="custom-order-section">
+  <div class="container">
+    <div class="custom-order-card">
+      <div>
+        <p class="section-eyebrow">Pedidos especiales</p>
+        <h3>¿Necesitás otro color o cantidad mayor?</h3>
+        <p>Trabajamos colores bajo pedido mínimo. Rojo, negro, azul, verde, amarillo y más. Si tu pedido justifica el lote, lo producimos. También atendemos pedidos de más de 500 unidades con precio preferencial.</p>
+        <div class="color-swatches">
+          <div class="color-swatch" style="background:#e53935;" title="Rojo"></div>
+          <div class="color-swatch" style="background:#1565c0;" title="Azul"></div>
+          <div class="color-swatch" style="background:#2e7d32;" title="Verde"></div>
+          <div class="color-swatch" style="background:#f9a825;" title="Amarillo"></div>
+          <div class="color-swatch" style="background:#f06292;" title="Rosa"></div>
+          <div class="color-swatch" style="background:#6a1b9a;" title="Morado"></div>
+          <div class="color-swatch" style="background:#263238;" title="Negro"></div>
+          <div class="color-swatch" style="background:#bdbdbd; border-color: #555;" title="Plateado"></div>
+        </div>
+      </div>
+      <div>
+        <a href="https://wa.me/50670183073?text=Hola%2C%20me%20interesa%20un%20pedido%20especial%20de%20blanks%20en%20color.%20%C2%BFMe%20pod%C3%A9s%20dar%20m%C3%A1s%20informaci%C3%B3n%3F"
+           class="btn-primary" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Consultá tu pedido
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <p>© 2026 FabricaLaser.com — Todos los derechos reservados</p>
+      <div class="footer-links">
+        <a href="/">Inicio</a>
+        <a href="/#servicios">Servicios</a>
+        <a href="/catalogo/">Catálogo</a>
+        <a href="https://wa.me/50670183073" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Auth guard — catálogo requiere login (igual que cotizador)
+(function() {
+  var token = localStorage.getItem('fl_token');
+  if (!token) {
+    window.location.href = '/?login=catalogo';
+  }
+})();
+
+// Auth state (igual que landing)
+function updateNavForAuth() {
+  const token = localStorage.getItem('fl_token');
+  const user = JSON.parse(localStorage.getItem('fl_user') || 'null');
+  const navActions = document.getElementById('navActions');
+
+  if (token && user) {
+    const initials = (user.nombre || 'U').charAt(0).toUpperCase();
+    const isAdmin = user.role === 'admin';
+    navActions.innerHTML = `
+      ${isAdmin ? '<button class="nav-admin" onclick="window.location.href=\'/admin/\'">Admin</button>' : ''}
+      <div class="nav-user" onclick="window.location.href='/mi-cuenta'" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 12px;border-radius:6px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--bg-elevated);border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text-secondary);">${initials}</div>
+        <span style="font-size:13px;color:var(--text-secondary);">${user.nombre}</span>
+      </div>
+      <button class="nav-cta" onclick="window.location.href='/cotizar'">COTIZAR</button>
+    `;
+  }
+}
+
+function handleCotizar() {
+  const token = localStorage.getItem('fl_token');
+  if (token) { window.location.href = '/cotizar'; }
+  else { window.location.href = '/?cotizar=1'; }
+}
+
+function openAuthModal() {
+  window.location.href = '/?login=1';
+}
+
+function toggleMobileMenu() {
+  const links = document.querySelector('.nav-links');
+  links.style.display = links.style.display === 'flex' ? 'none' : 'flex';
+}
+
+function scrollToSection(e, id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  updateNavForAuth();
+
+  // Actualizar tab activo al hacer scroll
+  const sections = ['llaveros', 'medallas'];
+  const tabs = document.querySelectorAll('.cat-tab');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = sections.indexOf(entry.target.id);
+        if (idx >= 0) {
+          tabs.forEach(t => t.classList.remove('active'));
+          if (tabs[idx]) tabs[idx].classList.add('active');
+        }
+      }
+    });
+  }, { threshold: 0.4 });
+
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+});
+</script>
+<script src="/static/chat-widget.js?v=3"></script>
+
+</body>
+</html>
