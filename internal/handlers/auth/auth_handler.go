@@ -3,10 +3,13 @@ package auth
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"strings"
 
 	authService "github.com/alonsoalpizar/fabricalaser/internal/services/auth"
 )
+
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
 type AuthHandler struct {
 	service *authService.AuthService
@@ -148,6 +151,11 @@ func (h *AuthHandler) Registro(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if strings.TrimSpace(req.Telefono) == "" {
+		respondError(w, http.StatusBadRequest, "MISSING_TELEFONO", "El teléfono es requerido")
+		return
+	}
+
 	if req.Password == "" || len(req.Password) < 6 {
 		respondError(w, http.StatusBadRequest, "WEAK_PASSWORD", "La contraseña debe tener al menos 6 caracteres")
 		return
@@ -170,6 +178,10 @@ func (h *AuthHandler) Registro(w http.ResponseWriter, r *http.Request) {
 			code = "CEDULA_EXISTS"
 		case authService.ErrEmailExists:
 			code = "EMAIL_EXISTS"
+		case authService.ErrTelefonoExists:
+			code = "TELEFONO_EXISTS"
+		case authService.ErrInvalidTelefono:
+			code = "INVALID_TELEFONO"
 		case authService.ErrInvalidCedula:
 			code = "INVALID_CEDULA"
 		case authService.ErrWeakPassword:
@@ -399,11 +411,5 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 // isValidEmail checks if email format is valid
 func isValidEmail(email string) bool {
-	// Simple check - contains @ and at least one . after @
-	at := strings.Index(email, "@")
-	if at < 1 {
-		return false
-	}
-	dot := strings.LastIndex(email, ".")
-	return dot > at+1 && dot < len(email)-1
+	return emailRegex.MatchString(strings.TrimSpace(email))
 }

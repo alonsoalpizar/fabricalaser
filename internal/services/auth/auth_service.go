@@ -9,6 +9,7 @@ import (
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
 	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 	"github.com/alonsoalpizar/fabricalaser/internal/services/cedula"
+	emailSvc "github.com/alonsoalpizar/fabricalaser/internal/services/email"
 	"github.com/alonsoalpizar/fabricalaser/internal/utils"
 	"gorm.io/datatypes"
 )
@@ -18,6 +19,8 @@ var (
 	ErrCedulaNotFound      = errors.New("cédula no registrada")
 	ErrAccountExists       = errors.New("ya existe una cuenta con esta cédula")
 	ErrEmailExists         = errors.New("ya existe una cuenta con este email")
+	ErrTelefonoExists      = errors.New("ya existe una cuenta con este número de teléfono")
+	ErrInvalidTelefono     = errors.New("número de teléfono inválido. Ingrese 8 dígitos (ej: 88887777)")
 	ErrInvalidPassword     = errors.New("contraseña incorrecta")
 	ErrAccountDisabled     = errors.New("cuenta desactivada. Contacte al administrador")
 	ErrWeakPassword        = errors.New("la contraseña debe tener al menos 6 caracteres")
@@ -233,6 +236,19 @@ func (s *AuthService) Registro(identificacion, nombre, email, telefono, password
 		return nil, ErrEmailExists
 	}
 
+	// Validate and check telefono uniqueness
+	if !utils.ValidateTelefonoCR(telefono) {
+		return nil, ErrInvalidTelefono
+	}
+	telefonoClean := utils.CleanTelefono(telefono)
+	telefonoExists, err := s.userRepo.ExistsByTelefonoWithPassword(telefonoClean)
+	if err != nil {
+		return nil, err
+	}
+	if telefonoExists {
+		return nil, ErrTelefonoExists
+	}
+
 	// Validate against GoMeta API
 	goMetaResult, err := s.cedulaService.ValidarCedula(validation.Cedula)
 	if err != nil {
@@ -260,6 +276,11 @@ func (s *AuthService) Registro(identificacion, nombre, email, telefono, password
 	var nombreFinal, apellidoFinal string
 	if goMetaResult.Valida && goMetaResult.NombreCompleto != "" {
 		nombreFinal, apellidoFinal = goMetaResult.GetNombreFormateado()
+		// Para cédulas jurídicas, GoMeta devuelve primerNombre/primerApellido vacíos.
+		// Usar NombreCompleto (nombre oficial de la empresa) como nombre.
+		if nombreFinal == "" {
+			nombreFinal = goMetaResult.NombreCompleto
+		}
 	} else {
 		// Split provided name
 		nombreFinal = strings.TrimSpace(nombre)
@@ -281,6 +302,7 @@ func (s *AuthService) Registro(identificacion, nombre, email, telefono, password
 
 	// Check if user exists without password (created by admin)
 	existingUser, err := s.userRepo.FindByCedula(validation.Cedula)
+	telefono = telefonoClean // always store clean digits
 	if err == nil && existingUser != nil && !existingUser.HasPassword() {
 		// Update existing user
 		existingUser.Nombre = nombreFinal
@@ -301,6 +323,7 @@ func (s *AuthService) Registro(identificacion, nombre, email, telefono, password
 		}
 
 		_ = s.userRepo.UpdateLastLogin(existingUser.ID)
+		emailSvc.SendWelcome(existingUser.Email, existingUser.Nombre)
 
 		token, err := utils.GenerateToken(existingUser.ID, existingUser.Cedula, existingUser.Nombre, existingUser.Email, existingUser.Role)
 		if err != nil {
@@ -340,6 +363,7 @@ func (s *AuthService) Registro(identificacion, nombre, email, telefono, password
 	}
 
 	_ = s.userRepo.UpdateLastLogin(user.ID)
+	emailSvc.SendWelcome(user.Email, user.Nombre)
 
 	token, err := utils.GenerateToken(user.ID, user.Cedula, user.Nombre, user.Email, user.Role)
 	if err != nil {
