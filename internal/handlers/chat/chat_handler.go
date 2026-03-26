@@ -280,15 +280,22 @@ type Handler struct {
 	matRepo  *repository.MaterialRepository
 	mu       sync.RWMutex
 	cache    *dynamicContext
+	genai    *genai.Client
 }
 
 const cacheTTL = 5 * time.Minute
 
-// NewHandler creates a new chat handler
+// NewHandler creates a new chat handler with a shared Vertex AI client
 func NewHandler() *Handler {
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, projectID, location)
+	if err != nil {
+		log.Fatalf("chat: failed to create Vertex AI client: %v", err)
+	}
 	return &Handler{
 		techRepo: repository.NewTechnologyRepository(),
 		matRepo:  repository.NewMaterialRepository(),
+		genai:    client,
 	}
 }
 
@@ -358,7 +365,7 @@ func (h *Handler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	dynCtx := h.getDynamicContext()
-	response, err := callGemini(ctx, req.Message, req.History, userName, dynCtx)
+	response, err := h.callGemini(ctx, req.Message, req.History, userName, dynCtx)
 	if err != nil {
 		log.Printf("Gemini error: %v", err)
 		sendError(w, "Error procesando la solicitud", http.StatusInternalServerError)
@@ -369,14 +376,8 @@ func (h *Handler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(ChatResponse{Response: response})
 }
 
-func callGemini(ctx context.Context, message string, history []HistoryEntry, userName string, dynCtx string) (string, error) {
-	client, err := genai.NewClient(ctx, projectID, location)
-	if err != nil {
-		return "", fmt.Errorf("failed to create client: %w", err)
-	}
-	defer client.Close()
-
-	model := client.GenerativeModel(modelName)
+func (h *Handler) callGemini(ctx context.Context, message string, history []HistoryEntry, userName string, dynCtx string) (string, error) {
+	model := h.genai.GenerativeModel(modelName)
 
 	// Choose instruction based on auth state, then append live DB context
 	var instruction string
@@ -460,16 +461,7 @@ func (h *Handler) HandleSummary(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
-	client, err := genai.NewClient(ctx, projectID, location)
-	if err != nil {
-		log.Printf("summary: error creating client: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(SummaryResponse{Error: "Error interno"})
-		return
-	}
-	defer client.Close()
-
-	model := client.GenerativeModel(modelName)
+	model := h.genai.GenerativeModel(modelName)
 	model.SystemInstruction = &genai.Content{
 		Parts: []genai.Part{genai.Text("Sos un asistente que resume conversaciones. Respondé solo con el resumen, sin saludos, sin explicaciones, sin formato markdown.")},
 	}
