@@ -54,15 +54,22 @@ type Metadata struct {
 }
 
 type Message struct {
-	From      string   `json:"from"`
-	ID        string   `json:"id"`
-	Timestamp string   `json:"timestamp"`
-	Type      string   `json:"type"`
-	Text      *TextMsg `json:"text,omitempty"`
+	From      string    `json:"from"`
+	ID        string    `json:"id"`
+	Timestamp string    `json:"timestamp"`
+	Type      string    `json:"type"`
+	Text      *TextMsg  `json:"text,omitempty"`
+	Image     *ImageMsg `json:"image,omitempty"`
 }
 
 type TextMsg struct {
 	Body string `json:"body"`
+}
+
+type ImageMsg struct {
+	ID       string `json:"id"`
+	MimeType string `json:"mime_type"`
+	Caption  string `json:"caption,omitempty"`
 }
 
 type Status struct {
