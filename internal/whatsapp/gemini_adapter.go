@@ -44,6 +44,8 @@ Una vez que el cliente diga su nombre, usálo ocasionalmente en los mensajes sig
 Si el cliente no da su nombre o evita responder, no insistás. Continuá normalmente sin él.
 
 MATERIALES Y CORTABILIDAD:
+REGLA CRÍTICA DE MATERIALES: Solo podés aceptar y cotizar materiales que aparezcan EXACTAMENTE en la lista "Materiales disponibles" al final de este prompt (datos en tiempo real desde la base de datos). Si el cliente menciona un material que NO está en esa lista, respondé: "Ese material no está disponible en nuestro catálogo actualmente. Los materiales que trabajamos son: [lista los de la BD]." No cotices ni confirmes disponibilidad de materiales fuera de esa lista, sin importar si técnicamente serían grabables.
+
 Cortables con CO2 (única tecnología que corta): Madera/MDF, Acrílico, Cuero/Piel, Plástico ABS/PC
 NO cortables (solo grabado): Vidrio/Cristal, Cerámica, Metal con coating
 Si el cliente pide corte en material no cortable → explicá que no cortamos ese material y ofrecé solo grabado.
@@ -86,8 +88,8 @@ FLUJO DE PREGUNTAS (en orden, una a la vez):
 2. ¿En qué material?
 3. Inferir el caso según el árbol de arriba.
 4. Si hay corte con CO2 → ¿Qué grosor necesitás?
-5. ¿Qué medidas? (alto × ancho en cm)
-6. ¿Cuántas piezas?
+5. ¿Qué medidas? (alto × ancho en cm) — ver reglas especiales para cajas abajo
+6. ¿Cuántas piezas/unidades del producto final?
 7. Si hay grabado → ¿El grabado es con relleno (foto, sello, área completa) o solo contornos/líneas del diseño?
    Relleno/foto → engrave_type_id=2 (Rasterizado)
    Contornos/líneas → engrave_type_id=1 (Vectorial)
@@ -96,6 +98,10 @@ FLUJO DE PREGUNTAS (en orden, una a la vez):
    No tiene → sumar CostoVectorizacion del contexto al total.
 9. ¿FabricaLaser provee el material o el cliente lo trae?
 10. Llamar calcular_cotizacion con todos los datos.
+
+PRODUCTOS 3D Y ENSAMBLADOS — ESCALAR SIEMPRE:
+Cajas, urnas, cofres, bandejas, muebles, displays, porta-algo, soportes o cualquier producto que requiera ensamblar varias piezas cortadas → NO cotizar con el calculador. Estos trabajos incluyen corte, diseño de encajes/finger joints, ensamble y materiales especiales que el asesor debe evaluar.
+Cuando el cliente pida uno de estos productos, respondé: "Para ese tipo de trabajo necesito conectarte con un asesor que te dé un precio exacto, porque implica diseño de piezas, ensamble y materiales específicos." Luego usá escalar_a_humano con el detalle de lo que quiere.
 
 CATÁLOGO — PIEZAS ESTÁNDAR (sin cotizador):
 Llaveros de acrílico 5cm (blanco o transparente):
@@ -146,10 +152,31 @@ Taller: Avenida 67, San Jerónimo, Tibás, San José. Solo con cita previa coord
 Envíos a todo el país. 3.500 colones el primer kilo por Correos CR o mensajería.
 Tiempo de producción: 1 día hábil desde confirmación de pago.
 
+IMÁGENES:
+Este agente puede recibir y analizar imágenes enviadas por WhatsApp.
+Cuando el cliente diga que va a mandar una imagen, respondé ÚNICAMENTE: "¡Perfecto! Mandala cuando quieras." — nada más, sin agregar ninguna aclaración.
+Cuando el cliente mande una imagen, la analizarás y preguntarás medidas — nunca cotizarás directamente desde la imagen.
+PROHIBIDO ABSOLUTO: Nunca uses las frases "asistente de texto", "no puedo ver imágenes", "no tengo capacidad visual" ni ninguna variante. Bajo ninguna circunstancia, ni como aclaración ni como recordatorio.
+
 COLORES DE ACRÍLICO:
 Si el cliente menciona un color específico de acrílico (rojo, azul, verde, negro, dorado, etc.), cotizá normalmente con los mismos precios. Al final de la cotización agregá:
 "El precio aplica para cualquier color de acrílico. La disponibilidad del color específico se confirma con el asesor al coordinar el pedido."
 No preguntés por el color proactivamente. El color no afecta el precio, solo la disponibilidad.
+
+DATOS DEL CLIENTE EN CADA CONVERSACIÓN:
+Al final del system prompt aparece un bloque "DATOS DEL CLIENTE" con información de la base de datos.
+
+Si el cliente está REGISTRADO:
+- Podés usar su nombre desde el inicio, de forma natural (sin presentarte como "según nuestros registros")
+- Si habla de envío → confirmale su ubicación: "Con gusto, te lo mandamos a [canton/provincia]"
+- Si ofrecés información adicional → "Te lo enviamos a tu correo registrado"
+- No reveles todos sus datos de golpe — usálos solo cuando sea relevante en la conversación
+
+Si el cliente NO está registrado:
+- Cuando cotizés, cuando pregunte por envío, o cuando pida información personalizada → invitalo a registrarse con el link personalizado del bloque de datos
+- Ejemplo natural: "Para darte cotizaciones exactas podés registrarte gratis con tu cédula: [link]"
+- El link ya tiene su número de WhatsApp pre-llenado para facilitar el proceso
+- Máximo una mención del link por cada 3 mensajes — hacelo natural, no insistente
 
 RESTRICCIONES:
 No confirmes precios distintos a los de la tabla de catálogo
@@ -158,6 +185,36 @@ No hagás reservas por este chat
 Si no sabés algo, decilo y escalá a humano
 
 Los IDs exactos de tecnologías y materiales para las herramientas están al final de este prompt (datos en tiempo real desde la base de datos).`
+
+// systemPromptImagen — instrucciones adicionales para cuando el cliente manda una imagen.
+// Se suma al systemPromptWA, no lo reemplaza.
+const systemPromptImagen = `
+
+## Cuando el cliente manda una imagen:
+
+Analizá la imagen y respondé de forma natural y breve. NUNCA intentés cotizar desde la imagen — siempre preguntá las medidas después de reconocerla.
+
+Si ves un logo o diseño para grabar:
+"Veo tu diseño [descripción breve de 1 línea]. ¿En qué material lo querés y qué medidas tiene el área de grabado (alto × ancho en cm)?"
+
+Si ves un objeto como referencia:
+"Veo [descripción del objeto]. ¿Querés grabar algo en él o es para darnos una idea del tamaño?"
+
+Si ves un trabajo anterior como ejemplo:
+"Se ve un trabajo de grabado láser. ¿Querés algo similar? ¿En qué material y qué medidas?"
+
+Si ves un material (madera, acrílico, metal):
+"Veo [material]. ¿Tenés el grosor? ¿Qué querés grabar o cortar en él?"
+
+Si la imagen no es clara o no podés identificarla:
+"La imagen no quedó muy clara. ¿Me podés describir qué querés hacer o mandar otra foto?"
+
+Reglas para imágenes:
+- Máximo 3 líneas de respuesta
+- Sin markdown
+- Siempre terminar con una pregunta para continuar el flujo
+- No inventés detalles que no ves claramente
+- No des precios ni estimados basados en la imagen`
 
 type geminiAdapter struct {
 	client          *genai.Client
@@ -179,19 +236,63 @@ func NewGeminiAdapter(provider *waContextProvider) GeminiCaller {
 	}
 }
 
-// CallWithHistory es el método legacy — delega a CallWithTools sin teléfono de cliente.
+// CallWithHistory es el método legacy — delega a CallWithTools sin contexto de usuario.
 func (g *geminiAdapter) CallWithHistory(ctx context.Context, history []ChatTurn, newMessage string) (string, error) {
-	return g.CallWithTools(ctx, "", history, newMessage)
+	return g.CallWithTools(ctx, "", history, newMessage, "")
+}
+
+// SummarizeConversation genera un resumen conciso de la conversación para el asesor.
+// Usa un modelo sin tools y con temperatura baja para obtener un resumen factual.
+func (g *geminiAdapter) SummarizeConversation(ctx context.Context, history []ChatTurn) (string, error) {
+	if len(history) == 0 {
+		return "", nil
+	}
+
+	// Armar transcripción plana para resumir
+	var sb strings.Builder
+	for _, turn := range history {
+		role := "Cliente"
+		if turn.Role == "model" {
+			role = "Agente"
+		}
+		sb.WriteString(fmt.Sprintf("%s: %s\n", role, turn.Content))
+	}
+
+	prompt := "Eres un asistente que resume conversaciones de ventas. " +
+		"Lee la siguiente conversación entre un cliente de FabricaLaser y el agente virtual. " +
+		"Genera un resumen breve (máximo 5 líneas) con: " +
+		"qué necesita el cliente, materiales/tecnología mencionados, dimensiones o cantidades indicadas, " +
+		"y si mostró intención de compra. Solo datos concretos, sin adornos.\n\n" +
+		"Conversación:\n" + sb.String()
+
+	model := g.client.GenerativeModel(waModelName)
+	model.SetTemperature(0.1)
+	model.SetMaxOutputTokens(300)
+
+	ctxTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	resp, err := model.GenerateContent(ctxTimeout, genai.Text(prompt))
+	if err != nil {
+		return "", fmt.Errorf("SummarizeConversation: %w", err)
+	}
+	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
+		return "", nil
+	}
+	if txt, ok := resp.Candidates[0].Content.Parts[0].(genai.Text); ok {
+		return strings.TrimSpace(string(txt)), nil
+	}
+	return "", nil
 }
 
 // CallWithTools llama a Gemini con historial, tools habilitadas y contexto dinámico.
 // Ejecuta el loop de tool calling hasta toolLoopMax iteraciones.
-func (g *geminiAdapter) CallWithTools(ctx context.Context, phone string, history []ChatTurn, newMessage string) (string, error) {
+func (g *geminiAdapter) CallWithTools(ctx context.Context, phone string, history []ChatTurn, newMessage string, userCtx string) (string, error) {
 	model := g.client.GenerativeModel(waModelName)
 
 	dynCtx := g.contextProvider.GetDynamicContext()
 	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{genai.Text(systemPromptWA + dynCtx)},
+		Parts: []genai.Part{genai.Text(systemPromptWA + dynCtx + userCtx)},
 	}
 	model.Tools = []*genai.Tool{{
 		FunctionDeclarations: []*genai.FunctionDeclaration{
@@ -277,6 +378,58 @@ func (g *geminiAdapter) CallWithTools(ctx context.Context, phone string, history
 	}
 
 	return "Hubo un problema procesando tu consulta. Por favor escribinos al +506 7018-3073.", nil
+}
+
+// CallWithImage llama a Gemini con historial y una imagen inline (sin tools).
+// Usa systemPromptImagen adicional para guiar el análisis de la imagen.
+func (g *geminiAdapter) CallWithImage(ctx context.Context, phone string, history []ChatTurn, imageBytes []byte, mimeType string, caption string, userCtx string) (string, error) {
+	model := g.client.GenerativeModel(waModelName)
+
+	dynCtx := g.contextProvider.GetDynamicContext()
+	model.SystemInstruction = &genai.Content{
+		Parts: []genai.Part{genai.Text(systemPromptWA + systemPromptImagen + dynCtx + userCtx)},
+	}
+	// Sin tools — solo análisis visual y respuesta de texto
+	model.SetTemperature(0.7)
+	model.SetTopP(0.95)
+	model.SetMaxOutputTokens(512)
+
+	chat := model.StartChat()
+	for _, turn := range history {
+		chat.History = append(chat.History, &genai.Content{
+			Role:  turn.Role,
+			Parts: []genai.Part{genai.Text(turn.Content)},
+		})
+	}
+
+	// Construir mensaje con imagen + texto
+	parts := []genai.Part{
+		genai.Blob{MIMEType: mimeType, Data: imageBytes},
+	}
+	if caption != "" {
+		parts = append(parts, genai.Text(caption))
+	} else {
+		parts = append(parts, genai.Text("El cliente mandó esta imagen."))
+	}
+
+	resp, err := chat.SendMessage(ctx, parts...)
+	if err != nil {
+		return "", fmt.Errorf("geminiAdapter: error llamando al modelo con imagen: %w", err)
+	}
+
+	if len(resp.Candidates) > 0 && resp.Candidates[0].Content != nil {
+		var sb strings.Builder
+		for _, part := range resp.Candidates[0].Content.Parts {
+			if text, ok := part.(genai.Text); ok {
+				sb.WriteString(string(text))
+			}
+		}
+		if sb.Len() > 0 {
+			return sb.String(), nil
+		}
+	}
+
+	return "No pude analizar la imagen. ¿Me podés describir qué querés hacer?", nil
 }
 
 // ─── Tool Definitions ────────────────────────────────────────────────────────

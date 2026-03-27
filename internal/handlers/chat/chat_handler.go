@@ -67,6 +67,10 @@ No lo repitas en cada mensaje. Una vez que lo mencionaste, esperá a que el visi
 Si preguntan por precios específicos → deciles que los precios están en el catálogo para usuarios registrados y dales el link: [Crear cuenta gratis](https://fabricalaser.com/?login=1)
 Cuando invités explícitamente a registrarse, siempre incluí el link en formato markdown para que sea clickeable.
 
+## Cierre cuando referís al WhatsApp:
+Cuando mandés al cliente al WhatsApp de pedidos, SIEMPRE incluí en el mismo mensaje la invitación a registrarse:
+"También te invitamos a [crear tu cuenta gratis](https://fabricalaser.com/?login=1) para acceder al cotizador online y ver el catálogo completo con precios."
+
 ## Restricciones:
 - NO reveles precios específicos de productos — eso es exclusivo para usuarios registrados
 - NO des cotizaciones ni rangos de precio
@@ -400,7 +404,7 @@ func (h *Handler) callGemini(ctx context.Context, message string, history []Hist
 	}
 	model.SetTemperature(0.7)
 	model.SetTopP(0.95)
-	model.SetMaxOutputTokens(1024)
+	model.SetMaxOutputTokens(2048)
 
 	chat := model.StartChat()
 
@@ -424,8 +428,13 @@ func (h *Handler) callGemini(ctx context.Context, message string, history []Hist
 		return "", fmt.Errorf("empty response from model")
 	}
 
+	candidate := resp.Candidates[0]
+	if candidate.FinishReason == genai.FinishReasonMaxTokens {
+		log.Printf("chat: respuesta cortada por límite de tokens (MaxOutputTokens=%d)", 2048)
+	}
+
 	var result strings.Builder
-	for _, part := range resp.Candidates[0].Content.Parts {
+	for _, part := range candidate.Content.Parts {
 		if text, ok := part.(genai.Text); ok {
 			result.WriteString(string(text))
 		}
@@ -469,12 +478,31 @@ func (h *Handler) HandleSummary(w http.ResponseWriter, r *http.Request) {
 
 	model := h.genai.GenerativeModel(modelName)
 	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{genai.Text("Sos un asistente que resume conversaciones. Respondé solo con el resumen, sin saludos, sin explicaciones, sin formato markdown.")},
+		Parts: []genai.Part{genai.Text("Sos un asistente especializado en resumir conversaciones de ventas para traspasar contexto a un asesor humano. Respondé solo con el resumen estructurado, sin saludos, sin explicaciones adicionales.")},
 	}
 	model.SetTemperature(0.2)
-	model.SetMaxOutputTokens(350)
+	model.SetMaxOutputTokens(700)
 
-	prompt := "Resume en máximo 3 líneas lo que el cliente quiere de FabricaLaser, escribiendo en PRIMERA PERSONA como si el cliente estuviera hablando (usá 'quiero', 'necesito', 'me interesa'). Incluí producto, cantidad y precio si se mencionaron. En español de Costa Rica.\n\nConversación:\n" + conv.String()
+	prompt := `Analizá la conversación completa y generá un resumen estructurado para el asesor de FabricaLaser que va a atender al cliente por WhatsApp.
+
+El resumen debe seguir este formato exacto:
+
+El cliente [nombre si se mencionó, si no ""] consultó sobre:
+- [producto/tema 1]: [detalles, cantidad, precio cotizado si aplica]
+- [producto/tema 2]: [detalles, cantidad, precio cotizado si aplica]
+(listá TODOS los productos o temas que el cliente preguntó durante la conversación, no solo el último)
+
+Estado: [en qué quedó la conversación — qué decidió, qué duda quedó pendiente, qué necesita resolver el asesor]
+
+Reglas:
+- Incluí todos los temas consultados, aunque sean de mensajes anteriores
+- Si se mencionaron precios o cantidades, incluílos siempre
+- El estado debe indicar claramente qué necesita el asesor para continuar sin preguntarle al cliente desde cero
+- Usá español de Costa Rica, tono directo
+- El resumen puede ser tan largo como sea necesario para cubrir todo el contexto
+
+Conversación:
+` + conv.String()
 
 	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil || len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {

@@ -2053,6 +2053,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Auto-open auth modal si vienen del catálogo o cotizador sin login
   const params = new URLSearchParams(window.location.search);
   const loginParam = params.get('login');
+  const telParam = params.get('tel');
   if (loginParam) {
     if (loginParam === 'catalogo') {
       redirectAfterAuth = '/catalogo/';
@@ -2325,6 +2326,12 @@ function showRegisterState(data) {
     document.getElementById('registerName').textContent = data.datosRegistroCivil.nombreCompleto || data.datosRegistroCivil.nombre;
   } else {
     document.getElementById('registerName').textContent = 'Usuario verificado';
+  }
+
+  // Pre-llenar teléfono si viene del link de WhatsApp (?tel=XXXXXXXX)
+  const telField = document.getElementById('registerTelefono');
+  if (telParam && telField && !telField.value) {
+    telField.value = telParam;
   }
 
   document.getElementById('registerEmail').focus();

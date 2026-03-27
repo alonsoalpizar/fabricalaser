@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/smtp"
 	"strings"
+	"sync"
 	"time"
 
 	"cloud.google.com/go/vertexai/genai"
@@ -41,17 +42,9 @@ type phoneGroup struct {
 
 // StartDigestScheduler launches a background goroutine that sends the WhatsApp
 // digest email every 4 hours. Only sends if there are new messages since the last run.
-func StartDigestScheduler(rc *redis.Client) {
-	go func() {
-		ticker := time.NewTicker(digestHours * time.Hour)
-		defer ticker.Stop()
-		for range ticker.C {
-			if err := SendDigest(rc); err != nil {
-				log.Printf("[WhatsApp digest] Error: %v", err)
-			}
-		}
-	}()
-	log.Printf("[WhatsApp digest] Scheduler started — every %d hours → %s", digestHours, digestTo)
+// StartDigestScheduler is a no-op — digest is triggered via cron (system) or admin endpoint.
+func StartDigestScheduler(_ *redis.Client) {
+	log.Printf("[WhatsApp digest] Listo — usar endpoint admin o cron para disparar")
 }
 
 // ─────────────────────────────────────────────
@@ -79,9 +72,8 @@ func SendDigest(rc *redis.Client) error {
 
 	groups := groupByPhone(messages)
 
-	// Summarize long conversations with Gemini
+	// Resumir conversaciones largas con Gemini
 	if err := summarizeGroups(groups); err != nil {
-		// Non-fatal: log and continue with full messages
 		log.Printf("[WhatsApp digest] Gemini summarization partial error: %v", err)
 	}
 
@@ -147,28 +139,52 @@ func summarizeGroups(groups []phoneGroup) error {
 	}
 	defer client.Close()
 
+	const maxConcurrent = 3
+	sem := make(chan struct{}, maxConcurrent)
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
 	for i := range groups {
 		if len(groups[i].messages) <= summaryThreshold {
 			continue
 		}
-		summary, err := geminiSummarize(ctx, client, groups[i])
-		if err != nil {
-			log.Printf("[WhatsApp digest] Gemini failed for %s: %v — usando mensajes completos", groups[i].phone, err)
-			continue
-		}
-		groups[i].summary = summary
-		groups[i].summarized = true
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			summary, err := geminiSummarize(ctx, client, groups[idx])
+			if err != nil {
+				log.Printf("[WhatsApp digest] Gemini failed for %s: %v — usando mensajes completos", groups[idx].phone, err)
+				return
+			}
+			mu.Lock()
+			groups[idx].summary = summary
+			groups[idx].summarized = true
+			mu.Unlock()
+		}(i)
 	}
+	wg.Wait()
 	return nil
 }
 
 func geminiSummarize(ctx context.Context, client *genai.Client, g phoneGroup) (string, error) {
 	model := client.GenerativeModel(waModelName)
 	model.SetTemperature(0.2)
-	model.SetMaxOutputTokens(300)
+	model.SetMaxOutputTokens(2048)
+
+	// Limitar a los últimos 40 mensajes para no exceder el contexto de Gemini
+	msgs := g.messages
+	const maxMsgsForSummary = 40
+	truncated := len(msgs) > maxMsgsForSummary
+	if truncated {
+		msgs = msgs[len(msgs)-maxMsgsForSummary:]
+	}
 
 	var conv strings.Builder
-	for _, m := range g.messages {
+	for _, m := range msgs {
 		label := "Cliente"
 		if m.Role == "model" {
 			label = "Asistente"
@@ -176,12 +192,19 @@ func geminiSummarize(ctx context.Context, client *genai.Client, g phoneGroup) (s
 		fmt.Fprintf(&conv, "[%s]: %s\n", label, m.Content)
 	}
 
-	prompt := fmt.Sprintf(`Resumí esta conversación de WhatsApp de FabricaLaser en 2 o 3 oraciones en español costarricense informal.
-Indicá: qué quería el cliente, cómo respondió el asistente, y si quedó algo pendiente o la consulta se cerró.
-Sé muy conciso — máximo 60 palabras.
+	contextNote := ""
+	if truncated {
+		contextNote = fmt.Sprintf("(Nota: se muestran los últimos %d mensajes de %d totales)\n\n", maxMsgsForSummary, len(g.messages))
+	}
 
-Conversación (%d mensajes):
-%s`, len(g.messages), conv.String())
+	prompt := fmt.Sprintf(`Sos el asistente interno de ventas de FabricaLaser. Tu tarea es escribir un resumen de esta conversación de WhatsApp para que el asesor humano entienda exactamente qué pasó y pueda dar seguimiento sin tener que leer todo el hilo.
+
+Escribí un párrafo fluido (no lista, no puntos) que explique: qué quería el cliente, qué productos o servicios consultó, qué materiales y medidas mencionó, qué cantidad necesitaba, si se calculó alguna cotización y a qué precio quedó, cómo respondió el cliente ante el precio, si mostró intención de compra o dudó, y cómo terminó la conversación (cerró, quedó pendiente, escaló al asesor, o simplemente dejó de responder). Si hay algo urgente o inusual que el asesor deba saber, mencionalo al final.
+
+Escribí en español directo, como si le hablaras al asesor de igual a igual. Sin asteriscos, sin listas, sin títulos. Solo el párrafo.
+
+%sConversación (%d mensajes):
+%s`, contextNote, len(msgs), conv.String())
 
 	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {

@@ -5,6 +5,7 @@
   let isLoading = false;
   let chatHistory = [];
   let cachedWaSummary = null;
+  let waLinkShown = false;
 
   // ===== CREATE DOM ELEMENTS =====
   const style = document.createElement('style');
@@ -256,7 +257,6 @@
     if (!text || isLoading) return;
 
     appendMessage('user', text);
-    chatHistory.push({ role: 'user', content: text });
     input.value = '';
     isLoading = true;
     sendBtn.disabled = true;
@@ -282,9 +282,15 @@
         appendMessage('assistant', 'Tuve un problema, intentá de nuevo.');
       } else {
         appendMessage('assistant', data.response);
+        // Agregar ambos turnos al historial una vez que el intercambio está completo
+        chatHistory.push({ role: 'user', content: text });
         chatHistory.push({ role: 'assistant', content: data.response });
-        // Pre-fetch summary as soon as the agent sends the WhatsApp link
-        if (data.response.indexOf('wa.me') !== -1) {
+        // Detectar primera aparición del link de WhatsApp
+        if (!waLinkShown && data.response.indexOf('wa.me') !== -1) {
+          waLinkShown = true;
+        }
+        // Refrescar resumen después de cada turno si el link ya fue mostrado
+        if (waLinkShown) {
           prefetchWaSummary();
         }
       }
