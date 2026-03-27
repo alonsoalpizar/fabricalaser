@@ -154,6 +154,15 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 		r.Delete("/material-costs/{id}", materialCostHandler.DeleteMaterialCost)
 		r.Post("/material-costs/{id}/recalculate", materialCostHandler.RecalculateMaterialCost)
 
+		// Blanks (catálogo preconfigurado) CRUD
+		blankHandler := admin.NewBlankHandler()
+		r.Get("/blanks", blankHandler.GetAll)
+		r.Post("/blanks", blankHandler.Create)
+		r.Put("/blanks/{id}", blankHandler.Update)
+		r.Delete("/blanks/{id}", blankHandler.Delete)
+		r.Patch("/blanks/{id}/stock", blankHandler.UpdateStock)
+		r.Patch("/blanks/{id}/featured", blankHandler.ToggleFeatured)
+
 		// WhatsApp bitácora — sesiones paginadas + depuración + digest manual
 		waAdminHandler := admin.NewWhatsappHandler(redisClient)
 		r.Get("/whatsapp/sessions", waAdminHandler.GetSessions)
@@ -178,6 +187,9 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 		r.Get("/webhook", waHandler.VerifyWebhook)
 		r.Post("/webhook", waHandler.HandleMessage)
 	})
+
+	// Blanks consultar — endpoint interno para el agente de WhatsApp (sin JWT)
+	r.Post("/api/v1/blanks/consultar", admin.NewBlankHandler().ConsultarBlank)
 
 	// Chat route (public - auth optional, enriches context if logged in)
 	chatHandler := chat.NewHandler()
@@ -289,6 +301,13 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 	// Static assets
 	r.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir(filepath.Join(webDir, "assets")))))
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(webDir, "static")))))
+
+	// Uploads — imágenes de blanks y otros archivos subidos
+	uploadsDir := os.Getenv("FABRICALASER_UPLOAD_DIR")
+	if uploadsDir == "" {
+		uploadsDir = "/opt/FabricaLaser/uploads"
+	}
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadsDir))))
 
 	return r
 }

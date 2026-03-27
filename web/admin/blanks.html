@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Blanks | Admin FabricaLaser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    .stock-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:12px;font-weight:500; }
+    .stock-ok   { background:#16a34a22;color:#16a34a; }
+    .stock-low  { background:#d9770622;color:#d97706; }
+    .stock-zero { background:#dc262622;color:#dc2626; }
+    .inactive-row { opacity:.5; }
+    .featured-star { cursor:pointer;font-size:18px;transition:opacity .2s; }
+    .featured-star.off { opacity:.22; }
+    .margin-good { color:#16a34a;font-weight:600; }
+    .margin-ok   { color:#d97706;font-weight:600; }
+    .margin-low  { color:#dc2626;font-weight:600; }
+    .filter-tabs { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px; }
+    .filter-tab  { padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-size:13px;transition:.15s; }
+    .filter-tab.active { background:var(--primary);color:#fff;border-color:var(--primary); }
+    .price-break-row { display:flex;gap:8px;align-items:center;margin-bottom:6px; }
+    .acc-row { display:flex;gap:8px;align-items:center;margin-bottom:6px; }
+    .acc-row input { flex:1; }
+    .btn-icon { background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;color:var(--text-secondary); }
+    .btn-icon:hover { background:var(--bg-hover);color:var(--text-primary); }
+    .status-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600; }
+    .status-active   { background:#16a34a22;color:#16a34a; }
+    .status-inactive { background:#6b728022;color:#6b7280; }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="content-header">
+        <div>
+          <h1 class="content-title">Catálogo de Blanks</h1>
+          <div class="content-breadcrumb">
+            <a href="/admin/">Dashboard</a>
+            <span>/</span>
+            <span>Blanks</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Nuevo Blank
+        </button>
+      </header>
+
+      <!-- Stats -->
+      <div class="metrics-grid" id="statsStrip" style="margin-bottom:24px;display:none;">
+        <div class="metric-card">
+          <div class="metric-value" id="statTotal">0</div>
+          <div class="metric-label">Blanks activos</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="statFeatured">0</div>
+          <div class="metric-label">Destacados</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="statLowStock">0</div>
+          <div class="metric-label">Stock bajo / sin stock</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="statConsultas">0</div>
+          <div class="metric-label">Consultas WhatsApp</div>
+        </div>
+      </div>
+
+      <!-- Category filter tabs -->
+      <div class="filter-tabs" id="filterTabs"></div>
+
+      <!-- Table -->
+      <div class="card">
+        <div class="card-body p-0">
+          <table class="table" id="blanksTable">
+            <thead>
+              <tr>
+                <th width="30">⭐</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Dimensiones</th>
+                <th>Precio base</th>
+                <th>Costo</th>
+                <th>Margen</th>
+                <th>Min. Qty</th>
+                <th>Stock</th>
+                <th>Consultas</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="blanksBody">
+              <tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text-secondary)">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ─── Modal Crear / Editar ─────────────────────────────────────────── -->
+  <div class="modal-overlay" id="blankModal">
+    <div class="modal" style="max-width:640px;max-height:90vh;overflow-y:auto;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Nuevo Blank</h2>
+        <button class="modal-close" onclick="closeModal('blankModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="blankId">
+
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label class="form-label">Nombre *</label>
+            <input type="text" class="form-input" id="blankName" placeholder="Llavero acrílico 5cm">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Categoría *</label>
+            <select class="form-input" id="blankCategory">
+              <option value="">Seleccionar...</option>
+              <option value="llavero">Llavero</option>
+              <option value="medalla">Medalla</option>
+              <option value="termo">Termo / Botella</option>
+              <option value="vaso">Vaso</option>
+              <option value="copa">Copa</option>
+              <option value="taza">Taza</option>
+              <option value="cilindro">Cilindro</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-input" id="blankDescription" rows="2" placeholder="Descripción visible al agente y al cliente"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Dimensiones</label>
+            <input type="text" class="form-input" id="blankDimensions" placeholder="5cm / 7cm diámetro">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mín. unidades</label>
+            <input type="number" class="form-input" id="blankMinQty" value="1" min="1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Precio base ₡ (a min_qty)</label>
+            <input type="number" class="form-input" id="blankBasePrice" min="0" placeholder="240">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Costo adquisición ₡ (interno)</label>
+            <input type="number" class="form-input" id="blankCostPrice" min="0" placeholder="120">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Stock actual</label>
+            <input type="number" class="form-input" id="blankStockQty" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Alerta stock mínimo</label>
+            <input type="number" class="form-input" id="blankStockAlert" min="0" value="10">
+          </div>
+          <div class="form-group" style="flex:0.6">
+            <label class="form-label">Activo</label>
+            <div style="display:flex;align-items:center;height:42px">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px">
+                <input type="checkbox" id="blankIsActive" checked style="width:16px;height:16px;cursor:pointer">
+                Visible
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Breaks -->
+        <div class="form-group">
+          <label class="form-label">Precios por volumen <span style="font-size:11px;color:var(--text-secondary)">(Desde N unidades → ₡ c/u)</span></label>
+          <div id="priceBreaksContainer"></div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addPriceBreak()" style="margin-top:6px">+ Agregar nivel de precio</button>
+        </div>
+
+        <!-- Accessories -->
+        <div class="form-group">
+          <label class="form-label">Accesorios opcionales <span style="font-size:11px;color:var(--text-secondary)">(nombre / ₡ / pack mínimo)</span></label>
+          <div id="accessoriesContainer"></div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addAccessory()" style="margin-top:6px">+ Agregar accesorio</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('blankModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveBlank()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Modal Stock ──────────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="stockModal">
+    <div class="modal" style="max-width:340px">
+      <div class="modal-header">
+        <h2 class="modal-title">Actualizar Stock</h2>
+        <button class="modal-close" onclick="closeModal('stockModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="stockBlankId">
+        <p id="stockBlankName" style="font-weight:600;margin-bottom:16px"></p>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Operación</label>
+            <select class="form-input" id="stockOperation">
+              <option value="add">Agregar unidades</option>
+              <option value="set">Establecer cantidad</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cantidad</label>
+            <input type="number" class="form-input" id="stockQty" min="0" value="0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('stockModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="submitStock()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    let blanksData = [];
+    let activeFilter = 'todos';
+
+    const CATEGORIES = ['llavero','medalla','termo','vaso','copa','taza','cilindro','otro'];
+
+    // ─── Inicialización ───────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      const ok = await initAdmin('blanks');
+      if (!ok) return;
+      await loadBlanks();
+    });
+
+    async function loadBlanks() {
+      try {
+        const data = await apiGet('/admin/blanks');
+        blanksData = data.blanks || [];
+        renderFilterTabs();
+        renderTable();
+        renderStats();
+        document.getElementById('statsStrip').style.removeProperty('display');
+      } catch (err) {
+        showToast('Error cargando blanks: ' + err.message, 'error');
+      }
+    }
+
+    // ─── Estadísticas ─────────────────────────────────────────────────────
+    function renderStats() {
+      const active   = blanksData.filter(b => b.is_active);
+      const featured = active.filter(b => b.is_featured).length;
+      const lowStock = active.filter(b => b.stock_qty === 0 || (b.stock_qty > 0 && b.stock_qty <= b.stock_alert)).length;
+      const consultas = blanksData.reduce((s, b) => s + (b.quote_count || 0), 0);
+      document.getElementById('statTotal').textContent    = active.length;
+      document.getElementById('statFeatured').textContent = featured;
+      document.getElementById('statLowStock').textContent = lowStock;
+      document.getElementById('statConsultas').textContent = consultas;
+    }
+
+    // ─── Filter tabs ──────────────────────────────────────────────────────
+    function renderFilterTabs() {
+      const categories = ['todos', ...new Set(blanksData.map(b => b.category))].filter(Boolean);
+      const container = document.getElementById('filterTabs');
+      container.innerHTML = categories.map(cat => {
+        const label = cat === 'todos' ? 'Todos' : cat.charAt(0).toUpperCase() + cat.slice(1);
+        const count = cat === 'todos' ? blanksData.length : blanksData.filter(b => b.category === cat).length;
+        return `<button class="filter-tab${activeFilter === cat ? ' active' : ''}" onclick="setFilter('${cat}')">
+          ${label} <span style="opacity:.6;font-size:11px">(${count})</span>
+        </button>`;
+      }).join('');
+    }
+
+    function setFilter(cat) {
+      activeFilter = cat;
+      renderFilterTabs();
+      renderTable();
+    }
+
+    // ─── Tabla ───────────────────────────────────────────────────────────
+    function renderTable() {
+      const filtered = activeFilter === 'todos'
+        ? blanksData
+        : blanksData.filter(b => b.category === activeFilter);
+
+      const tbody = document.getElementById('blanksBody');
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text-secondary)">
+          ${activeFilter === 'todos' ? 'Sin blanks. Creá el primero.' : 'Sin blanks en esta categoría.'}
+        </td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(b => {
+        const margin = b.base_price > 0 ? Math.round((b.base_price - b.cost_price) / b.base_price * 100) : 0;
+        const marginClass = margin >= 30 ? 'margin-good' : margin >= 15 ? 'margin-ok' : 'margin-low';
+
+        let stockBadge;
+        if (b.stock_qty === 0) {
+          stockBadge = `<span class="stock-badge stock-zero">Sin stock</span>`;
+        } else if (b.stock_qty <= b.stock_alert) {
+          stockBadge = `<span class="stock-badge stock-low">${b.stock_qty} uds</span>`;
+        } else {
+          stockBadge = `<span class="stock-badge stock-ok">${b.stock_qty} uds</span>`;
+        }
+
+        const dim       = b.dimensions || '—';
+        const starClass = b.is_featured ? '' : ' off';
+        const rowClass  = b.is_active ? '' : ' class="inactive-row"';
+        const statusBadge = b.is_active
+          ? `<span class="status-badge status-active">Activo</span>`
+          : `<span class="status-badge status-inactive">Inactivo</span>`;
+
+        return `<tr${rowClass}>
+          <td>
+            <span class="featured-star${starClass}" title="${b.is_featured ? 'Quitar destacado' : 'Destacar'}"
+              onclick="toggleFeatured(${b.id})">⭐</span>
+          </td>
+          <td style="font-weight:500">${escHtml(b.name)}</td>
+          <td><code style="font-size:12px">${escHtml(b.category)}</code></td>
+          <td style="color:var(--text-secondary)">${escHtml(dim)}</td>
+          <td>₡${(b.base_price || 0).toLocaleString()}</td>
+          <td style="color:var(--text-secondary)">₡${(b.cost_price || 0).toLocaleString()}</td>
+          <td><span class="${marginClass}">${margin}%</span></td>
+          <td>${b.min_qty}</td>
+          <td>
+            ${stockBadge}
+            <button class="btn-icon" title="Actualizar stock" onclick="openStockModal(${b.id}, '${escHtml(b.name).replace(/'/g,"\\'")}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+            </button>
+          </td>
+          <td style="color:var(--text-secondary);text-align:center">${b.quote_count || 0}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm" onclick="openEditModal(${b.id})">Editar</button>
+            ${b.is_active
+              ? `<button class="btn btn-sm" style="background:#dc262622;color:#dc2626;border:none;margin-left:4px" onclick="deleteBlank(${b.id})">Desactivar</button>`
+              : `<button class="btn btn-sm" style="background:#16a34a22;color:#16a34a;border:none;margin-left:4px" onclick="activateBlank(${b.id})">Activar</button>`
+            }
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ─── Featured toggle ──────────────────────────────────────────────────
+    async function toggleFeatured(id) {
+      try {
+        await apiPatch(`/admin/blanks/${id}/featured`, {});
+        await loadBlanks();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    // ─── Stock modal ──────────────────────────────────────────────────────
+    function openStockModal(id, name) {
+      document.getElementById('stockBlankId').value  = id;
+      document.getElementById('stockBlankName').textContent = name;
+      document.getElementById('stockQty').value = 0;
+      document.getElementById('stockOperation').value = 'add';
+      openModal('stockModal');
+    }
+
+    async function submitStock() {
+      const id  = document.getElementById('stockBlankId').value;
+      const qty = parseInt(document.getElementById('stockQty').value);
+      const op  = document.getElementById('stockOperation').value;
+      try {
+        await apiPatch(`/admin/blanks/${id}/stock`, { qty, operation: op });
+        closeModal('stockModal');
+        await loadBlanks();
+        showToast('Stock actualizado', 'success');
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    // ─── Create / Edit modal ──────────────────────────────────────────────
+    function openCreateModal() {
+      document.getElementById('modalTitle').textContent = 'Nuevo Blank';
+      document.getElementById('blankId').value = '';
+      document.getElementById('blankName').value = '';
+      document.getElementById('blankCategory').value = '';
+      document.getElementById('blankDescription').value = '';
+      document.getElementById('blankDimensions').value = '';
+      document.getElementById('blankMinQty').value = 1;
+      document.getElementById('blankBasePrice').value = '';
+      document.getElementById('blankCostPrice').value = '';
+      document.getElementById('blankStockQty').value = 0;
+      document.getElementById('blankStockAlert').value = 10;
+      document.getElementById('blankIsActive').checked = true;
+      renderPriceBreaks([]);
+      renderAccessories([]);
+      openModal('blankModal');
+    }
+
+    function openEditModal(id) {
+      const b = blanksData.find(x => x.id === id);
+      if (!b) return;
+      document.getElementById('modalTitle').textContent = 'Editar Blank';
+      document.getElementById('blankId').value = b.id;
+      document.getElementById('blankName').value = b.name;
+      document.getElementById('blankCategory').value = b.category;
+      document.getElementById('blankDescription').value = b.description || '';
+      document.getElementById('blankDimensions').value = b.dimensions || '';
+      document.getElementById('blankMinQty').value = b.min_qty;
+      document.getElementById('blankBasePrice').value = b.base_price;
+      document.getElementById('blankCostPrice').value = b.cost_price;
+      document.getElementById('blankStockQty').value = b.stock_qty;
+      document.getElementById('blankStockAlert').value = b.stock_alert;
+      document.getElementById('blankIsActive').checked = b.is_active;
+      renderPriceBreaks(b.price_breaks || []);
+      renderAccessories(b.accessories || []);
+      openModal('blankModal');
+    }
+
+    // Price breaks UI
+    function renderPriceBreaks(breaks) {
+      document.getElementById('priceBreaksContainer').innerHTML = '';
+      (breaks || []).forEach(br => addPriceBreakRow(br.qty, br.unit_price));
+    }
+
+    function addPriceBreak() { addPriceBreakRow('', ''); }
+
+    function addPriceBreakRow(qty, price) {
+      const c = document.getElementById('priceBreaksContainer');
+      const row = document.createElement('div');
+      row.className = 'price-break-row';
+      row.innerHTML = `
+        <span style="font-size:12px;color:var(--text-secondary);white-space:nowrap">Desde</span>
+        <input type="number" class="form-input pb-qty" placeholder="Qty" min="1" value="${qty || ''}" style="width:80px">
+        <span style="font-size:12px;color:var(--text-secondary)">uds → ₡</span>
+        <input type="number" class="form-input pb-price" placeholder="₡/u" min="0" value="${price || ''}" style="width:90px">
+        <span style="font-size:12px;color:var(--text-secondary)">c/u</span>
+        <button type="button" class="btn-icon" onclick="this.parentElement.remove()" title="Quitar">✕</button>`;
+      c.appendChild(row);
+    }
+
+    function getPriceBreaks() {
+      return Array.from(document.querySelectorAll('#priceBreaksContainer .price-break-row')).map(row => ({
+        qty:        parseInt(row.querySelector('.pb-qty').value) || 0,
+        unit_price: parseInt(row.querySelector('.pb-price').value) || 0
+      })).filter(b => b.qty > 0 && b.unit_price > 0);
+    }
+
+    // Accessories UI
+    function renderAccessories(accs) {
+      document.getElementById('accessoriesContainer').innerHTML = '';
+      (accs || []).forEach(a => addAccessoryRow(a.name, a.price, a.min_qty_pack));
+    }
+
+    function addAccessory() { addAccessoryRow('', '', ''); }
+
+    function addAccessoryRow(name, price, minPack) {
+      const c = document.getElementById('accessoriesContainer');
+      const row = document.createElement('div');
+      row.className = 'acc-row';
+      row.innerHTML = `
+        <input type="text" class="form-input acc-name" placeholder="Nombre accesorio" value="${escHtml(name || '')}">
+        <input type="number" class="form-input acc-price" placeholder="₡" min="0" value="${price || ''}" style="width:80px">
+        <input type="number" class="form-input acc-pack" placeholder="Pack mín" min="1" value="${minPack || ''}" style="width:85px" title="Mínimo por pack">
+        <button type="button" class="btn-icon" onclick="this.parentElement.remove()" title="Quitar">✕</button>`;
+      c.appendChild(row);
+    }
+
+    function getAccessories() {
+      return Array.from(document.querySelectorAll('#accessoriesContainer .acc-row')).map(row => ({
+        name:         row.querySelector('.acc-name').value.trim(),
+        price:        parseInt(row.querySelector('.acc-price').value) || 0,
+        min_qty_pack: parseInt(row.querySelector('.acc-pack').value) || 1
+      })).filter(a => a.name);
+    }
+
+    // ─── Save blank ───────────────────────────────────────────────────────
+    async function saveBlank() {
+      const id       = document.getElementById('blankId').value;
+      const name     = document.getElementById('blankName').value.trim();
+      const category = document.getElementById('blankCategory').value;
+      if (!name)     { showToast('El nombre es obligatorio', 'error'); return; }
+      if (!category) { showToast('Seleccioná una categoría', 'error'); return; }
+
+      const dims = document.getElementById('blankDimensions').value.trim();
+      const payload = {
+        name,
+        category,
+        description:  document.getElementById('blankDescription').value.trim(),
+        dimensions:   dims || null,
+        base_price:   parseInt(document.getElementById('blankBasePrice').value) || 0,
+        cost_price:   parseInt(document.getElementById('blankCostPrice').value) || 0,
+        min_qty:      parseInt(document.getElementById('blankMinQty').value) || 1,
+        stock_qty:    parseInt(document.getElementById('blankStockQty').value) || 0,
+        stock_alert:  parseInt(document.getElementById('blankStockAlert').value) || 10,
+        is_active:    document.getElementById('blankIsActive').checked,
+        price_breaks: getPriceBreaks(),
+        accessories:  getAccessories(),
+      };
+
+      try {
+        if (id) {
+          await apiPut(`/admin/blanks/${id}`, payload);
+          showToast('Blank actualizado', 'success');
+        } else {
+          await apiPost('/admin/blanks', payload);
+          showToast('Blank creado', 'success');
+        }
+        closeModal('blankModal');
+        await loadBlanks();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    // ─── Delete / Activate ────────────────────────────────────────────────
+    async function deleteBlank(id) {
+      const b = blanksData.find(x => x.id === id);
+      if (!confirm(`¿Desactivar "${b?.name}"? Quedará oculto al agente y al catálogo.`)) return;
+      try {
+        await apiDelete(`/admin/blanks/${id}`);
+        showToast('Blank desactivado', 'success');
+        await loadBlanks();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    async function activateBlank(id) {
+      const b = blanksData.find(x => x.id === id);
+      if (!b) return;
+      try {
+        await apiPut(`/admin/blanks/${id}`, { ...b, is_active: true, price_breaks: b.price_breaks || [], accessories: b.accessories || [] });
+        showToast('Blank activado', 'success');
+        await loadBlanks();
+      } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    // ─── Helper ───────────────────────────────────────────────────────────
+    function escHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>
