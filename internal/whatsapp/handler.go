@@ -21,11 +21,12 @@ type Handler struct {
 }
 
 // NewHandler construye el Handler leyendo configuración exclusivamente de variables de entorno.
-func NewHandler(redisClient RedisClient, pgClient PGClient, geminiCaller GeminiCaller) *Handler {
+// rateLimiter es opcional (puede ser nil para deshabilitar el rate limiting).
+func NewHandler(redisClient RedisClient, pgClient PGClient, geminiCaller GeminiCaller, rateLimiter *RateLimiter, contextProvider *waContextProvider) *Handler {
 	return &Handler{
 		appSecret:   os.Getenv("WHATSAPP_APP_SECRET"),
 		verifyToken: os.Getenv("WHATSAPP_VERIFY_TOKEN"),
-		processor:   NewMessageProcessor(redisClient, pgClient, geminiCaller),
+		processor:   NewMessageProcessor(redisClient, pgClient, geminiCaller, rateLimiter, contextProvider),
 	}
 }
 

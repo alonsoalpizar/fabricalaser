@@ -586,14 +586,14 @@ body {
   color: var(--text);
 }
 
-/* Technology cut warning */
+/* Technology cut warning — Estado 2 (amber): material cortable pero tech no corta */
 .tech-cut-warning {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.875rem 1rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(234, 179, 8, 0.1);
+  border: 1px solid rgba(234, 179, 8, 0.35);
   border-radius: 8px;
   margin-top: 1rem;
   font-size: 0.8125rem;
@@ -602,7 +602,7 @@ body {
 
 .tech-cut-warning svg {
   flex-shrink: 0;
-  color: #ef4444;
+  color: #eab308;
   margin-top: 0.125rem;
 }
 
@@ -613,12 +613,24 @@ body {
 }
 
 .tech-cut-warning-content strong {
-  color: #ef4444;
+  color: #eab308;
 }
 
 .tech-cut-warning-content p {
   margin: 0;
   line-height: 1.4;
+}
+
+/* Estado 3 (rojo): material no cortable */
+.tech-cut-warning.danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.tech-cut-warning.danger svg {
+  color: #ef4444;
+}
+.tech-cut-warning.danger strong {
+  color: #ef4444;
 }
 
 /* SVG PREVIEW */
@@ -844,6 +856,14 @@ body {
   background: var(--error-bg);
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.option-card.compat-optimal.selected,
+.option-card.compat-possible.selected,
+.option-card.compat-warning.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  opacity: 1;
 }
 
 .compat-indicator {
@@ -1938,15 +1958,21 @@ body {
               <line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             <div class="tech-cut-warning-content">
-              <strong>Tu dise&ntilde;o tiene l&iacute;neas de corte (rojas)</strong>
-              <p id="techCutWarningText">Esta tecnolog&iacute;a solo puede grabar, no cortar. Las l&iacute;neas rojas no se procesar&aacute;n.</p>
+              <strong id="techCutWarningTitle">Tu dise&ntilde;o tiene l&iacute;neas de corte</strong>
+              <p id="techCutWarningText">El corte se procesar&aacute; autom&aacute;ticamente con L&aacute;ser CO2.</p>
+              <div id="ignoreCutSection" style="display:none; margin-top:0.75rem;">
+                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+                  <input type="checkbox" id="ignoreCutCheckbox" onchange="setIgnoreCutLines(this.checked)">
+                  <span>Entendido, proceder solo con grabado</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Thickness (THIRD - based on tech+material combo) -->
         <div class="options-section" id="thicknessSection" style="display: none;">
-          <label class="options-label">3. Seleccion&aacute; el Grosor</label>
+          <label class="options-label" id="thicknessLabel">3. Seleccion&aacute; el Grosor</label>
           <div class="options-grid" id="thicknessOptions"></div>
         </div>
 
@@ -2250,6 +2276,7 @@ const API_BASE = '/api/v1';
 
 // STATE - Compatible options loaded from API (database-driven)
 let compatibleTechnologies = []; // Technologies compatible with selected material
+let allTechnologies = [];        // Todas las tecnologías (para buscar CO2 por code)
 
 // STATE
 const state = {
@@ -2269,7 +2296,9 @@ const state = {
     engraveTypeId: null,
     quantity: 1,
     thickness: null,
-    materialIncluded: true
+    materialIncluded: true,
+    cutTechnologyId: null,   // ID de CO2 cuando tech principal no corta
+    ignoreCutLines: false,   // true cuando material no es cortable
   },
   quote: null
 };
@@ -2348,10 +2377,12 @@ function logout() {
 
 // LOAD CONFIG
 async function loadConfig() {
-  // Check cache
-  const cached = sessionStorage.getItem('fabricalaser_config');
+  // Cache key versionado — incrementar al agregar campos nuevos al config
+  const CACHE_KEY = 'fabricalaser_config_v2';
+  const cached = sessionStorage.getItem(CACHE_KEY);
   if (cached) {
     state.config = JSON.parse(cached);
+    allTechnologies = state.config.technologies || [];
     renderOptions();
     return;
   }
@@ -2359,9 +2390,10 @@ async function loadConfig() {
   const res = await fetch(`${API_BASE}/config`);
   const data = await res.json();
   state.config = data.data || data;
+  allTechnologies = state.config.technologies || [];
 
   // Cache for session
-  sessionStorage.setItem('fabricalaser_config', JSON.stringify(state.config));
+  sessionStorage.setItem(CACHE_KEY, JSON.stringify(state.config));
 
   renderOptions();
 }
@@ -2438,8 +2470,13 @@ async function selectMaterial(materialId, el) {
     }
 
     // Render compatible technologies with capabilities
+    // If SVG has only cut operations (no engraving), only show techs that can cut
+    const techsToShow = (!state.hasEngraveOperations && state.hasCutOperations)
+      ? compatibleTechnologies.filter(t => t.can_cut)
+      : compatibleTechnologies;
+
     const techGrid = document.getElementById('techOptions');
-    techGrid.innerHTML = compatibleTechnologies.map(t => {
+    techGrid.innerHTML = techsToShow.map(t => {
       const capabilities = [];
       if (t.can_cut) capabilities.push('Corte');
       if (t.can_engrave) capabilities.push('Grabado');
@@ -2490,41 +2527,85 @@ function selectTechnology(techId, el) {
     return;
   }
 
-  // Check if technology can cut vs design has cut operations
+  // Tres estados según material cortable + capacidad de corte de la tech
+  const matInfo = (state.config?.materials || []).find(m => m.id === state.options.materialId);
+  const isCuttable = matInfo?.is_cuttable || false;
   const cutWarning = document.getElementById('techCutWarning');
-  if (state.hasCutOperations && !tech.can_cut) {
-    // Show warning - design has red lines but technology can't cut
-    cutWarning.style.display = 'flex';
-    const cutLength = state.analysis?.cut_length_mm || 0;
-    document.getElementById('techCutWarningText').textContent =
-      `${tech.name} solo puede grabar, no cortar. Las ${cutLength.toFixed(1)} mm de líneas rojas serán ignoradas.`;
-  } else {
-    cutWarning.style.display = 'none';
-  }
+  const cutTitle = document.getElementById('techCutWarningTitle');
+  const cutText = document.getElementById('techCutWarningText');
+  const ignoreSect = document.getElementById('ignoreCutSection');
 
-  // Show thickness options if available
-  const thicknessSection = document.getElementById('thicknessSection');
-  const thicknessGrid = document.getElementById('thicknessOptions');
-
-  if (tech.thicknesses && tech.thicknesses.length > 0) {
-    // Filter out 0 thickness (used for materials without thickness)
-    const validThicknesses = tech.thicknesses.filter(t => t > 0);
-
-    if (validThicknesses.length > 0) {
-      thicknessGrid.innerHTML = validThicknesses.map(t => `
-        <div class="option-card" data-id="${t}" onclick="selectThickness(${t}, this)">
-          <div class="option-card-name">${t} mm</div>
-          <div class="option-card-desc">Grosor del material</div>
-        </div>
-      `).join('');
-      thicknessSection.style.display = 'block';
+  if (state.hasCutOperations) {
+    if (!isCuttable) {
+      // Estado 3 — material no cortable: banner rojo + checkbox obligatorio
+      cutWarning.className = 'tech-cut-warning danger';
+      cutWarning.style.display = 'flex';
+      cutTitle.textContent = 'No realizamos corte en este material';
+      cutText.textContent = 'Las líneas rojas de tu diseño serán ignoradas. Solo procesaremos el grabado.';
+      ignoreSect.style.display = 'block';
+      document.getElementById('ignoreCutCheckbox').checked = false;
+      state.options.cutTechnologyId = null;
+      state.options.ignoreCutLines = false;
+      document.getElementById('btnCalculate').disabled = true;
+    } else if (!tech.can_cut) {
+      // Estado 2 — cortable pero esta tech no corta → CO2 automático
+      cutWarning.className = 'tech-cut-warning';
+      cutWarning.style.display = 'flex';
+      cutTitle.textContent = 'Tu diseño tiene líneas de corte';
+      const co2 = allTechnologies.find(t => t.code === 'CO2');
+      state.options.cutTechnologyId = co2?.id || null;
+      state.options.ignoreCutLines = false;
+      ignoreSect.style.display = 'none';
+      cutText.textContent = `${tech.name} solo graba. El corte se procesará automáticamente con Láser CO2. El precio incluye ambas operaciones.`;
+      document.getElementById('btnCalculate').disabled = false;
     } else {
-      // Thickness 0 means no thickness needed
-      thicknessSection.style.display = 'none';
-      state.options.thickness = 0;
+      // Estado 1 — tech puede cortar: todo normal
+      cutWarning.style.display = 'none';
+      state.options.cutTechnologyId = null;
+      state.options.ignoreCutLines = false;
+      document.getElementById('btnCalculate').disabled = false;
     }
   } else {
-    // No thickness options - hide section
+    cutWarning.style.display = 'none';
+    state.options.cutTechnologyId = null;
+    state.options.ignoreCutLines = false;
+    document.getElementById('btnCalculate').disabled = false;
+  }
+
+  // Show thickness options
+  // Estado 2 (cross-tech): usar grosores de CO2, no de la tech de grabado
+  const thicknessSection = document.getElementById('thicknessSection');
+  const thicknessGrid = document.getElementById('thicknessOptions');
+  const thicknessLabel = document.getElementById('thicknessLabel');
+
+  const isState2 = state.hasCutOperations && isCuttable && !tech.can_cut;
+  let thicknessSource;
+
+  if (isState2) {
+    // Buscar CO2 en compatibleTechnologies (ya cargado para este material)
+    const co2InList = compatibleTechnologies.find(t => t.code === 'CO2');
+    thicknessSource = co2InList?.thicknesses || [];
+    thicknessLabel.textContent = 'Grosor del material (para corte con CO2)';
+  } else {
+    thicknessSource = tech.thicknesses || [];
+    thicknessLabel.textContent = '3. Seleccioná el Grosor';
+  }
+
+  const validThicknesses = thicknessSource.filter(t => t > 0);
+
+  if (validThicknesses.length > 0) {
+    thicknessGrid.innerHTML = validThicknesses.map(t => `
+      <div class="option-card" data-id="${t}" onclick="selectThickness(${t}, this)">
+        <div class="option-card-name">${t} mm</div>
+        <div class="option-card-desc">Grosor del material</div>
+      </div>
+    `).join('');
+    thicknessSection.style.display = 'block';
+    // En Estado 2, deshabilitar Calculate hasta que seleccionen el grosor
+    if (isState2) {
+      document.getElementById('btnCalculate').disabled = true;
+    }
+  } else {
     thicknessSection.style.display = 'none';
     state.options.thickness = 0;
   }
@@ -2540,6 +2621,17 @@ function selectThickness(thickness, el) {
   // Update UI - mark selected
   document.querySelectorAll('#thicknessOptions .option-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
+
+  // Estado 2 (cross-tech): re-habilitar Calculate una vez elegido el grosor de CO2
+  if (state.options.cutTechnologyId) {
+    document.getElementById('btnCalculate').disabled = false;
+  }
+}
+
+// IGNORE CUT LINES — Estado 3: habilita calcular cuando el usuario acepta ignorar corte
+function setIgnoreCutLines(checked) {
+  state.options.ignoreCutLines = checked;
+  document.getElementById('btnCalculate').disabled = !checked;
 }
 
 // SELECT ENGRAVE TYPE
@@ -2892,6 +2984,12 @@ async function calculatePrice() {
     showError('Seleccioná un grosor');
     return;
   }
+  // Estado 2 (cross-tech): grosor necesario para la velocidad de corte de CO2
+  if (state.options.cutTechnologyId && state.hasCutOperations &&
+      (state.options.thickness === null || state.options.thickness === undefined)) {
+    showError('Seleccioná el grosor para el corte con CO2');
+    return;
+  }
 
   // Only validate engrave type if SVG has engrave operations
   if (state.hasEngraveOperations && !state.options.engraveTypeId) {
@@ -2921,7 +3019,9 @@ async function calculatePrice() {
         engrave_type_id: engraveTypeId,
         quantity: state.options.quantity,
         thickness: state.options.thickness,
-        material_included: state.options.materialIncluded
+        material_included: state.options.materialIncluded,
+        cut_technology_id: state.options.cutTechnologyId || undefined,
+        ignore_cut_lines: state.options.ignoreCutLines,
       })
     });
 

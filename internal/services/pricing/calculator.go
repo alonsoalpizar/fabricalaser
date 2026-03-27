@@ -25,7 +25,7 @@ type PriceResult struct {
 	CostCut      float64 // time × rate
 	CostSetup    float64 // setup fee from tech_rates
 	CostBase     float64 // subtotal before factors (machine cost)
-	CostMaterial float64 // DEPRECATED: base × (material factor - 1)
+	CostMaterial float64 // Alias de CostMaterialWithWaste — mantenido por compatibilidad
 	CostOverhead float64 // overhead calculation
 
 	// Material Cost (Fase 7 - raw material pricing)
@@ -53,6 +53,9 @@ type PriceResult struct {
 	// Simulation: What if we apply FactorMaterial to Hybrid?
 	SimHybridWithMaterialFactor float64 // What hybrid would be WITH material factor
 	SimDifferencePct            float64 // Percentage difference
+
+	// Cut technology (when different from main engrave tech)
+	CutTechnologyID *uint // nil = misma tech principal
 
 	// Fallback warning
 	UsedFallbackSpeeds bool
@@ -87,6 +90,8 @@ func (c *Calculator) Calculate(
 	thickness float64,
 	quantity int,
 	materialIncluded bool,
+	cutTechnologyID *uint, // nil = usar techID para corte
+	ignoreCutLines bool,   // true = ignorar líneas de corte (material no cortable)
 ) (*PriceResult, error) {
 	// Load current config from DB
 	config, err := c.configLoader.Load()
@@ -111,16 +116,42 @@ func (c *Calculator) Calculate(
 	scaledRasterArea := analysis.RasterAreaMM2 * float64(quantity)
 	scaledMaterialArea := analysis.TotalArea() * float64(quantity) // Bounding box real, no canvas
 
+	// Ignorar líneas de corte si material no es cortable
+	if ignoreCutLines {
+		scaledCutLength = 0
+	}
+	result.CutTechnologyID = cutTechnologyID
+
 	// Create time estimator with fresh config
 	timeEstimator := NewTimeEstimator(config)
 
 	// Calcular tiempo sobre geometría escalada, qty=1
-	timeEst := timeEstimator.EstimateWithGeometry(
-		scaledRasterArea,
-		scaledVectorLength,
-		scaledCutLength,
-		techID, materialID, engraveTypeID, thickness,
-	)
+	// Si cutTechnologyID es diferente a techID, dos estimaciones separadas
+	var timeEst TimeEstimate
+	if cutTechnologyID != nil && *cutTechnologyID != techID {
+		engraveEst := timeEstimator.EstimateWithGeometry(
+			scaledRasterArea, scaledVectorLength, 0,
+			techID, materialID, engraveTypeID, thickness,
+		)
+		cutEst := timeEstimator.EstimateWithGeometry(
+			0, 0, scaledCutLength,
+			*cutTechnologyID, materialID, engraveTypeID, thickness,
+		)
+		timeEst = TimeEstimate{
+			EngraveMins:  engraveEst.EngraveMins,
+			VectorMins:   engraveEst.VectorMins,
+			RasterMins:   engraveEst.RasterMins,
+			CutMins:      cutEst.CutMins,
+			SetupMins:    engraveEst.SetupMins,
+			TotalMins:    engraveEst.TotalMins + cutEst.CutMins,
+			UsedFallback: engraveEst.UsedFallback || cutEst.UsedFallback,
+		}
+	} else {
+		timeEst = timeEstimator.EstimateWithGeometry(
+			scaledRasterArea, scaledVectorLength, scaledCutLength,
+			techID, materialID, engraveTypeID, thickness,
+		)
+	}
 
 	result.TimeEngraveMins = timeEst.EngraveMins
 	result.TimeVectorMins = timeEst.VectorMins
@@ -136,8 +167,13 @@ func (c *Calculator) Calculate(
 	}
 
 	// Get rates from DB config
+	// Para corte, usar cutTechID si hay tecnología de corte separada
+	cutTechID := techID
+	if cutTechnologyID != nil {
+		cutTechID = *cutTechnologyID
+	}
 	costPerMinEngrave := config.GetCostPerMinEngrave(techID)
-	costPerMinCut := config.GetCostPerMinCut(techID)
+	costPerMinCut := config.GetCostPerMinCut(cutTechID)
 	setupFee := config.GetSetupFee(techID)
 	marginPct := config.GetMarginPercent(techID)
 
@@ -195,21 +231,31 @@ func (c *Calculator) Calculate(
 
 	totalCostBase := machineCost + materialCost
 
-	hybridTotal := totalCostBase
-	hybridTotal *= (1 + result.FactorMargin)
-	hybridTotal *= result.FactorEngrave
-	hybridTotal *= (1 + result.FactorUVPremium)
+	if cutTechnologyID != nil && *cutTechnologyID != techID {
+		// Dos tecnologías: márgenes separados por tech, setups sumados
+		marginEngrave := config.GetMarginPercent(techID)
+		marginCut := config.GetMarginPercent(cutTechID)
 
-	// Descuento volumen
-	hybridTotal *= (1 - result.DiscountVolumePct)
+		costEngraveBase := (result.CostEngrave + materialCost) *
+			(1 + marginEngrave) * result.FactorEngrave * (1 + result.FactorUVPremium)
+		costCutBase := result.CostCut * (1 + marginCut)
 
-	// Setup UNA vez
-	hybridTotal += result.CostSetup
+		// Setup de ambas máquinas
+		result.CostSetup += config.GetSetupFee(cutTechID)
 
-	result.PriceHybridTotal = math.Round(hybridTotal*100) / 100
-
-	// Unitario es referencia: total / qty
-	result.PriceHybridUnit = math.Round((hybridTotal/float64(quantity))*100) / 100
+		hybridTotal := (costEngraveBase + costCutBase) * (1 - result.DiscountVolumePct) + result.CostSetup
+		result.PriceHybridTotal = math.Round(hybridTotal*100) / 100
+		result.PriceHybridUnit = math.Round((hybridTotal/float64(quantity))*100) / 100
+	} else {
+		hybridTotal := totalCostBase
+		hybridTotal *= (1 + result.FactorMargin)
+		hybridTotal *= result.FactorEngrave
+		hybridTotal *= (1 + result.FactorUVPremium)
+		hybridTotal *= (1 - result.DiscountVolumePct)
+		hybridTotal += result.CostSetup
+		result.PriceHybridTotal = math.Round(hybridTotal*100) / 100
+		result.PriceHybridUnit = math.Round((hybridTotal/float64(quantity))*100) / 100
+	}
 
 	// =============================================================
 	// VALUE-BASED PRICING — adaptativo por tipo de trabajo
@@ -311,6 +357,8 @@ func (c *Calculator) ToQuoteModel(
 	engraveTypeID uint,
 	quantity int,
 	thickness float64,
+	cutTechnologyID *uint,
+	ignoreCutLines bool,
 ) *models.Quote {
 	now := time.Now()
 
@@ -333,11 +381,13 @@ func (c *Calculator) ToQuoteModel(
 	return &models.Quote{
 		UserID:        userID,
 		SVGAnalysisID: analysisID,
-		TechnologyID:  techID,
-		MaterialID:    materialID,
-		EngraveTypeID: engraveTypeID,
-		Quantity:      quantity,
-		Thickness:     thickness,
+		TechnologyID:    techID,
+		MaterialID:      materialID,
+		EngraveTypeID:   engraveTypeID,
+		CutTechnologyID: cutTechnologyID,
+		IgnoreCutLines:  ignoreCutLines,
+		Quantity:        quantity,
+		Thickness:       thickness,
 
 		TimeEngraveMins: result.TimeEngraveMins,
 		TimeVectorMins:  result.TimeVectorMins,

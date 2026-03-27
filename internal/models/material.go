@@ -13,6 +13,7 @@ type Material struct {
 	Factor     float64        `gorm:"type:decimal(5,4);default:1.0" json:"factor"` // 1.0 - 1.8
 	Thicknesses datatypes.JSON `gorm:"type:jsonb;default:'[]'" json:"thicknesses"` // [3, 5, 6, 10] mm
 	Notes      *string        `gorm:"type:text" json:"notes,omitempty"`
+	IsCuttable bool           `gorm:"default:false" json:"is_cuttable"`
 	IsActive   bool           `gorm:"default:true" json:"is_active"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`

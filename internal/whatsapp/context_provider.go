@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	contextCacheTTL       = 5 * time.Minute
-	defaultAsesorPhone    = "+50686091954"
+	contextCacheTTL    = 5 * time.Minute
+	defaultAsesorPhone = "+50686091954"
+	defaultMaxMsgs     = 20
 )
 
 // waContextProvider carga contexto dinámico desde BD (tecnologías, materiales, TelAsesor)
@@ -24,6 +25,7 @@ type waContextProvider struct {
 	mu            sync.RWMutex
 	cachedContext string
 	asesorPhone   string
+	maxMensajes   int
 	fetchedAt     time.Time
 }
 
@@ -56,6 +58,19 @@ func (p *waContextProvider) GetDynamicContext() string {
 	p.mu.Unlock()
 
 	return content
+}
+
+// GetMaxMensajesDia retorna el límite diario de mensajes por número desde system_config.
+// Fallback: 20. El valor se cachea junto con el contexto dinámico.
+func (p *waContextProvider) GetMaxMensajesDia() int {
+	p.mu.RLock()
+	v := p.maxMensajes
+	p.mu.RUnlock()
+	if v > 0 {
+		return v
+	}
+	// Si no está en cache, usar el default
+	return defaultMaxMsgs
 }
 
 // GetAsesorPhone retorna el teléfono del asesor desde system_config (TelAsesor).
@@ -118,9 +133,18 @@ func (p *waContextProvider) buildContext() string {
 		costoVectorizacion = cfg.ConfigValue
 	}
 
-	// Actualizar cache del teléfono al mismo tiempo que el contexto
+	// Límite diario de mensajes
+	maxMensajes := defaultMaxMsgs
+	if cfg, err := p.sysConfigRepo.FindByKey("wa_max_mensajes_dia"); err == nil && cfg.ConfigValue != "" {
+		if v, err := fmt.Sscanf(cfg.ConfigValue, "%d", &maxMensajes); err != nil || v != 1 {
+			maxMensajes = defaultMaxMsgs
+		}
+	}
+
+	// Actualizar cache del teléfono y límite al mismo tiempo que el contexto
 	p.mu.Lock()
 	p.asesorPhone = asesorPhone
+	p.maxMensajes = maxMensajes
 	p.mu.Unlock()
 
 	b.WriteString(fmt.Sprintf("\n## Configuración operativa:\n- Teléfono asesor para escalado: %s\n- Costo de vectorización: ₡%s\n", asesorPhone, costoVectorizacion))

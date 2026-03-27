@@ -132,6 +132,8 @@ type CalculateRequest struct {
 	Quantity         int     `json:"quantity"`
 	Thickness        float64 `json:"thickness,omitempty"`
 	MaterialIncluded *bool   `json:"material_included,omitempty"` // default true if not specified
+	CutTechnologyID  *uint   `json:"cut_technology_id,omitempty"` // nil = misma tech para corte
+	IgnoreCutLines   bool    `json:"ignore_cut_lines,omitempty"`  // true = material no cortable
 }
 
 // CalculatePrice handles POST /api/v1/quotes/calculate
@@ -190,7 +192,7 @@ func (h *Handler) CalculatePrice(w http.ResponseWriter, r *http.Request) {
 	// Calculate pricing (uses DB config, NO hardcode)
 	// Now includes thickness for specific speed lookups from tech_material_speeds
 	// and materialIncluded for raw material cost calculation
-	priceResult, err := h.calculator.Calculate(analysis, req.TechnologyID, req.MaterialID, req.EngraveTypeID, req.Thickness, req.Quantity, materialIncluded)
+	priceResult, err := h.calculator.Calculate(analysis, req.TechnologyID, req.MaterialID, req.EngraveTypeID, req.Thickness, req.Quantity, materialIncluded, req.CutTechnologyID, req.IgnoreCutLines)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "CALC_ERROR", "Error calculating price: "+err.Error())
 		return
@@ -206,6 +208,8 @@ func (h *Handler) CalculatePrice(w http.ResponseWriter, r *http.Request) {
 		req.EngraveTypeID,
 		req.Quantity,
 		req.Thickness,
+		req.CutTechnologyID,
+		req.IgnoreCutLines,
 	)
 
 	if err := h.quoteRepo.Create(quote); err != nil {

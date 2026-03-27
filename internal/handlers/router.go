@@ -172,6 +172,7 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 		whatsapp.NewPGAdapter(database.Get()),
 		whatsapp.NewGeminiAdapter(waContextProvider),
 		whatsapp.NewRateLimiter(redisClient),
+		waContextProvider,
 	)
 	r.Route("/api/v1/whatsapp", func(r chi.Router) {
 		r.Get("/webhook", waHandler.VerifyWebhook)

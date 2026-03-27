@@ -43,7 +43,7 @@
         <select class="filter-select" id="roleFilter" onchange="loadUsers()">
           <option value="">Todos los roles</option>
           <option value="admin">Admin</option>
-          <option value="user">Usuario</option>
+          <option value="customer">Cliente</option>
         </select>
         <select class="filter-select" id="statusFilter" onchange="loadUsers()">
           <option value="">Todos los estados</option>
@@ -109,7 +109,7 @@
             <div class="form-group">
               <label class="form-label">Rol *</label>
               <select class="form-select" id="userRole" required>
-                <option value="user">Usuario</option>
+                <option value="customer">Cliente</option>
                 <option value="admin">Administrador</option>
               </select>
             </div>
@@ -132,7 +132,7 @@
           <div class="form-group">
             <label class="form-label">Cuota de cotizaciones</label>
             <input type="number" class="form-input" id="userQuota" min="0" value="3" placeholder="3">
-            <span class="form-hint">Cotizaciones permitidas por mes</span>
+            <span class="form-hint">Total de cotizaciones (-1 = ilimitado)</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -267,7 +267,7 @@
                 <td>${u.email || '-'}</td>
                 <td>
                   <span class="status-badge ${u.role === 'admin' ? 'reviewed' : 'approved'}" style="font-size: 0.6875rem;">
-                    ${u.role === 'admin' ? 'Admin' : 'Usuario'}
+                    ${u.role === 'admin' ? 'Admin' : 'Cliente'}
                   </span>
                 </td>
                 <td>
@@ -376,7 +376,7 @@
         document.getElementById('userName').value = user.nombre || '';
         document.getElementById('userEmail').value = user.email || '';
         document.getElementById('userPhone').value = user.telefono || '';
-        document.getElementById('userRole').value = user.role || 'user';
+        document.getElementById('userRole').value = user.role || 'customer';
         document.getElementById('userActive').value = user.is_active ? 'true' : 'false';
         document.getElementById('userQuota').value = user.quote_limit || 3;
         document.getElementById('userPassword').value = '';

@@ -29,6 +29,10 @@ type User struct {
 	Provincia *string `gorm:"type:varchar(100)" json:"provincia,omitempty"`
 	Canton    *string `gorm:"type:varchar(100)" json:"canton,omitempty"`
 	Distrito  *string `gorm:"type:varchar(100)" json:"distrito,omitempty"`
+
+	// Password reset (never exposed in API responses)
+	PasswordResetToken   *string    `gorm:"type:varchar(64)" json:"-"`
+	PasswordResetExpires *time.Time `gorm:"type:timestamptz" json:"-"`
 }
 
 func (User) TableName() string {
