@@ -3,6 +3,7 @@ package whatsapp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -25,6 +26,7 @@ type PGClient interface {
 // GeminiCaller define el contrato para llamar al agente de Vertex AI.
 type GeminiCaller interface {
 	CallWithHistory(ctx context.Context, history []ChatTurn, newMessage string) (string, error)
+	CallWithTools(ctx context.Context, phone string, history []ChatTurn, newMessage string) (string, error)
 }
 
 // ─── Modelos de datos ────────────────────────────────────────────────────────
@@ -54,21 +56,24 @@ const (
 // ─── MessageProcessor ────────────────────────────────────────────────────────
 
 // MessageProcessor orquesta el flujo completo:
-// deduplicación → cargar historial → llamar Gemini → responder → archivar
+// deduplicación → rate limit → cargar historial → llamar Gemini → responder → archivar
 type MessageProcessor struct {
-	redis  RedisClient
-	pg     PGClient
-	gemini GeminiCaller
-	sender *Sender
+	redis       RedisClient
+	pg          PGClient
+	gemini      GeminiCaller
+	sender      *Sender
+	rateLimiter *RateLimiter
 }
 
 // NewMessageProcessor construye el procesador con sus dependencias.
-func NewMessageProcessor(redis RedisClient, pg PGClient, gemini GeminiCaller) *MessageProcessor {
+// rateLimiter puede ser nil — en ese caso el rate limiting queda deshabilitado (fail open).
+func NewMessageProcessor(redis RedisClient, pg PGClient, gemini GeminiCaller, rateLimiter *RateLimiter) *MessageProcessor {
 	return &MessageProcessor{
-		redis:  redis,
-		pg:     pg,
-		gemini: gemini,
-		sender: NewSender(),
+		redis:       redis,
+		pg:          pg,
+		gemini:      gemini,
+		sender:      NewSender(),
+		rateLimiter: rateLimiter,
 	}
 }
 
@@ -109,13 +114,28 @@ func (p *MessageProcessor) processTextMessage(ctx context.Context, msg Message) 
 		return nil
 	}
 
+	// 2. Rate limiting — solo para nuevas conversaciones
+	if p.rateLimiter != nil {
+		result := p.rateLimiter.Check(ctx, msg.From)
+		if result == Deny {
+			slog.Warn("whatsapp: mensaje descartado por rate limiter",
+				"from", msg.From,
+				"message_id", msg.ID,
+			)
+			return nil
+		}
+		if result == AllowContinuation {
+			slog.Debug("whatsapp: conversación continuada — sin contar", "from", msg.From)
+		}
+	}
+
 	slog.Info("whatsapp: procesando mensaje",
 		"from", msg.From,
 		"message_id", msg.ID,
 		"length", len(msg.Text.Body),
 	)
 
-	// 2. Cargar historial de la sesión activa desde Redis
+	// 4. Cargar historial de la sesión activa desde Redis
 	history, err := p.loadHistory(ctx, msg.From)
 	if err != nil {
 		slog.Warn("whatsapp: no se pudo cargar historial, continuando sin él",
@@ -125,14 +145,21 @@ func (p *MessageProcessor) processTextMessage(ctx context.Context, msg Message) 
 		history = []ChatTurn{}
 	}
 
-	// 3. Llamar a Gemini con historial + mensaje nuevo
-	response, err := p.gemini.CallWithHistory(ctx, history, msg.Text.Body)
+	// 3. Llamar a Gemini con historial + mensaje nuevo (con tools)
+	response, err := p.gemini.CallWithTools(ctx, msg.From, history, msg.Text.Body)
 	if err != nil {
 		return fmt.Errorf("processTextMessage: error llamando a Gemini: %w", err)
 	}
 
 	// 4. Enviar respuesta al usuario vía Meta
 	if err := p.sender.SendText(ctx, msg.From, response); err != nil {
+		if errors.Is(err, ErrMetaRateLimit) {
+			// Límite real de Meta alcanzado — loguear pero no propagar como error fatal
+			slog.Error("whatsapp: límite real de Meta — mensaje no enviado, revisar verificación de negocio",
+				"from", msg.From,
+			)
+			return nil
+		}
 		return fmt.Errorf("processTextMessage: error enviando respuesta: %w", err)
 	}
 
