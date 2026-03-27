@@ -72,10 +72,20 @@ func (e *TimeEstimator) Estimate(
 	}
 
 	// Calculate raster engrave time (area-based)
-	// Raster speed = head speed × spot_size (mm²/min)
-	// Each pass of the head covers a width equal to the spot size
+	// Si raster_speed_mm2_min está configurado, usarlo directamente (mm²/min).
+	// Si no, fallback: head_speed × spot_size (comportamiento legacy).
 	if analysis.RasterAreaMM2 > 0 {
-		effectiveRasterSpeed := engraveSpeedMmMin * spotSize // mm/min × mm = mm²/min
+		var effectiveRasterSpeed float64
+		if specificSpeed.RasterSpeedMm2Min != nil && *specificSpeed.RasterSpeedMm2Min > 0 {
+			effectiveRasterSpeed = *specificSpeed.RasterSpeedMm2Min * speedMult
+		} else {
+			baseAreaSpeed := e.config.GetBaseEngraveAreaSpeed()
+			if baseAreaSpeed > 0 {
+				effectiveRasterSpeed = baseAreaSpeed * speedMult
+			} else {
+				effectiveRasterSpeed = engraveSpeedMmMin * spotSize // legacy final
+			}
+		}
 		rasterTime := analysis.RasterAreaMM2 / effectiveRasterSpeed
 		estimate.RasterMins = rasterTime
 		estimate.EngraveMins += rasterTime
@@ -163,16 +173,26 @@ func (e *TimeEstimator) EstimateWithGeometry(
 	baseCutSpeed := e.config.GetBaseCutSpeed()
 	setupTimeMinutes := e.config.GetSetupTimeMinutes()
 
-	// Raster (área): convertir velocidad cabezal a mm²/min con spot_size
+	// Raster (área): usar raster_speed_mm2_min si existe, sino fallback a head_speed × spot_size
 	if rasterAreaMM2 > 0 {
-		var engraveSpeedMmMin float64
-		if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
-			engraveSpeedMmMin = *specificSpeed.EngraveSpeedMmMin * speedMult
+		var effectiveRasterSpeed float64
+		if specificSpeed.Found && specificSpeed.RasterSpeedMm2Min != nil && *specificSpeed.RasterSpeedMm2Min > 0 {
+			effectiveRasterSpeed = *specificSpeed.RasterSpeedMm2Min * speedMult
 		} else {
-			engraveSpeedMmMin = baseEngraveLineSpeed * speedMult / materialFactor
-			estimate.UsedFallback = true
+			var engraveSpeedMmMin float64
+			if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
+				engraveSpeedMmMin = *specificSpeed.EngraveSpeedMmMin * speedMult
+			} else {
+				engraveSpeedMmMin = baseEngraveLineSpeed * speedMult / materialFactor
+				estimate.UsedFallback = true
+			}
+			baseAreaSpeed := e.config.GetBaseEngraveAreaSpeed()
+			if baseAreaSpeed > 0 {
+				effectiveRasterSpeed = baseAreaSpeed * speedMult
+			} else {
+				effectiveRasterSpeed = engraveSpeedMmMin * spotSize // legacy final
+			}
 		}
-		effectiveRasterSpeed := engraveSpeedMmMin * spotSize
 		rasterTime := rasterAreaMM2 / effectiveRasterSpeed
 		estimate.RasterMins = rasterTime
 		estimate.EngraveMins += rasterTime

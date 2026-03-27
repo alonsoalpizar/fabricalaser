@@ -43,6 +43,8 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 		r.Post("/login", authHandler.Login)
 		r.Post("/registro", authHandler.Registro)
 		r.Post("/establecer-password", authHandler.EstablecerPassword)
+		r.Post("/solicitar-recuperacion", authHandler.SolicitarRecuperacion)
+		r.Post("/reset-password", authHandler.ResetPassword)
 
 		// Protected routes
 		r.Group(func(r chi.Router) {
@@ -50,6 +52,7 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 			r.Get("/me", authHandler.Me)
 			r.Get("/profile", authHandler.GetProfile)
 			r.Put("/profile", authHandler.UpdateProfile)
+			r.Put("/change-password", authHandler.ChangePassword)
 		})
 	})
 
@@ -151,18 +154,24 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 		r.Delete("/material-costs/{id}", materialCostHandler.DeleteMaterialCost)
 		r.Post("/material-costs/{id}/recalculate", materialCostHandler.RecalculateMaterialCost)
 
-		// WhatsApp conversations (read-only bitácora) + digest manual
+		// WhatsApp bitácora — sesiones paginadas + depuración + digest manual
 		waAdminHandler := admin.NewWhatsappHandler(redisClient)
+		r.Get("/whatsapp/sessions", waAdminHandler.GetSessions)
+		r.Get("/whatsapp/sessions/{phone}/{date}", waAdminHandler.GetSessionMessages)
+		r.Post("/whatsapp/purge", waAdminHandler.PurgeConversations)
+		r.Post("/whatsapp/digest/send", waAdminHandler.SendDigest)
+		// Legacy
 		r.Get("/whatsapp/conversations", waAdminHandler.GetConversations)
 		r.Get("/whatsapp/conversations/{phone}", waAdminHandler.GetConversation)
-		r.Post("/whatsapp/digest/send", waAdminHandler.SendDigest)
 	})
 
 	// WhatsApp webhook
+	waContextProvider := whatsapp.NewWAContextProvider()
 	waHandler := whatsapp.NewHandler(
 		whatsapp.NewRedisAdapter(redisClient),
 		whatsapp.NewPGAdapter(database.Get()),
-		whatsapp.NewGeminiAdapter(),
+		whatsapp.NewGeminiAdapter(waContextProvider),
+		whatsapp.NewRateLimiter(redisClient),
 	)
 	r.Route("/api/v1/whatsapp", func(r chi.Router) {
 		r.Get("/webhook", waHandler.VerifyWebhook)
@@ -179,21 +188,21 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 
 	// Quote routes (Fase 1 - Cotizador)
 	quoteHandler := quote.NewHandler()
+
 	r.Route("/api/v1/quotes", func(r chi.Router) {
-		r.Use(middleware.AuthMiddleware)
+		// Estimate — token interno, sin JWT (usado por el agente de WhatsApp)
+		// Usa r.Post directo — r.Group+r.Use propaga al padre en chi inline mux
+		r.Post("/estimate", quoteHandler.HandleEstimate)
 
-		// GET endpoints (no quota check)
-		r.Get("/my", quoteHandler.GetMyQuotes)                  // List user's quotes
-		r.Get("/analyses", quoteHandler.GetMyAnalyses)          // List user's SVG analyses
-		r.Get("/analyses/{id}/svg", quoteHandler.GetAnalysisSVG) // Get SVG content for preview
-		r.Get("/{id}", quoteHandler.GetQuote)                   // Get specific quote
+		// GET endpoints — requieren JWT (r.With no propaga al padre)
+		r.With(middleware.AuthMiddleware).Get("/my", quoteHandler.GetMyQuotes)
+		r.With(middleware.AuthMiddleware).Get("/analyses", quoteHandler.GetMyAnalyses)
+		r.With(middleware.AuthMiddleware).Get("/analyses/{id}/svg", quoteHandler.GetAnalysisSVG)
+		r.With(middleware.AuthMiddleware).Get("/{id}", quoteHandler.GetQuote)
 
-		// POST endpoints (with quota check)
-		r.Group(func(r chi.Router) {
-			r.Use(middleware.QuotaMiddleware)
-			r.Post("/analyze", quoteHandler.AnalyzeSVG)      // Upload and analyze SVG
-			r.Post("/calculate", quoteHandler.CalculatePrice) // Calculate price for analysis
-		})
+		// POST endpoints — requieren JWT + cuota
+		r.With(middleware.AuthMiddleware, middleware.QuotaMiddleware).Post("/analyze", quoteHandler.AnalyzeSVG)
+		r.With(middleware.AuthMiddleware, middleware.QuotaMiddleware).Post("/calculate", quoteHandler.CalculatePrice)
 	})
 
 	// Static file routes
@@ -245,6 +254,11 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 	// Mi cuenta page
 	r.Get("/mi-cuenta", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "mi-cuenta", "index.html"))
+	})
+
+	// Reset password page
+	r.Get("/reset-password", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "reset-password", "index.html"))
 	})
 
 	// Cotizar page (Phase 1 - requires auth via JS)

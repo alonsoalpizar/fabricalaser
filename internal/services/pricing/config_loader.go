@@ -1,6 +1,7 @@
 package pricing
 
 import (
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -399,7 +400,8 @@ func (c *PricingConfig) GetPricePerMmCut() float64 {
 // TechMaterialSpeedResult holds speed info for a specific combination
 type TechMaterialSpeedResult struct {
 	CutSpeedMmMin     *float64
-	EngraveSpeedMmMin *float64 // Velocidad cabezal (mm/min) - para raster se multiplica por spot_size
+	EngraveSpeedMmMin *float64 // Velocidad cabezal lineal (mm/min) — vectorial y líneas
+	RasterSpeedMm2Min *float64 // Velocidad raster directa (mm²/min) — si existe, evita el cálculo × spot_size
 	Found             bool
 }
 
@@ -407,10 +409,11 @@ type TechMaterialSpeedResult struct {
 // Returns nil speeds if no specific configuration exists (use base speeds as fallback)
 func (c *PricingConfig) GetMaterialSpeed(techID, materialID uint, thickness float64) TechMaterialSpeedResult {
 	for _, s := range c.TechMaterialSpeeds {
-		if s.TechnologyID == techID && s.MaterialID == materialID && s.Thickness == thickness {
+		if s.TechnologyID == techID && s.MaterialID == materialID && math.Abs(s.Thickness-thickness) < 0.01 {
 			return TechMaterialSpeedResult{
 				CutSpeedMmMin:     s.CutSpeedMmMin,
 				EngraveSpeedMmMin: s.EngraveSpeedMmMin,
+				RasterSpeedMm2Min: s.RasterSpeedMm2Min,
 				Found:             true,
 			}
 		}
@@ -418,10 +421,11 @@ func (c *PricingConfig) GetMaterialSpeed(techID, materialID uint, thickness floa
 	// Try with thickness 0 (for materials without specific thickness)
 	if thickness != 0 {
 		for _, s := range c.TechMaterialSpeeds {
-			if s.TechnologyID == techID && s.MaterialID == materialID && s.Thickness == 0 {
+			if s.TechnologyID == techID && s.MaterialID == materialID && math.Abs(s.Thickness) < 0.01 {
 				return TechMaterialSpeedResult{
 					CutSpeedMmMin:     s.CutSpeedMmMin,
 					EngraveSpeedMmMin: s.EngraveSpeedMmMin,
+					RasterSpeedMm2Min: s.RasterSpeedMm2Min,
 					Found:             true,
 				}
 			}

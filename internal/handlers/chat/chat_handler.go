@@ -276,11 +276,12 @@ type dynamicContext struct {
 
 // Handler handles chat requests
 type Handler struct {
-	techRepo *repository.TechnologyRepository
-	matRepo  *repository.MaterialRepository
-	mu       sync.RWMutex
-	cache    *dynamicContext
-	genai    *genai.Client
+	techRepo      *repository.TechnologyRepository
+	matRepo       *repository.MaterialRepository
+	sysConfigRepo *repository.SystemConfigRepository
+	mu            sync.RWMutex
+	cache         *dynamicContext
+	genai         *genai.Client
 }
 
 const cacheTTL = 5 * time.Minute
@@ -293,9 +294,10 @@ func NewHandler() *Handler {
 		log.Fatalf("chat: failed to create Vertex AI client: %v", err)
 	}
 	return &Handler{
-		techRepo: repository.NewTechnologyRepository(),
-		matRepo:  repository.NewMaterialRepository(),
-		genai:    client,
+		techRepo:      repository.NewTechnologyRepository(),
+		matRepo:       repository.NewMaterialRepository(),
+		sysConfigRepo: repository.NewSystemConfigRepository(),
+		genai:         client,
 	}
 }
 
@@ -336,6 +338,10 @@ func (h *Handler) getDynamicContext() string {
 		b.WriteString(line)
 	}
 	b.WriteString("\nSi el cliente pregunta si trabajamos con un material o tecnología específica, reflejá exactamente esta lista. No menciones materiales o tecnologías que no estén aquí.\n")
+
+	if cfg, err := h.sysConfigRepo.FindByKey("TelAsesor"); err == nil && cfg.ConfigValue != "" {
+		b.WriteString(fmt.Sprintf("\n## Configuración operativa:\n- Teléfono asesor de ventas: %s\n", cfg.ConfigValue))
+	}
 
 	content := b.String()
 	h.mu.Lock()
