@@ -22,6 +22,7 @@ type waContextProvider struct {
 	techRepo      *repository.TechnologyRepository
 	matRepo       *repository.MaterialRepository
 	sysConfigRepo *repository.SystemConfigRepository
+	blankRepo     *repository.BlankRepository
 	mu            sync.RWMutex
 	cachedContext string
 	asesorPhone   string
@@ -35,6 +36,7 @@ func NewWAContextProvider() *waContextProvider {
 		techRepo:      repository.NewTechnologyRepository(),
 		matRepo:       repository.NewMaterialRepository(),
 		sysConfigRepo: repository.NewSystemConfigRepository(),
+		blankRepo:     repository.NewBlankRepository(),
 	}
 }
 
@@ -148,6 +150,22 @@ func (p *waContextProvider) buildContext() string {
 	p.mu.Unlock()
 
 	b.WriteString(fmt.Sprintf("\n## Configuración operativa:\n- Teléfono asesor para escalado: %s\n- Costo de vectorización: ₡%s\n", asesorPhone, costoVectorizacion))
+
+	// Catálogo de blanks (resumen para que el agente sepa qué categorías existen)
+	blanks, err := p.blankRepo.FindAll()
+	if err != nil {
+		slog.Error("waContextProvider: error cargando blanks", "error", err)
+	} else if len(blanks) > 0 {
+		b.WriteString("\n## Catálogo de blanks disponibles (usar consultar_blank para precios en tiempo real):\n")
+		for _, blank := range blanks {
+			dim := ""
+			if blank.Dimensions != nil {
+				dim = " (" + *blank.Dimensions + ")"
+			}
+			b.WriteString(fmt.Sprintf("- blank_id=%d, categoria=%s, nombre=\"%s\"%s, min_qty=%d\n",
+				blank.ID, blank.Category, blank.Name, dim, blank.MinQty))
+		}
+	}
 
 	return b.String()
 }

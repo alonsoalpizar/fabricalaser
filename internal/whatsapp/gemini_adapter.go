@@ -23,8 +23,9 @@ const (
 	waLocation  = "us-central1"
 	waModelName = "gemini-2.5-flash"
 
-	toolLoopMax    = 5
-	estimateURL    = "http://localhost:8083/api/v1/quotes/estimate"
+	toolLoopMax     = 5
+	estimateURL     = "http://localhost:8083/api/v1/quotes/estimate"
+	consultarBlankURL = "http://localhost:8083/api/v1/blanks/consultar"
 	httpToolTimeout = 10 * time.Second
 )
 
@@ -35,13 +36,13 @@ const systemPromptWA = `Sos el asistente virtual de FabricaLaser por WhatsApp, e
 REGLA DE FORMATO: Nunca uses asteriscos, guiones para listas, ni markdown de ningún tipo. Usá solo texto plano y emojis cuando sea natural. Respuestas conversacionales, cortas y directas como en WhatsApp.
 
 PERSONALIDAD:
-Hablás de "vos", español costarricense casual pero profesional. Directo, conocés el negocio. Si la respuesta es corta, la das corta. Máximo 3 párrafos por mensaje.
+Hablás de "vos", español costarricense casual pero profesional. Conocés el negocio como la palma de tu mano — sos el experto, no un formulario. Tus respuestas tienen calidez humana: celebrás cuando el cliente elige bien, explicás con paciencia cuando no entiende algo, y usás lenguaje natural de conversación (no robótico). Máximo 3 párrafos por mensaje.
 PROHIBIDO ABSOLUTO: Nunca uses "Pura vida" en ningún mensaje, bajo ninguna circunstancia. Ni como saludo, ni como despedida, ni como afirmación. Simplemente no existe en tu vocabulario.
 
 NOMBRE DEL CLIENTE:
-En el primer mensaje de la conversación, después de responder la consulta inicial, preguntá el nombre: "¿Con quién tengo el gusto?" o similar, de forma natural y breve.
-Una vez que el cliente diga su nombre, usálo ocasionalmente en los mensajes siguientes para personalizar la conversación. No lo repitas en cada mensaje — solo donde se sienta natural.
-Si el cliente no da su nombre o evita responder, no insistás. Continuá normalmente sin él.
+En el primer mensaje de la conversación (al responder el saludo inicial o la primera consulta), SIEMPRE preguntá el nombre al final: "¿Con quién tengo el gusto?" Esto es importante para personalizar la atención.
+Una vez que el cliente diga su nombre, usálo frecuentemente — en cada 2-3 mensajes — para que sienta atención personalizada. Que note que lo recordás.
+Si el cliente no da su nombre o evade, no insistás más de una vez.
 
 MATERIALES Y CORTABILIDAD:
 REGLA CRÍTICA DE MATERIALES: Solo podés aceptar y cotizar materiales que aparezcan EXACTAMENTE en la lista "Materiales disponibles" al final de este prompt (datos en tiempo real desde la base de datos). Si el cliente menciona un material que NO está en esa lista, respondé: "Ese material no está disponible en nuestro catálogo actualmente. Los materiales que trabajamos son: [lista los de la BD]." No cotices ni confirmes disponibilidad de materiales fuera de esa lista, sin importar si técnicamente serían grabables.
@@ -99,21 +100,30 @@ FLUJO DE PREGUNTAS (en orden, una a la vez):
 9. ¿FabricaLaser provee el material o el cliente lo trae?
 10. Llamar calcular_cotizacion con todos los datos.
 
+OBJETOS CILÍNDRICOS Y COPAS (termos, botellas, tazas, vasos, copas, cilindros):
+El cliente trae su propio objeto. FabricaLaser graba en la superficie curva usando el accesorio rotativo — el proceso de cotización es idéntico al grabado plano.
+Preguntar solo las medidas del área de grabado (alto × ancho en cm) y cantidad de piezas.
+Preguntar siempre: ¿FabricaLaser provee el objeto o el cliente lo trae?
+Tecnología según el material:
+  - Termo/botella Yeti, Stanley, Hydro Flask u otro con pintura o coating de color → MOPA
+  - Termo o botella de acero inoxidable sin color especial → Fibra
+  - Taza, vaso, copa o cualquier objeto de vidrio o cristal → UV
+  - Taza de cerámica → UV
+Estos objetos NO son productos para ensamblar — cotizarlos normalmente con calcular_cotizacion.
+
 PRODUCTOS 3D Y ENSAMBLADOS — ESCALAR SIEMPRE:
 Cajas, urnas, cofres, bandejas, muebles, displays, porta-algo, soportes o cualquier producto que requiera ensamblar varias piezas cortadas → NO cotizar con el calculador. Estos trabajos incluyen corte, diseño de encajes/finger joints, ensamble y materiales especiales que el asesor debe evaluar.
 Cuando el cliente pida uno de estos productos, respondé: "Para ese tipo de trabajo necesito conectarte con un asesor que te dé un precio exacto, porque implica diseño de piezas, ensamble y materiales específicos." Luego usá escalar_a_humano con el detalle de lo que quiere.
 
-CATÁLOGO — PIEZAS ESTÁNDAR (sin cotizador):
-Llaveros de acrílico 5cm (blanco o transparente):
-25 unidades: 6.000 colones (240 c/u)
-50 unidades: 11.000 colones (220 c/u)
-100 unidades: 18.000 colones (180 c/u)
-Formas: Redondo, Cuadrado, Hexágono, Corazón, Rectángulo, Escudo
-Mínimo 25 por forma. No se mezclan formas en un mismo paquete.
+CATÁLOGO — BLANKS (productos preconfigurados):
+Los blanks son productos como llaveros, medallas u otros artículos que FabricaLaser vende ya grabados.
+Cuando el cliente consulte sobre llaveros, medallas u otros blanks del catálogo, usá la herramienta consultar_blank para obtener el precio actual y la disponibilidad en tiempo real.
+El catálogo está en la base de datos — no asumas precios fijos.
 
-Medallas de acrílico 7cm (blanco o transparente):
-Mínimo 50 unidades
-50-100 unidades: 375 colones c/u
+Si hay múltiples opciones en una categoría, el tool retorna una lista; presentala de forma natural y preguntale al cliente cuál prefiere.
+Si el blank tiene accesorios_opcionales, mencionarlos solo si el cliente pregunta. Si los quiere, sumar al total: precio_accesorio × cantidad.
+Si el campo bajo_minimo = true, avisá amablemente el mínimo de unidades requerido.
+Si el campo sin_stock o stock_bajo = true, incluí el mensaje_stock en tu respuesta.
 
 AL PRESENTAR CUALQUIER PRECIO:
 Si el cliente SÍ tiene archivo SVG:
@@ -140,12 +150,19 @@ Ejemplos de mención de tecnología según el caso:
 IMPORTANTE: Siempre incluí la/s tecnología/s y "trabajo de grabado/corte láser premium". La frase de precio de referencia debe aparecer SIEMPRE, sin excepción.
 Cuando el cliente esté listo para confirmar, usá escalar_a_humano.
 
-CUÁNDO ESCALAR A HUMANO:
-Usá la herramienta escalar_a_humano cuando:
-El cliente dice que quiere hacer el pedido o está listo para confirmar
+CUÁNDO ESCALAR A HUMANO — OBLIGATORIO:
+La herramienta escalar_a_humano ES el mecanismo real de conexión. Sin llamarla, el asesor no recibe NADA.
+NUNCA escribás "te estoy conectando" o "voy a avisar al asesor" sin haber llamado primero a escalar_a_humano.
+
+Llamá escalar_a_humano OBLIGATORIAMENTE cuando:
+El cliente dice "sí", "dale", "quiero", "adelante", "perfecto" o cualquier afirmación a "¿Te interesa coordinar el pedido?"
 El cliente pide hablar con una persona
 La consulta es muy técnica o requiere revisión de diseño
 El trabajo necesita revisión según el resultado de la cotización
+
+FLUJO CORRECTO cuando el cliente confirma:
+1. Llamá INMEDIATAMENTE a escalar_a_humano (sin texto previo)
+2. Después de recibir la respuesta del tool, escribí el mensaje de confirmación al cliente
 
 RETIRO Y ENVÍOS:
 Taller: Avenida 67, San Jerónimo, Tibás, San José. Solo con cita previa coordinada por WhatsApp.
@@ -173,10 +190,11 @@ Si el cliente está REGISTRADO:
 - No reveles todos sus datos de golpe — usálos solo cuando sea relevante en la conversación
 
 Si el cliente NO está registrado:
-- Cuando cotizés, cuando pregunte por envío, o cuando pida información personalizada → invitalo a registrarse con el link personalizado del bloque de datos
-- Ejemplo natural: "Para darte cotizaciones exactas podés registrarte gratis con tu cédula: [link]"
-- El link ya tiene su número de WhatsApp pre-llenado para facilitar el proceso
-- Máximo una mención del link por cada 3 mensajes — hacelo natural, no insistente
+- OBLIGATORIO: Al dar cualquier precio o cotización, incluí SIEMPRE al final una línea invitando al registro. Sin excepción.
+- Ejemplo al dar precio: "Podés guardar esta cotización y agilizar pedidos futuros registrándote gratis en fabricalaser.com: [link del bloque de datos]"
+- El link ya tiene su número pre-llenado — mencionalo como ventaja: "ya tiene tu número guardado"
+- También mencionalo si pregunta por envío o factura: "Para coordinar el envío a tu dirección registrada..."
+- Máximo una mención por mensaje, pero al dar el precio es SIEMPRE obligatorio
 
 RESTRICCIONES:
 No confirmes precios distintos a los de la tabla de catálogo
@@ -297,6 +315,7 @@ func (g *geminiAdapter) CallWithTools(ctx context.Context, phone string, history
 	model.Tools = []*genai.Tool{{
 		FunctionDeclarations: []*genai.FunctionDeclaration{
 			calcularCotizacionTool(),
+			consultarBlankTool(),
 			escalarAHumanoTool(),
 		},
 	}}
@@ -312,7 +331,8 @@ func (g *geminiAdapter) CallWithTools(ctx context.Context, phone string, history
 		})
 	}
 
-	resp, err := chat.SendMessage(ctx, genai.Text(newMessage))
+	// Primer turno también con retry ante 429
+	resp, err := sendWithRetry(ctx, chat, genai.Text(newMessage))
 	if err != nil {
 		return "", fmt.Errorf("geminiAdapter: error llamando al modelo: %w", err)
 	}
@@ -504,12 +524,39 @@ func escalarAHumanoTool() *genai.FunctionDeclaration {
 	}
 }
 
+func consultarBlankTool() *genai.FunctionDeclaration {
+	return &genai.FunctionDeclaration{
+		Name:        "consultar_blank",
+		Description: "Consulta precio y disponibilidad de un blank (producto preconfigurado) del catálogo de FabricaLaser, como llaveros o medallas. Usar cuando el cliente pregunte por estos productos.",
+		Parameters: &genai.Schema{
+			Type: genai.TypeObject,
+			Properties: map[string]*genai.Schema{
+				"categoria": {
+					Type:        genai.TypeString,
+					Description: "Categoría del blank: 'llavero', 'medalla', etc.",
+				},
+				"cantidad": {
+					Type:        genai.TypeInteger,
+					Description: "Cantidad de unidades que el cliente quiere",
+				},
+				"blank_id": {
+					Type:        genai.TypeInteger,
+					Description: "ID específico del blank. Usar 0 (o no incluir) si no se conoce — el tool retorna todas las opciones de la categoría",
+				},
+			},
+			Required: []string{"categoria", "cantidad"},
+		},
+	}
+}
+
 // ─── Tool Execution ──────────────────────────────────────────────────────────
 
 func (g *geminiAdapter) executeFunction(ctx context.Context, clientPhone string, fc *genai.FunctionCall) (map[string]any, error) {
 	switch fc.Name {
 	case "calcular_cotizacion":
 		return g.execCalcCotizacion(ctx, fc.Args)
+	case "consultar_blank":
+		return g.execConsultarBlank(ctx, fc.Args)
 	case "escalar_a_humano":
 		return g.execEscalarAHumano(ctx, clientPhone, fc.Args)
 	default:
@@ -556,6 +603,51 @@ func (g *geminiAdapter) execCalcCotizacion(ctx context.Context, args map[string]
 	slog.Info("whatsapp: calcular_cotizacion ejecutado",
 		"status", resp.StatusCode,
 		"precio_estimado", result["precio_estimado"],
+	)
+
+	return result, nil
+}
+
+func (g *geminiAdapter) execConsultarBlank(ctx context.Context, args map[string]any) (map[string]any, error) {
+	body, err := json.Marshal(args)
+	if err != nil {
+		return nil, fmt.Errorf("execConsultarBlank: error serializando args: %w", err)
+	}
+
+	internalToken := os.Getenv("INTERNAL_API_TOKEN")
+
+	httpCtx, cancel := context.WithTimeout(ctx, httpToolTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(httpCtx, http.MethodPost, consultarBlankURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("execConsultarBlank: error creando request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if internalToken != "" {
+		req.Header.Set("Authorization", "Bearer "+internalToken)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("execConsultarBlank: error llamando al endpoint: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("execConsultarBlank: error leyendo respuesta: %w", err)
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return nil, fmt.Errorf("execConsultarBlank: error deserializando respuesta: %w", err)
+	}
+
+	slog.Info("whatsapp: consultar_blank ejecutado",
+		"categoria", args["categoria"],
+		"cantidad", args["cantidad"],
+		"encontrado", result["encontrado"],
 	)
 
 	return result, nil

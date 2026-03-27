@@ -94,8 +94,10 @@ func (p *MessageProcessor) fetchUserContext(ctx context.Context, waPhone string)
 	var userCtx string
 	if err != nil {
 		userCtx = buildUnregisteredCtx(localPhone)
+		slog.Info("whatsapp: usuario NO registrado", "phone", localPhone)
 	} else {
 		userCtx = buildRegisteredCtx(profile)
+		slog.Info("whatsapp: usuario REGISTRADO", "phone", localPhone, "nombre", profile.Nombre)
 	}
 
 	_ = p.redis.Set(ctx, cacheKey, userCtx, userCtxTTL)
@@ -293,11 +295,14 @@ func (p *MessageProcessor) processTextMessage(ctx context.Context, msg Message) 
 	// 5. Llamar a Gemini con historial + mensaje nuevo (con tools)
 	response, err := p.gemini.CallWithTools(ctx, msg.From, history, msg.Text.Body, userCtx)
 	if err != nil {
+		// Enviar mensaje de error amigable al usuario en lugar de dejarlo en silencio
+		_ = p.sender.SendText(ctx, msg.From,
+			"En este momento tengo un problema técnico. Por favor intentá de nuevo en unos segundos o escribinos al +506 7018-3073.")
 		return fmt.Errorf("processTextMessage: error llamando a Gemini: %w", err)
 	}
 
-	// Aviso preventivo cuando quedan 2 mensajes automáticos
-	if limitErr == nil {
+	// Aviso preventivo cuando quedan 2 mensajes automáticos (exento si es el asesor)
+	if limitErr == nil && !isAsesor {
 		maxMsgs := p.contextProvider.GetMaxMensajesDia()
 		warningAt := int64(maxMsgs) - 2
 		if count == warningAt {
