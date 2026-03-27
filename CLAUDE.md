@@ -376,10 +376,16 @@ Pipeline: Validar → Parsear XML → Clasificar por color → Calcular geometr�
 - Área raster: bounding box inicial
 - Go puro, cero dependencias externas
 
+## Build y Binario Oficial
+- **Binario oficial:** `bin/fabricalaser-api` (usado por systemd)
+- **Compilar SIEMPRE con:** `go build -o bin/fabricalaser-api ./cmd/server/` o `make build`
+- **NUNCA compilar a la raíz** (`go build -o fabricalaser` está prohibido)
+- **NUNCA commitear binarios** — están en .gitignore
+
 ## Comandos
 ```bash
 make run                        # go run cmd/server/main.go
-make build                      # go build -o bin/fabricalaser
+make build                      # go build -o bin/fabricalaser-api
 make test                       # go test ./...
 make lint                       # golangci-lint run
 make migrate-up                 # Aplicar migraciones
