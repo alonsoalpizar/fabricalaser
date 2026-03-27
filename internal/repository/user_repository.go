@@ -212,3 +212,37 @@ func (r *UserRepository) ListAll(limit, offset int, search, role string, isActiv
 func (r *UserRepository) Delete(id uint) error {
 	return r.db.Delete(&models.User{}, id).Error
 }
+
+// SetPasswordResetToken stores (or overwrites) a password reset token for a user
+func (r *UserRepository) SetPasswordResetToken(id uint, token string, expires time.Time) error {
+	return r.db.Model(&models.User{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"password_reset_token":   token,
+		"password_reset_expires": expires,
+	}).Error
+}
+
+// FindByResetToken finds a user with a valid (non-expired) reset token
+func (r *UserRepository) FindByResetToken(token string) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("password_reset_token = ? AND password_reset_expires > NOW()", token).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+// ClearPasswordResetToken sets both reset columns to NULL for the given user
+func (r *UserRepository) ClearPasswordResetToken(id uint) error {
+	return r.db.Model(&models.User{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"password_reset_token":   nil,
+		"password_reset_expires": nil,
+	}).Error
+}
+
+// UpdatePassword replaces the password_hash for a user
+func (r *UserRepository) UpdatePassword(id uint, passwordHash string) error {
+	return r.db.Model(&models.User{}).Where("id = ?", id).Update("password_hash", passwordHash).Error
+}

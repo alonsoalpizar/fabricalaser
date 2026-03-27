@@ -30,9 +30,11 @@ type Quote struct {
 	SVGAnalysisID uint `gorm:"not null;index" json:"svg_analysis_id"`
 
 	// Selected options (FK to config tables)
-	TechnologyID  uint `gorm:"not null" json:"technology_id"`
-	MaterialID    uint `gorm:"not null" json:"material_id"`
-	EngraveTypeID uint `gorm:"not null" json:"engrave_type_id"`
+	TechnologyID    uint  `gorm:"not null" json:"technology_id"`
+	MaterialID      uint  `gorm:"not null" json:"material_id"`
+	EngraveTypeID   uint  `gorm:"not null" json:"engrave_type_id"`
+	CutTechnologyID *uint `json:"cut_technology_id,omitempty"` // nil = misma tech; CO2 cuando tech principal no corta
+	IgnoreCutLines  bool  `gorm:"default:false" json:"ignore_cut_lines"` // true = material no cortable, se ignoró corte
 
 	// Job parameters
 	Quantity  int     `gorm:"not null;default:1" json:"quantity"`
@@ -51,7 +53,7 @@ type Quote struct {
 	CostCut      float64 `json:"cost_cut"`      // time × rate
 	CostSetup    float64 `json:"cost_setup"`    // setup fee
 	CostBase     float64 `json:"cost_base"`     // subtotal before factors (machine cost)
-	CostMaterial float64 `json:"cost_material"` // DEPRECATED: was base × material factor
+	CostMaterial float64 `json:"cost_material"` // Alias de CostMaterialWithWaste — mantenido por compatibilidad
 	CostOverhead float64 `json:"cost_overhead"` // overhead rate
 
 	// Material Cost (Fase 7 - raw material pricing)
@@ -146,10 +148,12 @@ func (q *Quote) ToDetailedJSON() map[string]interface{} {
 		"user_id":    q.UserID,
 		"created_at": q.CreatedAt,
 
-		"svg_analysis_id": q.SVGAnalysisID,
-		"technology_id":   q.TechnologyID,
-		"material_id":     q.MaterialID,
-		"engrave_type_id": q.EngraveTypeID,
+		"svg_analysis_id":   q.SVGAnalysisID,
+		"technology_id":     q.TechnologyID,
+		"material_id":       q.MaterialID,
+		"engrave_type_id":   q.EngraveTypeID,
+		"cut_technology_id": q.CutTechnologyID,
+		"ignore_cut_lines":  q.IgnoreCutLines,
 
 		"quantity":          q.Quantity,
 		"thickness":         q.Thickness,

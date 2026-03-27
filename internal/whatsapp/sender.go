@@ -5,11 +5,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 )
+
+// ErrMetaRateLimit indica que Meta rechazó el mensaje por límite de conversaciones (código 131049).
+var ErrMetaRateLimit = fmt.Errorf("whatsapp: Meta rate limit alcanzado (131049)")
+
+// metaErrorResponse es la estructura del error que devuelve Meta cuando falla el envío.
+type metaErrorResponse struct {
+	Error struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
 
 // ─── Tipos del Payload entrante de Meta ─────────────────────────────────────
 
@@ -125,7 +137,17 @@ func (s *Sender) SendText(ctx context.Context, to, text string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("sender: Meta respondió con status %d", resp.StatusCode)
+		// Leer el body del error para detectar código 131049 (rate limit real de Meta)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		var metaErr metaErrorResponse
+		if json.Unmarshal(bodyBytes, &metaErr) == nil && metaErr.Error.Code == 131049 {
+			slog.Error("whatsapp: Meta rate limit real alcanzado (131049) — verificar negocio en Meta Business Manager",
+				"to", to,
+				"meta_message", metaErr.Error.Message,
+			)
+			return ErrMetaRateLimit
+		}
+		return fmt.Errorf("sender: Meta respondió con status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	slog.Info("whatsapp: mensaje enviado exitosamente", "to", to)

@@ -81,10 +81,12 @@ func (a *SVGAnalysis) ComplexityFactor() float64 {
 	if area <= 0 {
 		return 0
 	}
-	// Factor = (cut + vector length) / sqrt(area)
+	// Factor = (cut + vector length + raster contrib) / sqrt(area)
 	// Lower is simpler, higher is more complex
+	// Raster contribution: sqrt(RasterAreaMM2) * 0.1 — proporcional pero conservador
 	totalLength := a.CutLengthMM + a.VectorLengthMM
-	return totalLength / sqrt(area)
+	rasterContrib := sqrt(a.RasterAreaMM2) * 0.1
+	return (totalLength + rasterContrib) / sqrt(area)
 }
 
 // sqrt helper (avoid importing math for one function)

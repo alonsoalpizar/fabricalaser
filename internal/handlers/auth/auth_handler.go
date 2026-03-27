@@ -409,6 +409,141 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// SolicitarRecuperacion handles POST /api/v1/auth/solicitar-recuperacion
+func (h *AuthHandler) SolicitarRecuperacion(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Identificacion string `json:"identificacion"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
+		return
+	}
+
+	if req.Identificacion == "" {
+		respondError(w, http.StatusBadRequest, "MISSING_FIELD", "La identificación es requerida")
+		return
+	}
+
+	// Calcular email_hint antes de llamar al servicio (anti-enumeración: la respuesta siempre es 200)
+	emailHint := ""
+	if user, err := h.service.GetUserByCedula(req.Identificacion); err == nil && user != nil && user.Email != "" {
+		emailHint = maskEmail(user.Email)
+	}
+
+	// Siempre retorna nil — nunca revela si la cuenta existe
+	_ = h.service.SolicitarRecuperacion(req.Identificacion)
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message":    "Si existe una cuenta con esa cédula, recibirás un email con el enlace de recuperación.",
+		"email_hint": emailHint,
+	})
+}
+
+// ResetPassword handles POST /api/v1/auth/reset-password
+func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
+		return
+	}
+
+	if req.Token == "" {
+		respondError(w, http.StatusBadRequest, "MISSING_FIELD", "El token es requerido")
+		return
+	}
+
+	if req.Password == "" || len(req.Password) < 6 {
+		respondError(w, http.StatusBadRequest, "WEAK_PASSWORD", "La contraseña debe tener al menos 6 caracteres")
+		return
+	}
+
+	if err := h.service.ResetPassword(req.Token, req.Password); err != nil {
+		code := "RESET_ERROR"
+		status := http.StatusBadRequest
+
+		switch err {
+		case authService.ErrResetTokenInvalid:
+			code = "INVALID_RESET_TOKEN"
+		case authService.ErrWeakPassword:
+			code = "WEAK_PASSWORD"
+		}
+
+		respondError(w, status, code, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message": "Contraseña restablecida correctamente. Ya podés iniciar sesión.",
+	})
+}
+
+// ChangePassword handles PUT /api/v1/auth/change-password (JWT required)
+func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID")
+	if userID == nil {
+		respondError(w, http.StatusUnauthorized, "UNAUTHORIZED", "No autenticado")
+		return
+	}
+
+	var req struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "INVALID_JSON", "JSON inválido")
+		return
+	}
+
+	if req.CurrentPassword == "" {
+		respondError(w, http.StatusBadRequest, "MISSING_FIELD", "La contraseña actual es requerida")
+		return
+	}
+
+	if req.NewPassword == "" || len(req.NewPassword) < 6 {
+		respondError(w, http.StatusBadRequest, "WEAK_PASSWORD", "La nueva contraseña debe tener al menos 6 caracteres")
+		return
+	}
+
+	if err := h.service.CambiarPassword(userID.(uint), req.CurrentPassword, req.NewPassword); err != nil {
+		code := "CHANGE_PASSWORD_ERROR"
+		status := http.StatusBadRequest
+
+		switch err {
+		case authService.ErrCurrentPasswordWrong:
+			code = "WRONG_CURRENT_PASSWORD"
+		case authService.ErrWeakPassword:
+			code = "WEAK_PASSWORD"
+		}
+
+		respondError(w, status, code, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message": "Contraseña actualizada correctamente.",
+	})
+}
+
+// maskEmail returns a masked version of an email address (ev***@gmail.com)
+func maskEmail(email string) string {
+	parts := strings.SplitN(email, "@", 2)
+	if len(parts) != 2 {
+		return ""
+	}
+	local := parts[0]
+	domain := parts[1]
+	if len(local) <= 2 {
+		return local + "***@" + domain
+	}
+	return local[:2] + "***@" + domain
+}
+
 // isValidEmail checks if email format is valid
 func isValidEmail(email string) bool {
 	return emailRegex.MatchString(strings.TrimSpace(email))

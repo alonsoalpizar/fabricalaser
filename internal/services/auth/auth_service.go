@@ -1,9 +1,12 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/alonsoalpizar/fabricalaser/internal/config"
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
@@ -15,18 +18,20 @@ import (
 )
 
 var (
-	ErrInvalidCedula       = errors.New("formato de cédula inválido. Use 9 dígitos para física o 10 para jurídica")
-	ErrCedulaNotFound      = errors.New("cédula no registrada")
-	ErrAccountExists       = errors.New("ya existe una cuenta con esta cédula")
-	ErrEmailExists         = errors.New("ya existe una cuenta con este email")
-	ErrTelefonoExists      = errors.New("ya existe una cuenta con este número de teléfono")
-	ErrInvalidTelefono     = errors.New("número de teléfono inválido. Ingrese 8 dígitos (ej: 88887777)")
-	ErrInvalidPassword     = errors.New("contraseña incorrecta")
-	ErrAccountDisabled     = errors.New("cuenta desactivada. Contacte al administrador")
-	ErrWeakPassword        = errors.New("la contraseña debe tener al menos 6 caracteres")
-	ErrUserHasPassword     = errors.New("cliente no encontrado o ya tiene contraseña")
-	ErrCedulaNotValid      = errors.New("cédula no válida según el registro civil de Costa Rica")
-	ErrValidationOffline   = errors.New("servicio de validación de cédula no disponible. Intente más tarde")
+	ErrInvalidCedula        = errors.New("formato de cédula inválido. Use 9 dígitos para física o 10 para jurídica")
+	ErrCedulaNotFound       = errors.New("cédula no registrada")
+	ErrAccountExists        = errors.New("ya existe una cuenta con esta cédula")
+	ErrEmailExists          = errors.New("ya existe una cuenta con este email")
+	ErrTelefonoExists       = errors.New("ya existe una cuenta con este número de teléfono")
+	ErrInvalidTelefono      = errors.New("número de teléfono inválido. Ingrese 8 dígitos (ej: 88887777)")
+	ErrInvalidPassword      = errors.New("contraseña incorrecta")
+	ErrAccountDisabled      = errors.New("cuenta desactivada. Contacte al administrador")
+	ErrWeakPassword         = errors.New("la contraseña debe tener al menos 6 caracteres")
+	ErrUserHasPassword      = errors.New("cliente no encontrado o ya tiene contraseña")
+	ErrCedulaNotValid       = errors.New("cédula no válida según el registro civil de Costa Rica")
+	ErrValidationOffline    = errors.New("servicio de validación de cédula no disponible. Intente más tarde")
+	ErrResetTokenInvalid    = errors.New("el enlace de recuperación no es válido o ya expiró")
+	ErrCurrentPasswordWrong = errors.New("la contraseña actual es incorrecta")
 )
 
 // VerifyCedulaResult represents the result of cedula verification
@@ -453,6 +458,15 @@ func (s *AuthService) GetCurrentUser(userID uint) (*models.User, error) {
 	return s.userRepo.FindByID(userID)
 }
 
+// GetUserByCedula returns a user by cedula (used for email hint in recovery)
+func (s *AuthService) GetUserByCedula(identificacion string) (*models.User, error) {
+	validation := utils.ValidateCedula(identificacion)
+	if !validation.Valid {
+		return nil, ErrInvalidCedula
+	}
+	return s.userRepo.FindByCedulaWithPassword(validation.Cedula)
+}
+
 // UpdateProfile updates user profile fields
 func (s *AuthService) UpdateProfile(userID uint, email, telefono, direccion, provincia, canton, distrito *string) (*models.User, error) {
 	// Check if email is used by another user
@@ -470,6 +484,99 @@ func (s *AuthService) UpdateProfile(userID uint, email, telefono, direccion, pro
 
 	// Return updated user
 	return s.userRepo.FindByID(userID)
+}
+
+// SolicitarRecuperacion genera un token de reset y envía el email.
+// Siempre retorna nil (anti-enumeración: no revela si la cédula existe).
+func (s *AuthService) SolicitarRecuperacion(identificacion string) error {
+	// Validar formato localmente — si inválido, retornar nil silenciosamente
+	validation := utils.ValidateCedula(identificacion)
+	if !validation.Valid {
+		return nil
+	}
+
+	// Buscar usuario con password (solo cuentas activadas pueden hacer reset)
+	user, err := s.userRepo.FindByCedulaWithPassword(validation.Cedula)
+	if err != nil || user == nil {
+		return nil
+	}
+
+	// Si no tiene email, no podemos enviar el enlace
+	if user.Email == "" {
+		return nil
+	}
+
+	// Generar token: 32 bytes aleatorios → hex 64 chars
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return nil
+	}
+	token := hex.EncodeToString(tokenBytes)
+	expires := time.Now().Add(time.Hour)
+
+	// Guardar token (sobreescribe cualquier token previo)
+	if err := s.userRepo.SetPasswordResetToken(user.ID, token, expires); err != nil {
+		return nil
+	}
+
+	// Enviar email en goroutine (no bloqueante)
+	emailSvc.SendPasswordReset(user.Email, user.Nombre, token)
+
+	return nil
+}
+
+// ResetPassword valida el token y establece la nueva contraseña.
+func (s *AuthService) ResetPassword(token, newPassword string) error {
+	if token == "" {
+		return ErrResetTokenInvalid
+	}
+
+	if !utils.ValidatePasswordStrength(newPassword) {
+		return ErrWeakPassword
+	}
+
+	user, err := s.userRepo.FindByResetToken(token)
+	if err != nil {
+		return ErrResetTokenInvalid
+	}
+
+	passwordHash, err := utils.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	if err := s.userRepo.UpdatePassword(user.ID, passwordHash); err != nil {
+		return err
+	}
+
+	// Limpiar token inmediatamente post-uso
+	_ = s.userRepo.ClearPasswordResetToken(user.ID)
+
+	return nil
+}
+
+// CambiarPassword permite a un usuario autenticado cambiar su propia contraseña.
+// Requiere la contraseña actual para prevenir cambios no autorizados en sesiones abiertas.
+func (s *AuthService) CambiarPassword(userID uint, currentPassword, newPassword string) error {
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return err
+	}
+
+	if user.PasswordHash == nil || !utils.CheckPassword(currentPassword, *user.PasswordHash) {
+		return ErrCurrentPasswordWrong
+	}
+
+	if !utils.ValidatePasswordStrength(newPassword) {
+		return ErrWeakPassword
+	}
+
+	passwordHash, err := utils.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	return s.userRepo.UpdatePassword(userID, passwordHash)
 }
 
 // extractDatosFromMetadata extracts DatosRegistroCivil from metadata extras

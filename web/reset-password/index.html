@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restablecer contraseña — FabricaLaser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #000000;
+  --bg-card: #1A1A1A;
+  --bg-elevated: #222222;
+  --border: #2A2A2A;
+  --border-light: #333333;
+  --text: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-muted: #666666;
+  --accent: #9B2020;
+  --accent-hover: #B82E2E;
+  --accent-soft: rgba(155, 32, 32, 0.15);
+  --success: #10b981;
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --error: #ef4444;
+  --error-soft: rgba(239, 68, 68, 0.12);
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Audiowide', sans-serif;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* NAV */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 1.15rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text);
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.nav-logo span { color: var(--accent); }
+
+.nav-back {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+.nav-back:hover { border-color: var(--accent); color: var(--text); }
+
+/* MAIN */
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 1rem 3rem;
+}
+
+.container {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* CARD */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+}
+
+.card-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.card-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+/* STATUS CARDS */
+.status-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.status-card-success {
+  background: var(--success-soft);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.status-card-error {
+  background: var(--error-soft);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.status-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.status-card-success .status-icon { color: var(--success); }
+.status-card-error .status-icon { color: var(--error); }
+
+.status-card-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+}
+
+.status-card-success .status-card-title { color: var(--success); }
+.status-card-error .status-card-title { color: var(--error); }
+
+.status-card-body {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* FORM */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.form-input:focus { border-color: var(--accent); }
+.form-input::placeholder { color: var(--text-muted); }
+
+.form-error {
+  color: var(--error);
+  font-size: 0.8rem;
+  margin-top: 0.4rem;
+}
+
+/* BUTTON */
+.btn-submit {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.85rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-submit:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-home {
+  display: inline-block;
+  margin-top: 1rem;
+  color: var(--accent);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+}
+
+/* SPINNER */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* STATES */
+[data-state] { display: none; }
+[data-state].active { display: block; }
+
+/* COUNTDOWN */
+.countdown { color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem; text-align: center; }
+
+@media (max-width: 480px) {
+  .nav { padding: 1rem 1.25rem; }
+  .card { padding: 2rem 1.25rem; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo" onclick="window.location.href='/'">Fabrica<span>Laser</span></div>
+  <button class="nav-back" onclick="window.location.href='/'">← Volver al inicio</button>
+</nav>
+
+<main class="main">
+  <div class="container">
+
+    <!-- State: form -->
+    <div data-state="form" class="card">
+      <h1 class="card-title">Restablecer contraseña</h1>
+      <p class="card-subtitle">Ingresá tu nueva contraseña. Debe tener al menos 6 caracteres.</p>
+
+      <div class="form-group">
+        <label class="form-label">Nueva contraseña</label>
+        <input type="password" class="form-input" id="newPassword"
+               placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirmar contraseña</label>
+        <input type="password" class="form-input" id="confirmPassword"
+               placeholder="Repetí tu contraseña" autocomplete="new-password">
+      </div>
+
+      <p class="form-error" id="formError" style="display:none;"></p>
+
+      <button class="btn-submit" id="submitBtn" onclick="resetPassword()">
+        Restablecer contraseña
+      </button>
+    </div>
+
+    <!-- State: invalid -->
+    <div data-state="invalid" class="card">
+      <div class="status-card status-card-error">
+        <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <div>
+          <div class="status-card-title">Enlace no válido</div>
+          <div class="status-card-body">Este enlace de recuperación no es válido o ya expiró. Los enlaces son válidos por 1 hora y solo pueden usarse una vez.</div>
+        </div>
+      </div>
+      <p class="card-subtitle">Podés solicitar uno nuevo desde la página de inicio.</p>
+      <button class="btn-submit" onclick="window.location.href='/'">Ir al inicio</button>
+    </div>
+
+    <!-- State: success -->
+    <div data-state="success" class="card">
+      <div class="status-card status-card-success">
+        <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <div>
+          <div class="status-card-title">¡Contraseña restablecida!</div>
+          <div class="status-card-body">Tu contraseña fue actualizada correctamente. Ya podés iniciar sesión con tu nueva contraseña.</div>
+        </div>
+      </div>
+      <p class="countdown" id="countdown">Redirigiendo en <strong id="countNum">3</strong> segundos...</p>
+      <button class="btn-home" onclick="window.location.href='/'">Ir al inicio ahora</button>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const API_BASE = '/api/v1';
+
+function showState(name) {
+  document.querySelectorAll('[data-state]').forEach(el => el.classList.remove('active'));
+  const el = document.querySelector('[data-state="' + name + '"]');
+  if (el) el.classList.add('active');
+}
+
+function showError(msg) {
+  const el = document.getElementById('formError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError() {
+  const el = document.getElementById('formError');
+  el.style.display = 'none';
+}
+
+function setLoading(loading) {
+  const btn = document.getElementById('submitBtn');
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Procesando...';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = 'Restablecer contraseña';
+  }
+}
+
+function startCountdown() {
+  let n = 3;
+  const el = document.getElementById('countNum');
+  const interval = setInterval(() => {
+    n--;
+    if (el) el.textContent = n;
+    if (n <= 0) {
+      clearInterval(interval);
+      window.location.href = '/';
+    }
+  }, 1000);
+}
+
+async function resetPassword() {
+  hideError();
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const pass1 = document.getElementById('newPassword').value;
+  const pass2 = document.getElementById('confirmPassword').value;
+
+  if (pass1.length < 6) {
+    showError('La contraseña debe tener al menos 6 caracteres.');
+    return;
+  }
+  if (pass1 !== pass2) {
+    showError('Las contraseñas no coinciden.');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password: pass1 })
+    });
+
+    const result = await res.json();
+
+    if (result.error) {
+      if (result.error.code === 'INVALID_RESET_TOKEN') {
+        showState('invalid');
+      } else {
+        showError(result.error.message || 'Error al restablecer la contraseña.');
+        setLoading(false);
+      }
+      return;
+    }
+
+    showState('success');
+    startCountdown();
+
+  } catch (err) {
+    showError('Error de conexión. Intentá de nuevo.');
+    setLoading(false);
+  }
+}
+
+// Enter key submit
+document.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    const state = document.querySelector('[data-state].active');
+    if (state && state.getAttribute('data-state') === 'form') {
+      resetPassword();
+    }
+  }
+});
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+
+  if (!token || token.length !== 64) {
+    showState('invalid');
+  } else {
+    showState('form');
+    document.getElementById('newPassword').focus();
+  }
+});
+</script>
+</body>
+</html>

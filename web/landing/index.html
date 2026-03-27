@@ -1942,6 +1942,12 @@ footer {
         <p class="form-error" id="loginPasswordError" style="display: none;"></p>
       </div>
 
+      <p style="text-align:right; margin-top:-8px; margin-bottom:14px;">
+        <button class="btn-back" style="font-size:12px; padding:0;" onclick="showResetState()">
+          &iquest;Olvidaste tu contrase&ntilde;a?
+        </button>
+      </p>
+
       <button class="btn-submit" id="loginSubmit" onclick="login()">
         Ingresar
       </button>
@@ -1989,6 +1995,44 @@ footer {
       <button class="btn-submit" id="establishSubmit" onclick="establecerPassword()">
         Activar cuenta
       </button>
+    </div>
+
+    <!-- State 2D: Password Recovery Request -->
+    <div id="authState2D" style="display: none;">
+      <button class="btn-back" onclick="goBackToState2B()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Volver al inicio de sesi&oacute;n
+      </button>
+
+      <h2 class="modal-title">&iquest;Olvidaste tu contrase&ntilde;a?</h2>
+      <p class="modal-subtitle" id="resetEmailHint">
+        Enviaremos un enlace de recuperaci&oacute;n a tu email.
+      </p>
+
+      <!-- Success card (hidden until sent) -->
+      <div id="resetSuccessCard" style="display: none;">
+        <div class="status-card status-card-success">
+          <svg class="status-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <div class="status-card-content">
+            <div class="status-card-title">Email enviado</div>
+            <div class="status-card-name">Revis&aacute; tu bandeja de entrada y spam.</div>
+          </div>
+        </div>
+        <p class="modal-subtitle" style="margin-top:0.5rem;">El enlace es v&aacute;lido por 1 hora.</p>
+      </div>
+
+      <!-- Action group (hidden after success) -->
+      <div id="resetActionGroup">
+        <p class="form-error" id="resetError" style="display: none;"></p>
+        <button class="btn-submit" id="resetSubmit" onclick="solicitarRecuperacion()">
+          Enviar enlace
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -2130,6 +2174,7 @@ function resetAuthModal() {
   document.getElementById('authState2A').style.display = 'none';
   document.getElementById('authState2B').style.display = 'none';
   document.getElementById('authState2C').style.display = 'none';
+  document.getElementById('authState2D').style.display = 'none';
   document.getElementById('cedulaInput').value = '';
   document.getElementById('cedulaSubmit').disabled = true;
   document.getElementById('cedulaError').style.display = 'none';
@@ -2143,6 +2188,7 @@ function goBackToState1() {
   document.getElementById('authState2A').style.display = 'none';
   document.getElementById('authState2B').style.display = 'none';
   document.getElementById('authState2C').style.display = 'none';
+  document.getElementById('authState2D').style.display = 'none';
   document.getElementById('cedulaInput').focus();
 }
 
@@ -2158,9 +2204,66 @@ function setButtonLoading(buttonId, loading) {
       'cedulaSubmit': 'Continuar',
       'registerSubmit': 'Crear cuenta',
       'loginSubmit': 'Ingresar',
-      'establishSubmit': 'Activar cuenta'
+      'establishSubmit': 'Activar cuenta',
+      'resetSubmit': 'Enviar enlace'
     };
     btn.innerHTML = texts[buttonId] || 'Enviar';
+  }
+}
+
+// Show password recovery state (2D)
+function showResetState() {
+  document.getElementById('authState2B').style.display = 'none';
+  document.getElementById('authState2D').style.display = 'block';
+  document.getElementById('resetSuccessCard').style.display = 'none';
+  document.getElementById('resetActionGroup').style.display = 'block';
+  document.getElementById('resetError').style.display = 'none';
+
+  // Show masked email if already known from cedula verification
+  const hintEl = document.getElementById('resetEmailHint');
+  if (currentCedulaData && currentCedulaData.emailHint) {
+    hintEl.textContent = 'Enviaremos un enlace a: ' + currentCedulaData.emailHint;
+  } else {
+    hintEl.textContent = 'Enviaremos un enlace de recuperación a tu email registrado.';
+  }
+}
+
+// Go back to login state (2B) from recovery state (2D)
+function goBackToState2B() {
+  document.getElementById('authState2D').style.display = 'none';
+  document.getElementById('authState2B').style.display = 'block';
+  document.getElementById('loginPassword').focus();
+}
+
+// Request password recovery
+async function solicitarRecuperacion() {
+  document.getElementById('resetError').style.display = 'none';
+  setButtonLoading('resetSubmit', true);
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/solicitar-recuperacion`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identificacion: currentCedula })
+    });
+
+    const result = await response.json();
+
+    // Update hint with masked email returned by server
+    if (result.data && result.data.email_hint) {
+      document.getElementById('resetEmailHint').textContent =
+        'Enviamos un enlace a: ' + result.data.email_hint;
+      if (currentCedulaData) currentCedulaData.emailHint = result.data.email_hint;
+    }
+
+    // Always show success (anti-enumeración)
+    document.getElementById('resetActionGroup').style.display = 'none';
+    document.getElementById('resetSuccessCard').style.display = 'block';
+
+  } catch (error) {
+    document.getElementById('resetError').textContent = 'Error de conexión. Intentá de nuevo.';
+    document.getElementById('resetError').style.display = 'block';
+    setButtonLoading('resetSubmit', false);
   }
 }
 

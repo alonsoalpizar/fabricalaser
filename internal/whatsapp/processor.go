@@ -16,6 +16,8 @@ type RedisClient interface {
 	SetNX(ctx context.Context, key string, value string, ttl time.Duration) (bool, error)
 	Get(ctx context.Context, key string) (string, error)
 	Set(ctx context.Context, key string, value string, ttl time.Duration) error
+	Incr(ctx context.Context, key string) (int64, error)
+	Expire(ctx context.Context, key string, ttl time.Duration) error
 }
 
 // PGClient define las operaciones PostgreSQL para archivo de conversaciones.
@@ -58,22 +60,24 @@ const (
 // MessageProcessor orquesta el flujo completo:
 // deduplicación → rate limit → cargar historial → llamar Gemini → responder → archivar
 type MessageProcessor struct {
-	redis       RedisClient
-	pg          PGClient
-	gemini      GeminiCaller
-	sender      *Sender
-	rateLimiter *RateLimiter
+	redis           RedisClient
+	pg              PGClient
+	gemini          GeminiCaller
+	sender          *Sender
+	rateLimiter     *RateLimiter
+	contextProvider *waContextProvider
 }
 
 // NewMessageProcessor construye el procesador con sus dependencias.
 // rateLimiter puede ser nil — en ese caso el rate limiting queda deshabilitado (fail open).
-func NewMessageProcessor(redis RedisClient, pg PGClient, gemini GeminiCaller, rateLimiter *RateLimiter) *MessageProcessor {
+func NewMessageProcessor(redis RedisClient, pg PGClient, gemini GeminiCaller, rateLimiter *RateLimiter, contextProvider *waContextProvider) *MessageProcessor {
 	return &MessageProcessor{
-		redis:       redis,
-		pg:          pg,
-		gemini:      gemini,
-		sender:      NewSender(),
-		rateLimiter: rateLimiter,
+		redis:           redis,
+		pg:              pg,
+		gemini:          gemini,
+		sender:          NewSender(),
+		rateLimiter:     rateLimiter,
+		contextProvider: contextProvider,
 	}
 }
 
@@ -135,6 +139,29 @@ func (p *MessageProcessor) processTextMessage(ctx context.Context, msg Message) 
 		"length", len(msg.Text.Body),
 	)
 
+	// 3. Límite diario de mensajes
+	count, limitErr := p.checkDailyLimit(ctx, msg.From)
+	if limitErr != nil {
+		slog.Warn("whatsapp: error verificando límite diario, continuando normalmente", "error", limitErr)
+	} else {
+		maxMsgs := p.contextProvider.GetMaxMensajesDia()
+		if count > int64(maxMsgs) {
+			slog.Info("whatsapp: límite diario alcanzado", "from", msg.From, "count", count, "max", maxMsgs)
+			mensajeLimite := "Hemos alcanzado el límite de mensajes automáticos por hoy. " +
+				"Un asesor de FabricaLaser te va a contactar para ayudarte. ¡Gracias por tu paciencia!"
+			_ = p.sender.SendText(ctx, msg.From, mensajeLimite)
+
+			asesorPhone := p.contextProvider.GetAsesorPhone()
+			resumen := fmt.Sprintf(
+				"FabricaLaser — Límite alcanzado\n\n"+
+					"⚠️ Cliente alcanzó el límite de %d mensajes hoy.\n"+
+					"Requiere atención humana para completar su consulta.\n"+
+					"Número del cliente: %s", maxMsgs, msg.From)
+			_ = p.sender.SendText(ctx, asesorPhone, resumen)
+			return nil
+		}
+	}
+
 	// 4. Cargar historial de la sesión activa desde Redis
 	history, err := p.loadHistory(ctx, msg.From)
 	if err != nil {
@@ -145,10 +172,20 @@ func (p *MessageProcessor) processTextMessage(ctx context.Context, msg Message) 
 		history = []ChatTurn{}
 	}
 
-	// 3. Llamar a Gemini con historial + mensaje nuevo (con tools)
+	// 5. Llamar a Gemini con historial + mensaje nuevo (con tools)
 	response, err := p.gemini.CallWithTools(ctx, msg.From, history, msg.Text.Body)
 	if err != nil {
 		return fmt.Errorf("processTextMessage: error llamando a Gemini: %w", err)
+	}
+
+	// Aviso preventivo cuando quedan 2 mensajes automáticos
+	if limitErr == nil {
+		maxMsgs := p.contextProvider.GetMaxMensajesDia()
+		warningAt := int64(maxMsgs) - 2
+		if count == warningAt {
+			response += fmt.Sprintf("\n\n(Nota: te quedan 2 consultas automáticas por hoy. "+
+				"Si necesitás más ayuda, un asesor puede atenderte.)")
+		}
 	}
 
 	// 4. Enviar respuesta al usuario vía Meta
@@ -211,6 +248,28 @@ func (p *MessageProcessor) saveHistoryAsync(ctx context.Context, phone, userMsg,
 			)
 		}
 	}
+}
+
+// checkDailyLimit incrementa el contador diario del teléfono y retorna el valor actual.
+// La clave expira a medianoche hora Costa Rica. Devuelve (count, error).
+func (p *MessageProcessor) checkDailyLimit(ctx context.Context, phone string) (int64, error) {
+	loc, _ := time.LoadLocation("America/Costa_Rica")
+	now := time.Now().In(loc)
+	fecha := now.Format("2006-01-02")
+	key := fmt.Sprintf("wa:limit:%s:%s", phone, fecha)
+
+	count, err := p.redis.Incr(ctx, key)
+	if err != nil {
+		return 0, fmt.Errorf("checkDailyLimit: error incrementando contador: %w", err)
+	}
+
+	// Setear TTL solo en el primer mensaje del día
+	if count == 1 {
+		midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, loc)
+		_ = p.redis.Expire(ctx, key, midnight.Sub(now))
+	}
+
+	return count, nil
 }
 
 func (p *MessageProcessor) updateRedisHistory(ctx context.Context, phone, userMsg, botResponse string) error {

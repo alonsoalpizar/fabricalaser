@@ -33,3 +33,11 @@ func (r *redisAdapter) Get(ctx context.Context, key string) (string, error) {
 func (r *redisAdapter) Set(ctx context.Context, key string, value string, ttl time.Duration) error {
 	return r.client.Set(ctx, key, value, ttl).Err()
 }
+
+func (r *redisAdapter) Incr(ctx context.Context, key string) (int64, error) {
+	return r.client.Incr(ctx, key).Result()
+}
+
+func (r *redisAdapter) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	return r.client.Expire(ctx, key, ttl).Err()
+}

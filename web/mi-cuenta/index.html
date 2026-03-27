@@ -690,6 +690,41 @@ a { color: inherit; text-decoration: none; }
     </form>
   </div>
 
+  <!-- Change Password Card -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Cambiar contrase&ntilde;a</h2>
+    </div>
+
+    <form id="passwordForm">
+      <div class="form-row single">
+        <div class="form-group">
+          <label class="form-label">Contrase&ntilde;a actual</label>
+          <input type="password" class="form-input" id="inputCurrentPassword"
+                 placeholder="Tu contrase&ntilde;a actual" autocomplete="current-password">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nueva contrase&ntilde;a</label>
+          <input type="password" class="form-input" id="inputNewPassword"
+                 placeholder="M&iacute;nimo 6 caracteres" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar nueva contrase&ntilde;a</label>
+          <input type="password" class="form-input" id="inputConfirmPassword"
+                 placeholder="Repet&iacute; tu contrase&ntilde;a" autocomplete="new-password">
+        </div>
+      </div>
+
+      <p class="form-error" id="passwordError" style="display: none;"></p>
+
+      <div class="btn-row">
+        <button type="submit" class="btn-primary" id="savePasswordBtn">Cambiar contrase&ntilde;a</button>
+      </div>
+    </form>
+  </div>
+
   <!-- Logout -->
   <div class="card" style="background: transparent; border-color: var(--border);">
     <div class="btn-row" style="margin: 0; justify-content: space-between;">
@@ -921,6 +956,68 @@ document.getElementById('emailForm').addEventListener('submit', async function(e
 
   btn.disabled = false;
   btn.textContent = 'Actualizar email';
+});
+
+// Change password
+document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const token = localStorage.getItem('fl_token');
+  const btn = document.getElementById('savePasswordBtn');
+  const errorEl = document.getElementById('passwordError');
+  const current = document.getElementById('inputCurrentPassword').value;
+  const newPass = document.getElementById('inputNewPassword').value;
+  const confirm = document.getElementById('inputConfirmPassword').value;
+
+  errorEl.style.display = 'none';
+
+  if (!current) {
+    errorEl.textContent = 'Ingresá tu contraseña actual.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (newPass.length < 6) {
+    errorEl.textContent = 'La nueva contraseña debe tener al menos 6 caracteres.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (newPass !== confirm) {
+    errorEl.textContent = 'Las contraseñas no coinciden.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/change-password`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ current_password: current, new_password: newPass })
+    });
+
+    const result = await res.json();
+
+    if (result.error) {
+      errorEl.textContent = result.error.code === 'WRONG_CURRENT_PASSWORD'
+        ? 'La contraseña actual es incorrecta.'
+        : (result.error.message || 'Error al cambiar la contraseña.');
+      errorEl.style.display = 'block';
+    } else {
+      showToast('Contraseña actualizada correctamente', 'success');
+      document.getElementById('passwordForm').reset();
+    }
+  } catch (err) {
+    errorEl.textContent = 'Error de conexión.';
+    errorEl.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Cambiar contraseña';
 });
 
 // Logout
