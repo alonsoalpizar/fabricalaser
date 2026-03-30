@@ -441,7 +441,7 @@ function renderSidebar(activePage = 'dashboard') {
   sidebarEl.innerHTML = `
     <div class="sidebar-header">
       <a href="/admin/" class="sidebar-logo">
-        <img src="/assets/img/nav.png" alt="FabricaLaser" style="height: 28px; width: auto; -webkit-mask-image: none; display: block;">
+        <img src="/assets/img/nav.webp" alt="FabricaLaser" style="height: 28px; width: auto; -webkit-mask-image: none; display: block;">
         <span class="sidebar-badge">Admin</span>
       </a>
     </div>

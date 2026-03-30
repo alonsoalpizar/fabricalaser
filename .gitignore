@@ -47,6 +47,7 @@ temp/
 # Large media (served from disk, not tracked in git)
 web/assets/blanks/
 web/assets/vids/
+SVGS/
 
 # Build artifacts at root (any case)
 fabricalaser
