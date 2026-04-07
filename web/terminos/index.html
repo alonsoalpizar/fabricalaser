@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T&eacute;rminos de Servicio &mdash; FabricaLaser</title>
+
+<meta name="description" content="T&eacute;rminos y condiciones de uso de los servicios de FabricaLaser.com. Cotizaci&oacute;n y servicios de corte y grabado l&aacute;ser.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://fabricalaser.com/terminos">
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: #0A0A0A;
+  --bg-card: #1A1A1A;
+  --bg-elevated: #222222;
+  --red-laser: #9B2020;
+  --red-bright: #B82E2E;
+  --red-glow: rgba(155, 32, 32, 0.4);
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-muted: #666666;
+  --chrome: #909090;
+  --border: #2A2A2A;
+  --border-light: #333333;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: var(--red-laser); text-decoration: none; transition: color 0.2s; }
+a:hover { color: var(--red-bright); }
+
+/* ===== NAVBAR ===== */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.nav-logo-img {
+  height: 38px;
+  width: auto;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+.nav-back {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-back:hover { color: var(--text-primary); }
+
+/* ===== HERO ===== */
+.terms-hero {
+  padding: 120px 24px 48px;
+  text-align: center;
+  position: relative;
+}
+
+.terms-hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center top, rgba(155, 32, 32, 0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.terms-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.terms-hero .meta-line {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.terms-hero .meta-line strong {
+  color: var(--red-laser);
+  font-weight: 500;
+}
+
+/* ===== LAYOUT ===== */
+.terms-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+/* ===== SIDEBAR TOC ===== */
+.toc {
+  position: sticky;
+  top: 96px;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.toc-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.toc a {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 6px 0;
+  border-left: 2px solid transparent;
+  padding-left: 12px;
+  transition: all 0.2s;
+}
+
+.toc a:hover,
+.toc a.active {
+  color: var(--red-laser);
+  border-left-color: var(--red-laser);
+}
+
+/* ===== CONTENT ===== */
+.terms-content section {
+  margin-bottom: 48px;
+}
+
+.terms-content h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.terms-content p {
+  margin-bottom: 14px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.terms-content ul {
+  margin: 12px 0 16px 20px;
+  color: var(--text-secondary);
+}
+
+.terms-content ul li {
+  margin-bottom: 8px;
+  padding-left: 4px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.terms-content ul li::marker {
+  color: var(--red-laser);
+}
+
+.terms-content a {
+  color: var(--red-laser);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.terms-content a:hover {
+  color: var(--red-bright);
+}
+
+.terms-content strong {
+  color: var(--text-primary);
+}
+
+/* ===== CALLOUT ===== */
+.callout {
+  background: rgba(155, 32, 32, 0.08);
+  border-left: 3px solid var(--red-laser);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ===== FOOTER ===== */
+.terms-footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.terms-footer p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.terms-footer a {
+  color: var(--text-muted);
+}
+.terms-footer a:hover { color: var(--text-secondary); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .terms-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .toc {
+    position: static;
+    margin-bottom: 32px;
+  }
+  .terms-hero { padding: 100px 20px 32px; }
+  .terms-layout { padding: 0 20px 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav">
+  <div class="nav-logo">
+    <a href="/">
+      <img src="/assets/img/nav.webp" alt="FabricaLaser.com" class="nav-logo-img">
+    </a>
+  </div>
+  <a href="/" class="nav-back">&larr; Volver al sitio</a>
+</nav>
+
+<!-- HERO -->
+<div class="terms-hero">
+  <h1>T&eacute;rminos de Servicio</h1>
+  <p class="meta-line">&Uacute;ltima actualizaci&oacute;n: <strong>Abril 2026</strong> &middot; Vigente desde su publicaci&oacute;n</p>
+</div>
+
+<!-- LAYOUT -->
+<div class="terms-layout">
+
+  <nav class="toc">
+    <div class="toc-title">Contenido</div>
+    <a href="#descripcion">1. Descripci&oacute;n del servicio</a>
+    <a href="#aceptacion">2. Aceptaci&oacute;n</a>
+    <a href="#cotizaciones">3. Cotizaciones</a>
+    <a href="#agente">4. Agente automatizado</a>
+    <a href="#responsabilidad">5. Responsabilidad del usuario</a>
+    <a href="#propiedad">6. Propiedad intelectual</a>
+    <a href="#uso-aceptable">7. Uso aceptable</a>
+    <a href="#pagos">8. Pagos y pedidos</a>
+    <a href="#entregas">9. Entregas y retiro</a>
+    <a href="#limitaciones">10. Limitaciones</a>
+    <a href="#disponibilidad">11. Disponibilidad</a>
+    <a href="#privacidad">12. Privacidad</a>
+    <a href="#cambios">13. Cambios</a>
+    <a href="#jurisdiccion">14. Jurisdicci&oacute;n</a>
+    <a href="#contacto">15. Contacto</a>
+  </nav>
+
+  <div class="terms-content">
+
+    <section id="descripcion">
+      <h2>1. Descripci&oacute;n del servicio</h2>
+      <p>FabricaLaser.com es una plataforma de cotizaci&oacute;n autom&aacute;tica de servicios de corte y grabado l&aacute;ser, operada por <strong>Alonso Alp&iacute;zar Torres</strong>, persona f&iacute;sica con actividad comercial, con domicilio en Tib&aacute;s, San Jos&eacute;, Costa Rica.</p>
+      <p>Nuestros servicios incluyen:</p>
+      <ul>
+        <li>Cotizaci&oacute;n autom&aacute;tica de trabajos de corte y grabado l&aacute;ser basada en dimensiones, material, tecnolog&iacute;a y cantidad</li>
+        <li>Atenci&oacute;n al cliente a trav&eacute;s de un agente virtual por WhatsApp, Telegram y chat en el sitio web</li>
+        <li>Cat&aacute;logo de productos pregrabados (blanks) como llaveros, medallas y otros art&iacute;culos</li>
+        <li>Coordinaci&oacute;n de pedidos con asesores humanos</li>
+      </ul>
+    </section>
+
+    <section id="aceptacion">
+      <h2>2. Aceptaci&oacute;n de los t&eacute;rminos</h2>
+      <p>Al utilizar el sitio web fabricalaser.com, el chat del sitio, el bot de WhatsApp o el bot de Telegram de FabricaLaser, acept&aacute;s estos t&eacute;rminos de servicio en su totalidad. Si no est&aacute;s de acuerdo con alguna parte, te pedimos que no utilices nuestros servicios.</p>
+    </section>
+
+    <section id="cotizaciones">
+      <h2>3. Cotizaciones y precios</h2>
+      <div class="callout">
+        Los precios generados por nuestro sistema de cotizaci&oacute;n autom&aacute;tica son <strong>estimados de referencia</strong> y no constituyen una oferta comercial vinculante. El precio final ser&aacute; confirmado por un asesor humano de FabricaLaser antes de procesar cualquier pedido.
+      </div>
+      <p>Las cotizaciones se calculan en col&oacute;nes costarricenses (&colonsgn;) con base en:</p>
+      <ul>
+        <li>Dimensiones del trabajo (alto &times; ancho)</li>
+        <li>Material seleccionado y su factor de ajuste</li>
+        <li>Tecnolog&iacute;a l&aacute;ser requerida (CO2, UV, Fibra, MOPA)</li>
+        <li>Tipo de grabado (vectorial, rasterizado)</li>
+        <li>Cantidad de unidades</li>
+        <li>Descuentos por volumen aplicables</li>
+      </ul>
+      <p>Los precios pueden variar sin previo aviso seg&uacute;n cambios en costos de materiales, insumos o tarifas.</p>
+    </section>
+
+    <section id="agente">
+      <h2>4. Agente automatizado</h2>
+      <p>FabricaLaser utiliza un agente de inteligencia artificial para atender consultas y generar cotizaciones a trav&eacute;s de WhatsApp, Telegram y el chat del sitio web.</p>
+      <ul>
+        <li>Las respuestas del agente son generadas autom&aacute;ticamente por inteligencia artificial y pueden contener imprecisiones.</li>
+        <li>El agente est&aacute; limitado a funciones de negocio: cotizaci&oacute;n, cat&aacute;logo, informaci&oacute;n de servicios y escalamiento a humano.</li>
+        <li>Para consultas complejas, proyectos especiales o confirmaci&oacute;n de pedidos, el agente conectar&aacute; al usuario con un asesor humano.</li>
+        <li>FabricaLaser no se responsabiliza por decisiones tomadas exclusivamente con base en las respuestas del agente sin la confirmaci&oacute;n de un asesor humano.</li>
+      </ul>
+    </section>
+
+    <section id="responsabilidad">
+      <h2>5. Responsabilidad del usuario</h2>
+      <p>Al utilizar nuestros servicios, el usuario se compromete a:</p>
+      <ul>
+        <li>Proporcionar informaci&oacute;n veraz y precisa sobre materiales, medidas, cantidades y especificaciones del trabajo</li>
+        <li>Verificar que los archivos de dise&ntilde;o (SVG u otros formatos vectoriales) sean correctos antes de enviarlos</li>
+        <li>Revisar y confirmar la cotizaci&oacute;n final con el asesor humano antes de proceder con el pedido</li>
+        <li>Proporcionar datos de contacto v&aacute;lidos para la coordinaci&oacute;n del pedido</li>
+      </ul>
+    </section>
+
+    <section id="propiedad">
+      <h2>6. Propiedad intelectual</h2>
+      <p><strong>Dise&ntilde;os del cliente:</strong> Los archivos de dise&ntilde;o (SVG, vectoriales, im&aacute;genes) enviados por el usuario son y seguir&aacute;n siendo propiedad del usuario. FabricaLaser no los reutilizar&aacute;, reproducir&aacute; ni compartir&aacute; sin autorizaci&oacute;n expl&iacute;cita del cliente.</p>
+      <p><strong>Contenido de FabricaLaser:</strong> El sitio web, la marca, el sistema de cotizaci&oacute;n, los textos, im&aacute;genes y dise&ntilde;os propios de FabricaLaser son propiedad de Alonso Alp&iacute;zar Torres y est&aacute;n protegidos por las leyes de propiedad intelectual de Costa Rica.</p>
+      <p>El usuario es responsable de garantizar que los dise&ntilde;os enviados no infrinjan derechos de propiedad intelectual de terceros.</p>
+    </section>
+
+    <section id="uso-aceptable">
+      <h2>7. Uso aceptable</h2>
+      <p>Queda prohibido utilizar nuestros canales de comunicaci&oacute;n (WhatsApp, Telegram, chat web) para:</p>
+      <ul>
+        <li>Fines ajenos a los servicios de corte y grabado l&aacute;ser de FabricaLaser</li>
+        <li>Enviar contenido ofensivo, difamatorio, ilegal o que viole derechos de terceros</li>
+        <li>Intentar manipular, enga&ntilde;ar o abusar del agente automatizado</li>
+        <li>Enviar mensajes masivos o automatizados (spam)</li>
+        <li>Intentar acceder a informaci&oacute;n de otros usuarios o del sistema</li>
+      </ul>
+      <p>FabricaLaser se reserva el derecho de bloquear el acceso a usuarios que incumplan estas condiciones.</p>
+    </section>
+
+    <section id="pagos">
+      <h2>8. Pagos y pedidos</h2>
+      <p>Los pedidos se confirman y coordinan a trav&eacute;s de un asesor humano de FabricaLaser. Las condiciones de pago, m&eacute;todos aceptados y pol&iacute;ticas de cancelaci&oacute;n o devoluci&oacute;n ser&aacute;n comunicadas por el asesor al momento de la confirmaci&oacute;n del pedido.</p>
+      <p>El tiempo de producci&oacute;n est&aacute;ndar es de 1 d&iacute;a h&aacute;bil desde la confirmaci&oacute;n de pago, sujeto a la complejidad del trabajo y la disponibilidad de materiales.</p>
+    </section>
+
+    <section id="entregas">
+      <h2>9. Entregas y retiro</h2>
+      <ul>
+        <li><strong>Retiro en taller:</strong> Avenida 67, San Jer&oacute;nimo, Tib&aacute;s, San Jos&eacute;. Solo con cita previa coordinada por mensajer&iacute;a.</li>
+        <li><strong>Env&iacute;os:</strong> Realizamos env&iacute;os a todo el pa&iacute;s a trav&eacute;s de Correos de Costa Rica o servicios de mensajer&iacute;a. El costo base de env&iacute;o es de &colonsgn;3.500 por el primer kilogramo.</li>
+      </ul>
+      <p>Los tiempos de entrega dependen del servicio de mensajer&iacute;a utilizado y est&aacute;n fuera del control de FabricaLaser una vez despachado el pedido.</p>
+    </section>
+
+    <section id="limitaciones">
+      <h2>10. Limitaciones de responsabilidad</h2>
+      <ul>
+        <li>FabricaLaser no garantiza la disponibilidad ininterrumpida del servicio de cotizaci&oacute;n autom&aacute;tica ni de los canales de atenci&oacute;n.</li>
+        <li>Las respuestas del agente automatizado son orientativas y no sustituyen la consulta con un asesor humano para la confirmaci&oacute;n de pedidos.</li>
+        <li>FabricaLaser no se responsabiliza por da&ntilde;os derivados del uso incorrecto de los datos de cotizaci&oacute;n sin confirmaci&oacute;n del asesor.</li>
+        <li>La responsabilidad m&aacute;xima de FabricaLaser se limita al valor del pedido confirmado y pagado.</li>
+      </ul>
+    </section>
+
+    <section id="disponibilidad">
+      <h2>11. Disponibilidad del servicio</h2>
+      <p>FabricaLaser se esfuerza por mantener sus servicios disponibles las 24 horas del d&iacute;a, los 7 d&iacute;as de la semana. Sin embargo, el servicio puede interrumpirse temporalmente por mantenimiento, actualizaciones o causas de fuerza mayor, sin que esto genere responsabilidad alguna.</p>
+      <p>La atenci&oacute;n por parte de asesores humanos est&aacute; disponible en horario laboral de Costa Rica.</p>
+    </section>
+
+    <section id="privacidad">
+      <h2>12. Privacidad</h2>
+      <p>El tratamiento de datos personales se rige por nuestra <a href="/privacidad">Pol&iacute;tica de Privacidad</a>, que forma parte integral de estos t&eacute;rminos.</p>
+    </section>
+
+    <section id="cambios">
+      <h2>13. Cambios a estos t&eacute;rminos</h2>
+      <p>FabricaLaser se reserva el derecho de modificar estos t&eacute;rminos de servicio en cualquier momento. Los cambios ser&aacute;n publicados en esta p&aacute;gina con la fecha de actualizaci&oacute;n correspondiente. El uso continuado de nuestros servicios despu&eacute;s de la publicaci&oacute;n de cambios constituye la aceptaci&oacute;n de los mismos.</p>
+    </section>
+
+    <section id="jurisdiccion">
+      <h2>14. Legislaci&oacute;n aplicable y jurisdicci&oacute;n</h2>
+      <p>Estos t&eacute;rminos se rigen por las leyes de la Rep&uacute;blica de Costa Rica. Cualquier controversia derivada del uso de nuestros servicios ser&aacute; sometida a los tribunales competentes de San Jos&eacute;, Costa Rica.</p>
+    </section>
+
+    <section id="contacto">
+      <h2>15. Contacto</h2>
+      <p>Para consultas sobre estos t&eacute;rminos de servicio:</p>
+      <ul>
+        <li><strong>Correo electr&oacute;nico:</strong> <a href="mailto:social@fabricalaser.com">social@fabricalaser.com</a></li>
+        <li><strong>Sitio web:</strong> <a href="https://fabricalaser.com">fabricalaser.com</a></li>
+      </ul>
+    </section>
+
+  </div>
+</div>
+
+<div class="terms-footer">
+  <p>&copy; 2026 FabricaLaser.com &mdash; Alonso Alp&iacute;zar Torres. Todos los derechos reservados. &middot; <a href="/privacidad">Privacidad</a> &middot; <a href="/terminos">T&eacute;rminos</a></p>
+</div>
+
+</body>
+</html>

@@ -31,13 +31,15 @@ const (
 
 // systemPromptWA — prompt para el agente de WhatsApp de FabricaLaser.
 // Sin markdown ni asteriscos en respuestas. Con flujo de cotización en pasos.
-const systemPromptWA = `Sos el asistente virtual de FabricaLaser por WhatsApp, empresa costarricense de corte y grabado láser en Tibás, San José.
+const systemPromptWA = `Sos el asistente virtual de FabricaLaser, empresa costarricense de corte y grabado láser en Tibás, San José. Atendés clientes por mensajería (el canal específico se indica en los DATOS DEL CLIENTE más abajo).
 
-REGLA DE FORMATO: Nunca uses asteriscos, guiones para listas, ni markdown de ningún tipo. Usá solo texto plano y emojis cuando sea natural. Respuestas conversacionales, cortas y directas como en WhatsApp.
+REGLA DE FORMATO: Nunca uses asteriscos, guiones para listas, ni markdown de ningún tipo. Usá solo texto plano y emojis cuando sea natural. Respuestas conversacionales, cortas y directas.
 
 PERSONALIDAD:
 Hablás de "vos", español costarricense casual pero profesional. Conocés el negocio como la palma de tu mano — sos el experto, no un formulario. Tus respuestas tienen calidez humana: celebrás cuando el cliente elige bien, explicás con paciencia cuando no entiende algo, y usás lenguaje natural de conversación (no robótico). Máximo 3 párrafos por mensaje.
-PROHIBIDO ABSOLUTO: Nunca uses "Pura vida" en ningún mensaje, bajo ninguna circunstancia. Ni como saludo, ni como despedida, ni como afirmación. Simplemente no existe en tu vocabulario.
+PROHIBIDO ABSOLUTO — LEER CON ATENCIÓN:
+1. Nunca uses "Pura vida" en ningún mensaje, bajo ninguna circunstancia. Ni como saludo, ni como despedida, ni como afirmación. Simplemente no existe en tu vocabulario. Si lo usás, es un error grave.
+2. Nunca menciones un canal de mensajería diferente al que está usando el cliente. Si el cliente está en Telegram, NUNCA menciones WhatsApp. Si el cliente está en WhatsApp, NUNCA menciones Telegram. El canal correcto siempre está en los DATOS DEL CLIENTE.
 
 NOMBRE DEL CLIENTE:
 En el primer mensaje de la conversación (al responder el saludo inicial o la primera consulta), SIEMPRE preguntá el nombre al final: "¿Con quién tengo el gusto?" Esto es importante para personalizar la atención.
@@ -163,14 +165,15 @@ El trabajo necesita revisión según el resultado de la cotización
 FLUJO CORRECTO cuando el cliente confirma:
 1. Llamá INMEDIATAMENTE a escalar_a_humano (sin texto previo)
 2. Después de recibir la respuesta del tool, escribí el mensaje de confirmación al cliente
+3. En el mensaje de confirmación, decí que el asesor lo contactará POR EL MISMO CANAL donde está la conversación (ver DATOS DEL CLIENTE). NUNCA menciones otro canal.
 
 RETIRO Y ENVÍOS:
-Taller: Avenida 67, San Jerónimo, Tibás, San José. Solo con cita previa coordinada por WhatsApp.
+Taller: Avenida 67, San Jerónimo, Tibás, San José. Solo con cita previa coordinada por mensajería.
 Envíos a todo el país. 3.500 colones el primer kilo por Correos CR o mensajería.
 Tiempo de producción: 1 día hábil desde confirmación de pago.
 
 IMÁGENES:
-Este agente puede recibir y analizar imágenes enviadas por WhatsApp.
+Este agente puede recibir y analizar imágenes enviadas por el cliente.
 Cuando el cliente diga que va a mandar una imagen, respondé ÚNICAMENTE: "¡Perfecto! Mandala cuando quieras." — nada más, sin agregar ninguna aclaración.
 Cuando el cliente mande una imagen, la analizarás y preguntarás medidas — nunca cotizarás directamente desde la imagen.
 PROHIBIDO ABSOLUTO: Nunca uses las frases "asistente de texto", "no puedo ver imágenes", "no tengo capacidad visual" ni ninguna variante. Bajo ninguna circunstancia, ni como aclaración ni como recordatorio.
@@ -236,12 +239,45 @@ Reglas para imágenes:
 
 type geminiAdapter struct {
 	client          *genai.Client
-	contextProvider *waContextProvider
+	contextProvider *WAContextProvider
 	sender          *Sender
+	tgSender        *tgSenderAdapter
+}
+
+// tgSenderAdapter es un wrapper liviano para enviar mensajes vía Telegram Bot API.
+// Se usa solo para notificaciones al asesor cuando el cliente viene de Telegram.
+type tgSenderAdapter struct {
+	botToken   string
+	httpClient *http.Client
+}
+
+func (s *tgSenderAdapter) sendText(ctx context.Context, chatID int64, text string) error {
+	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", s.botToken)
+	payload := fmt.Sprintf(`{"chat_id":%d,"text":%s}`, chatID, jsonEscapeString(text))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("telegram API status %d: %s", resp.StatusCode, string(body))
+	}
+	return nil
+}
+
+func jsonEscapeString(s string) string {
+	b, _ := json.Marshal(s)
+	return string(b)
 }
 
 // NewGeminiAdapter crea un GeminiCaller con soporte de tools y contexto dinámico.
-func NewGeminiAdapter(provider *waContextProvider) GeminiCaller {
+func NewGeminiAdapter(provider *WAContextProvider) GeminiCaller {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, waProjectID, waLocation)
 	if err != nil {
@@ -251,6 +287,10 @@ func NewGeminiAdapter(provider *waContextProvider) GeminiCaller {
 		client:          client,
 		contextProvider: provider,
 		sender:          NewSender(),
+		tgSender: &tgSenderAdapter{
+			botToken:   os.Getenv("TELEGRAM_BOT_TOKEN"),
+			httpClient: &http.Client{Timeout: 15 * time.Second},
+		},
 	}
 }
 
@@ -655,24 +695,48 @@ func (g *geminiAdapter) execConsultarBlank(ctx context.Context, args map[string]
 
 func (g *geminiAdapter) execEscalarAHumano(ctx context.Context, clientPhone string, args map[string]any) (map[string]any, error) {
 	resumen, _ := args["resumen"].(string)
-	asesorPhone := g.contextProvider.GetAsesorPhone()
 
 	var msg strings.Builder
 	msg.WriteString("FabricaLaser — Cliente listo para coordinar\n\n")
 	msg.WriteString(resumen)
-	if clientPhone != "" {
+
+	// Detectar canal por prefijo del identificador y enviar por el canal correspondiente
+	if strings.HasPrefix(clientPhone, "tg:") {
+		msg.WriteString(fmt.Sprintf("\n\nCanal: Telegram\nChat ID: %s", strings.TrimPrefix(clientPhone, "tg:")))
+
+		// Enviar al asesor por Telegram
+		asesorChatID := g.contextProvider.GetAsesorTelegramChatID()
+		if asesorChatID != 0 {
+			if err := g.tgSender.sendText(ctx, asesorChatID, msg.String()); err != nil {
+				slog.Error("escalar_a_humano: error enviando al asesor por Telegram",
+					"asesor_chat_id", asesorChatID,
+					"error", err,
+				)
+				return map[string]any{"enviado": false, "error": err.Error()}, nil
+			}
+			slog.Info("escalar_a_humano: mensaje enviado al asesor por Telegram",
+				"asesor_chat_id", asesorChatID,
+				"cliente", clientPhone,
+			)
+			return map[string]any{"enviado": true}, nil
+		}
+		// Fallback a WhatsApp si no hay TelegramAsesorChatID configurado
+		slog.Warn("escalar_a_humano: TelegramAsesorChatID no configurado, fallback a WhatsApp")
+	} else if clientPhone != "" {
 		msg.WriteString(fmt.Sprintf("\n\nNúmero del cliente: %s", clientPhone))
 	}
 
+	// Enviar al asesor por WhatsApp (canal por defecto o fallback)
+	asesorPhone := g.contextProvider.GetAsesorPhone()
 	if err := g.sender.SendText(ctx, asesorPhone, msg.String()); err != nil {
-		slog.Error("whatsapp: escalar_a_humano — error enviando al asesor",
+		slog.Error("escalar_a_humano: error enviando al asesor por WhatsApp",
 			"asesor", asesorPhone,
 			"error", err,
 		)
 		return map[string]any{"enviado": false, "error": err.Error()}, nil
 	}
 
-	slog.Info("whatsapp: escalar_a_humano — mensaje enviado al asesor",
+	slog.Info("escalar_a_humano: mensaje enviado al asesor por WhatsApp",
 		"asesor", asesorPhone,
 		"cliente", clientPhone,
 	)

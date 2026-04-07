@@ -107,6 +107,7 @@ func (p *MessageProcessor) fetchUserContext(ctx context.Context, waPhone string)
 func buildRegisteredCtx(p *UserProfile) string {
 	var b strings.Builder
 	b.WriteString("\n\nDATOS DEL CLIENTE (base de datos FabricaLaser):\n")
+	b.WriteString("Canal: WhatsApp\n")
 
 	if p.CedulaType == "juridica" {
 		b.WriteString(fmt.Sprintf("Empresa: %s\n", p.Nombre))
@@ -146,6 +147,7 @@ func buildUnregisteredCtx(localPhone string) string {
 	registerLink := fmt.Sprintf("https://fabricalaser.com/?login=1&tel=%s", localPhone)
 	var b strings.Builder
 	b.WriteString("\n\nDATOS DEL CLIENTE (base de datos FabricaLaser):\n")
+	b.WriteString("Canal: WhatsApp\n")
 	b.WriteString("Estado: NO registrado en fabricalaser.com\n")
 	b.WriteString(fmt.Sprintf("Link de registro (teléfono pre-llenado): %s\n", registerLink))
 	return b.String()
@@ -162,12 +164,12 @@ type MessageProcessor struct {
 	sender          *Sender
 	downloader      *ImageDownloader
 	rateLimiter     *RateLimiter
-	contextProvider *waContextProvider
+	contextProvider *WAContextProvider
 }
 
 // NewMessageProcessor construye el procesador con sus dependencias.
 // rateLimiter puede ser nil — en ese caso el rate limiting queda deshabilitado (fail open).
-func NewMessageProcessor(redis RedisClient, pg PGClient, gemini GeminiCaller, rateLimiter *RateLimiter, contextProvider *waContextProvider) *MessageProcessor {
+func NewMessageProcessor(redis RedisClient, pg PGClient, gemini GeminiCaller, rateLimiter *RateLimiter, contextProvider *WAContextProvider) *MessageProcessor {
 	return &MessageProcessor{
 		redis:           redis,
 		pg:              pg,
@@ -244,6 +246,16 @@ func (p *MessageProcessor) processTextMessage(ctx context.Context, msg Message) 
 		"message_id", msg.ID,
 		"length", len(msg.Text.Body),
 	)
+
+	// 2b. Opt-in — disclaimer de privacidad en primer contacto (1 vez cada 30 días)
+	optinKey := fmt.Sprintf("wa:optin:%s", msg.From)
+	isFirstContact, _ := p.redis.SetNX(ctx, optinKey, "1", 30*24*time.Hour)
+	if isFirstContact {
+		_ = p.sender.SendText(ctx, msg.From,
+			"Al comunicarte con FabricaLaser por este canal, aceptás que "+
+				"procesemos tu número, nombre y mensajes para brindarte cotizaciones "+
+				"y atención al cliente. Más info: fabricalaser.com/privacidad")
+	}
 
 	// 3. Límite diario de mensajes (el asesor está exento)
 	count, limitErr := p.checkDailyLimit(ctx, msg.From)
@@ -420,6 +432,16 @@ func (p *MessageProcessor) processImageMessage(ctx context.Context, msg Message)
 		"from", msg.From,
 		"media_id", msg.Image.ID,
 	)
+
+	// 2b. Opt-in — disclaimer en primer contacto (reutiliza la clave de texto)
+	optinKey := fmt.Sprintf("wa:optin:%s", msg.From)
+	isFirstContact, _ := p.redis.SetNX(ctx, optinKey, "1", 30*24*time.Hour)
+	if isFirstContact {
+		_ = p.sender.SendText(ctx, msg.From,
+			"Al comunicarte con FabricaLaser por este canal, aceptás que "+
+				"procesemos tu número, nombre y mensajes para brindarte cotizaciones "+
+				"y atención al cliente. Más info: fabricalaser.com/privacidad")
+	}
 
 	// 3. Límite diario (las imágenes cuentan igual que mensajes de texto)
 	count, limitErr := p.checkDailyLimit(ctx, msg.From)

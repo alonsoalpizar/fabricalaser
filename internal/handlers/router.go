@@ -14,6 +14,7 @@ import (
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/config"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/quote"
 	"github.com/alonsoalpizar/fabricalaser/internal/middleware"
+	"github.com/alonsoalpizar/fabricalaser/internal/telegram"
 	"github.com/alonsoalpizar/fabricalaser/internal/whatsapp"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
@@ -188,6 +189,17 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 		r.Post("/webhook", waHandler.HandleMessage)
 	})
 
+	// Telegram webhook
+	tgProcessor := telegram.NewProcessor(
+		whatsapp.NewRedisAdapter(redisClient),
+		whatsapp.NewPGAdapter(database.Get()),
+		whatsapp.NewGeminiAdapter(waContextProvider),
+		whatsapp.NewRateLimiter(redisClient),
+		waContextProvider,
+	)
+	tgHandler := telegram.NewHandler(tgProcessor)
+	r.Post("/api/v1/telegram/webhook", tgHandler.HandleWebhook)
+
 	// Blanks consultar — endpoint interno para el agente de WhatsApp (sin JWT)
 	r.Post("/api/v1/blanks/consultar", admin.NewBlankHandler().ConsultarBlank)
 
@@ -280,6 +292,22 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 	})
 	r.Get("/cotizar/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join(webDir, "cotizar", "index.html"))
+	})
+
+	// Privacidad page
+	r.Get("/privacidad", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "privacidad", "index.html"))
+	})
+	r.Get("/privacidad/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/privacidad", http.StatusMovedPermanently)
+	})
+
+	// Términos de servicio
+	r.Get("/terminos", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(webDir, "terminos", "index.html"))
+	})
+	r.Get("/terminos/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/terminos", http.StatusMovedPermanently)
 	})
 
 	// Documentation pages

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pol&iacute;tica de Privacidad — FabricaLaser</title>
+
+<meta name="description" content="Pol&iacute;tica de privacidad de FabricaLaser.com. C&oacute;mo recopilamos, usamos y protegemos tus datos personales.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://fabricalaser.com/privacidad">
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: #0A0A0A;
+  --bg-card: #1A1A1A;
+  --bg-elevated: #222222;
+  --red-laser: #9B2020;
+  --red-bright: #B82E2E;
+  --red-glow: rgba(155, 32, 32, 0.4);
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-muted: #666666;
+  --chrome: #909090;
+  --border: #2A2A2A;
+  --border-light: #333333;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: var(--red-laser); text-decoration: none; transition: color 0.2s; }
+a:hover { color: var(--red-bright); }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== NAVBAR ===== */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.nav-logo-img {
+  height: 38px;
+  width: auto;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+.nav-back {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-back:hover { color: var(--text-primary); }
+
+/* ===== HERO ===== */
+.privacy-hero {
+  padding: 120px 24px 48px;
+  text-align: center;
+  position: relative;
+}
+
+.privacy-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center top, rgba(155, 32, 32, 0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.privacy-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 400;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.privacy-hero .meta-line {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.privacy-hero .meta-line strong {
+  color: var(--red-laser);
+  font-weight: 500;
+}
+
+/* ===== LAYOUT ===== */
+.privacy-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+/* ===== SIDEBAR TOC ===== */
+.toc {
+  position: sticky;
+  top: 96px;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.toc-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.toc a {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 6px 0;
+  border-left: 2px solid transparent;
+  padding-left: 12px;
+  transition: all 0.2s;
+}
+
+.toc a:hover,
+.toc a.active {
+  color: var(--red-laser);
+  border-left-color: var(--red-laser);
+}
+
+/* ===== CONTENT ===== */
+.privacy-content section {
+  margin-bottom: 48px;
+}
+
+.privacy-content h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.privacy-content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.privacy-content p {
+  margin-bottom: 14px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.privacy-content ul {
+  margin: 12px 0 16px 20px;
+  color: var(--text-secondary);
+}
+
+.privacy-content ul li {
+  margin-bottom: 8px;
+  padding-left: 4px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.privacy-content ul li::marker {
+  color: var(--red-laser);
+}
+
+.privacy-content a {
+  color: var(--red-laser);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.privacy-content a:hover {
+  color: var(--red-bright);
+}
+
+/* ===== CALLOUT ===== */
+.callout {
+  background: rgba(155, 32, 32, 0.08);
+  border-left: 3px solid var(--red-laser);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ===== CONTACT CARD ===== */
+.contact-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+}
+
+.contact-card p {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.contact-card strong {
+  color: var(--text-primary);
+}
+
+/* ===== FOOTER ===== */
+.privacy-footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.privacy-footer p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .privacy-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .toc {
+    position: static;
+    margin-bottom: 32px;
+  }
+  .privacy-hero { padding: 100px 20px 32px; }
+  .privacy-layout { padding: 0 20px 60px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav">
+  <div class="nav-logo">
+    <a href="/">
+      <img src="/assets/img/nav.webp" alt="FabricaLaser.com" class="nav-logo-img">
+    </a>
+  </div>
+  <a href="/" class="nav-back">&larr; Volver al sitio</a>
+</nav>
+
+<!-- HERO -->
+<div class="privacy-hero">
+  <h1>Pol&iacute;tica de Privacidad</h1>
+  <p class="meta-line">&Uacute;ltima actualizaci&oacute;n: <strong>Abril 2026</strong> &middot; Vigente desde su publicaci&oacute;n</p>
+</div>
+
+<!-- LAYOUT -->
+<div class="privacy-layout">
+
+  <nav class="toc">
+    <div class="toc-title">Contenido</div>
+    <a href="#responsable">1. Responsable</a>
+    <a href="#datos">2. Datos que recopilamos</a>
+    <a href="#whatsapp">3. Uso de WhatsApp</a>
+    <a href="#telegram">4. Uso de Telegram</a>
+    <a href="#ia">5. Procesamiento con IA</a>
+    <a href="#proposito">6. Prop&oacute;sito</a>
+    <a href="#base-legal">7. Base legal</a>
+    <a href="#compartir">8. Compartir datos</a>
+    <a href="#retencion">9. Retenci&oacute;n</a>
+    <a href="#derechos">10. Tus derechos</a>
+    <a href="#seguridad">11. Seguridad</a>
+    <a href="#cookies">12. Cookies</a>
+    <a href="#menores">13. Menores de edad</a>
+    <a href="#cambios">14. Cambios</a>
+    <a href="#contacto">15. Contacto</a>
+  </nav>
+
+  <div class="privacy-content">
+
+    <section id="responsable">
+      <h2>1. Responsable del tratamiento de datos</h2>
+      <p>FabricaLaser es un nombre comercial operado por <strong>Alonso Alp&iacute;zar Torres</strong>, persona f&iacute;sica con actividad comercial, con domicilio en Tib&aacute;s, San Jos&eacute;, Costa Rica.</p>
+      <p>Para efectos de esta pol&iacute;tica, &ldquo;FabricaLaser&rdquo;, &ldquo;nosotros&rdquo; o &ldquo;nuestro&rdquo; se refiere a Alonso Alp&iacute;zar Torres en su calidad de operador del sitio web fabricalaser.com y de los servicios de corte y grabado l&aacute;ser asociados.</p>
+    </section>
+
+    <section id="datos">
+      <h2>2. Datos que recopilamos</h2>
+      <p>Recopilamos distintos tipos de informaci&oacute;n dependiendo de c&oacute;mo interact&uacute;es con nosotros:</p>
+
+      <h3>Datos proporcionados directamente por ti</h3>
+      <ul>
+        <li>Nombre completo o nombre de contacto</li>
+        <li>N&uacute;mero de tel&eacute;fono (incluyendo tu n&uacute;mero de WhatsApp)</li>
+        <li>Direcci&oacute;n de correo electr&oacute;nico</li>
+        <li>Direcci&oacute;n de entrega o retiro, si aplica</li>
+        <li>Detalles de tu consulta o proyecto (dimensiones, materiales, cantidades, archivos de dise&ntilde;o)</li>
+      </ul>
+
+      <h3>Datos de registro en fabricalaser.com</h3>
+      <ul>
+        <li>N&uacute;mero de c&eacute;dula (f&iacute;sica o jur&iacute;dica), validado contra el Registro Civil de Costa Rica</li>
+        <li>Nombre completo (obtenido del Registro Civil)</li>
+        <li>Correo electr&oacute;nico</li>
+        <li>Tel&eacute;fono</li>
+        <li>Direcci&oacute;n de entrega (provincia, cant&oacute;n, distrito, direcci&oacute;n exacta)</li>
+      </ul>
+
+      <h3>Datos recopilados autom&aacute;ticamente</h3>
+      <ul>
+        <li>Direcci&oacute;n IP y datos de navegaci&oacute;n al visitar fabricalaser.com</li>
+        <li>Tipo de dispositivo y navegador</li>
+        <li>P&aacute;ginas visitadas y tiempo de permanencia</li>
+      </ul>
+
+      <h3>Datos recopilados a trav&eacute;s de WhatsApp</h3>
+      <ul>
+        <li>Tu n&uacute;mero de tel&eacute;fono de WhatsApp</li>
+        <li>Nombre de perfil de WhatsApp</li>
+        <li>Contenido de los mensajes que nos env&iacute;as (texto, im&aacute;genes, documentos, notas de voz)</li>
+        <li>Fecha y hora de los mensajes</li>
+        <li>Estado de entrega y lectura de mensajes</li>
+      </ul>
+
+      <h3>Datos recopilados a trav&eacute;s de Telegram</h3>
+      <ul>
+        <li>Username de Telegram</li>
+        <li>Identificador de chat (chat ID)</li>
+        <li>Nombre y apellido del perfil</li>
+        <li>Contenido de los mensajes enviados (texto, im&aacute;genes)</li>
+        <li>Fecha y hora de los mensajes</li>
+      </ul>
+
+      <h3>Datos recopilados a trav&eacute;s del chat en el sitio web</h3>
+      <ul>
+        <li>Contenido de las conversaciones</li>
+        <li>Datos de sesi&oacute;n si el usuario est&aacute; autenticado (nombre, correo electr&oacute;nico, tel&eacute;fono)</li>
+      </ul>
+    </section>
+
+    <section id="whatsapp">
+      <h2>3. Uso de WhatsApp Business API</h2>
+      <p>FabricaLaser utiliza la <strong>WhatsApp Business API (Cloud API)</strong> proporcionada por Meta Platforms, Inc. para comunicarse con clientes y prospectos. Esto significa que los mensajes que nos env&iacute;as a trav&eacute;s de WhatsApp son procesados a trav&eacute;s de la infraestructura de Meta.</p>
+
+      <div class="callout">
+        Al enviarnos un mensaje por WhatsApp, acept&aacute;s que tu informaci&oacute;n de contacto y el contenido de tus mensajes sean procesados a trav&eacute;s de la plataforma de Meta y almacenados en nuestros sistemas para darte seguimiento a tu consulta o pedido.
+      </div>
+
+      <p>Nuestro sistema de atenci&oacute;n por WhatsApp incluye:</p>
+      <ul>
+        <li><strong>Respuestas automatizadas:</strong> Utilizamos un asistente automatizado para atender consultas frecuentes, generar cotizaciones y brindar informaci&oacute;n sobre nuestros servicios de corte y grabado l&aacute;ser.</li>
+        <li><strong>Escalamiento a humano:</strong> Cuando tu consulta requiere atenci&oacute;n personalizada, un asesor humano de FabricaLaser te atender&aacute; directamente.</li>
+        <li><strong>Mensajes de plantilla:</strong> Podemos enviarte notificaciones previamente aprobadas por Meta, como confirmaciones de pedido, actualizaciones de estado o seguimiento post-venta.</li>
+      </ul>
+      <p>El uso de WhatsApp Business API est&aacute; sujeto a la <a href="https://www.whatsapp.com/legal/business-policy" target="_blank" rel="noopener">Pol&iacute;tica de WhatsApp Business</a> y a los <a href="https://www.whatsapp.com/legal/terms-of-service" target="_blank" rel="noopener">T&eacute;rminos de Servicio de WhatsApp</a>.</p>
+    </section>
+
+    <section id="telegram">
+      <h2>4. Uso de Telegram Bot</h2>
+      <p>FabricaLaser tambi&eacute;n ofrece atenci&oacute;n al cliente a trav&eacute;s de un <strong>bot de Telegram</strong> (<a href="https://t.me/FabricalaserBot" target="_blank" rel="noopener">@FabricalaserBot</a>) que utiliza la <strong>Telegram Bot API</strong>.</p>
+
+      <div class="callout">
+        Al enviarnos un mensaje por Telegram, acept&aacute;s que tu informaci&oacute;n de contacto y el contenido de tus mensajes sean procesados a trav&eacute;s de la plataforma de Telegram y almacenados en nuestros sistemas para darte seguimiento a tu consulta o pedido.
+      </div>
+
+      <p>El bot de Telegram ofrece las mismas funcionalidades que nuestro canal de WhatsApp: cotizaciones automatizadas, informaci&oacute;n de cat&aacute;logo, y escalamiento a un asesor humano cuando sea necesario.</p>
+    </section>
+
+    <section id="ia">
+      <h2>5. Procesamiento con inteligencia artificial</h2>
+      <p>Los mensajes que env&iacute;as a trav&eacute;s de WhatsApp, Telegram o el chat del sitio web son procesados por <strong>Google Gemini</strong> (servicio de inteligencia artificial de Google Cloud, plataforma <strong>Vertex AI</strong>) para generar respuestas autom&aacute;ticas relevantes a tu consulta.</p>
+      <p>El procesamiento con IA est&aacute; limitado estrictamente a funciones de negocio:</p>
+      <ul>
+        <li>Cotizaci&oacute;n de servicios de corte y grabado l&aacute;ser</li>
+        <li>Informaci&oacute;n sobre materiales, tecnolog&iacute;as y precios</li>
+        <li>Consulta de cat&aacute;logo de productos</li>
+        <li>Coordinaci&oacute;n de pedidos y escalamiento a asesores humanos</li>
+      </ul>
+      <p>No utilizamos inteligencia artificial de prop&oacute;sito general. El agente no responde preguntas fuera del contexto de los servicios de FabricaLaser.</p>
+    </section>
+
+    <section id="proposito">
+      <h2>6. Prop&oacute;sito del tratamiento</h2>
+      <p>Utilizamos tus datos personales para los siguientes fines:</p>
+      <ul>
+        <li>Responder a tus consultas sobre nuestros servicios de corte y grabado l&aacute;ser</li>
+        <li>Generar cotizaciones basadas en tus especificaciones (material, dimensiones, cantidad)</li>
+        <li>Procesar y dar seguimiento a tus pedidos</li>
+        <li>Enviarte actualizaciones sobre el estado de tu pedido</li>
+        <li>Brindarte soporte post-venta</li>
+        <li>Mejorar nuestros servicios y la experiencia del cliente</li>
+        <li>Cumplir con obligaciones legales y fiscales aplicables en Costa Rica</li>
+      </ul>
+      <p>No utilizamos tus datos para enviar publicidad no solicitada. Si en el futuro ofrecemos comunicaciones promocionales, solicitaremos tu consentimiento previo.</p>
+    </section>
+
+    <section id="base-legal">
+      <h2>7. Base legal para el tratamiento</h2>
+      <p>El tratamiento de tus datos se fundamenta en:</p>
+      <ul>
+        <li><strong>Consentimiento:</strong> Al contactarnos por WhatsApp o a trav&eacute;s de nuestro sitio web, nos brind&aacute;s tu consentimiento para procesar la informaci&oacute;n que compart&iacute;s con nosotros.</li>
+        <li><strong>Ejecuci&oacute;n contractual:</strong> El procesamiento de datos es necesario para cumplir con los servicios que nos solicit&aacute;s (cotizaciones, pedidos, entregas).</li>
+        <li><strong>Obligaci&oacute;n legal:</strong> Mantenemos registros seg&uacute;n lo requiere la legislaci&oacute;n fiscal y comercial de Costa Rica.</li>
+      </ul>
+      <p>Este tratamiento se realiza en conformidad con la Ley de Protecci&oacute;n de la Persona frente al Tratamiento de sus Datos Personales (Ley N.&deg; 8968) de Costa Rica y su reglamento.</p>
+    </section>
+
+    <section id="compartir">
+      <h2>8. Compartir datos con terceros</h2>
+      <p>No vendemos, alquilamos ni comercializamos tus datos personales. Podemos compartir informaci&oacute;n con los siguientes terceros &uacute;nicamente en la medida necesaria para la prestaci&oacute;n de nuestros servicios:</p>
+      <ul>
+        <li><strong>Meta Platforms, Inc.:</strong> Como proveedor de la plataforma WhatsApp Business API, Meta procesa los datos de mensajer&iacute;a seg&uacute;n sus propias pol&iacute;ticas de privacidad.</li>
+        <li><strong>Telegram FZ-LLC:</strong> Como proveedor de la plataforma Telegram Bot API, procesa los datos de mensajer&iacute;a seg&uacute;n sus pol&iacute;ticas de privacidad.</li>
+        <li><strong>Google Cloud Platform (Vertex AI):</strong> Utilizamos Google Gemini a trav&eacute;s de Vertex AI para el procesamiento de mensajes con inteligencia artificial.</li>
+        <li><strong>GoMeta API (apis.gometa.org):</strong> Validaci&oacute;n de c&eacute;dulas contra el Registro Civil de Costa Rica durante el proceso de registro.</li>
+        <li><strong>Servicios de entrega:</strong> Si tu pedido requiere env&iacute;o, compartiremos tu nombre y direcci&oacute;n de entrega con el servicio de mensajer&iacute;a correspondiente.</li>
+        <li><strong>Autoridades legales:</strong> Cuando sea requerido por ley, orden judicial o autoridad competente en Costa Rica.</li>
+      </ul>
+    </section>
+
+    <section id="retencion">
+      <h2>9. Retenci&oacute;n de datos</h2>
+      <p>Conservamos tus datos personales durante el tiempo necesario para cumplir con los fines descritos en esta pol&iacute;tica:</p>
+      <ul>
+        <li><strong>Sesiones activas:</strong> El historial de conversaci&oacute;n en tiempo real se mantiene en memoria cach&eacute; durante 4 horas desde el &uacute;ltimo mensaje, para brindar continuidad en la atenci&oacute;n.</li>
+        <li><strong>Datos de conversaciones (WhatsApp y Telegram):</strong> Se archivan en nuestra base de datos para seguimiento y calidad del servicio. Se conservan por un m&aacute;ximo de 12 meses desde la &uacute;ltima interacci&oacute;n, salvo que exista un pedido activo o una obligaci&oacute;n legal que requiera conservarlos por m&aacute;s tiempo.</li>
+        <li><strong>Datos de pedidos y facturaci&oacute;n:</strong> Se conservan por el per&iacute;odo que establece la legislaci&oacute;n fiscal de Costa Rica (actualmente 5 a&ntilde;os).</li>
+        <li><strong>Datos de registro:</strong> Se conservan mientras la cuenta est&eacute; activa.</li>
+        <li><strong>Datos de navegaci&oacute;n web:</strong> Se conservan por un m&aacute;ximo de 12 meses.</li>
+      </ul>
+      <p>Una vez transcurrido el per&iacute;odo de retenci&oacute;n, los datos ser&aacute;n eliminados o anonimizados de forma segura.</p>
+    </section>
+
+    <section id="derechos">
+      <h2>10. Tus derechos</h2>
+      <p>De acuerdo con la legislaci&oacute;n costarricense de protecci&oacute;n de datos, ten&eacute;s derecho a:</p>
+      <ul>
+        <li><strong>Acceso:</strong> Solicitar informaci&oacute;n sobre los datos personales que tenemos sobre vos.</li>
+        <li><strong>Rectificaci&oacute;n:</strong> Corregir datos inexactos o incompletos.</li>
+        <li><strong>Supresi&oacute;n:</strong> Solicitar la eliminaci&oacute;n de tus datos cuando ya no sean necesarios para los fines para los que fueron recopilados.</li>
+        <li><strong>Revocaci&oacute;n del consentimiento:</strong> Retirar tu consentimiento en cualquier momento, sin que esto afecte la licitud del tratamiento previo.</li>
+      </ul>
+      <p>Para ejercer cualquiera de estos derechos, contactanos a trav&eacute;s de los medios indicados en la secci&oacute;n de Contacto. Responderemos a tu solicitud en un plazo m&aacute;ximo de 5 d&iacute;as h&aacute;biles.</p>
+    </section>
+
+    <section id="seguridad">
+      <h2>11. Seguridad de los datos</h2>
+      <p>Implementamos medidas t&eacute;cnicas y organizativas para proteger tus datos personales contra acceso no autorizado, p&eacute;rdida, alteraci&oacute;n o divulgaci&oacute;n. Estas medidas incluyen:</p>
+      <ul>
+        <li>Comunicaciones cifradas (HTTPS/TLS) en nuestro sitio web</li>
+        <li>Cifrado de extremo a extremo en las comunicaciones por WhatsApp</li>
+        <li>Acceso restringido a datos personales solo al personal autorizado</li>
+        <li>Almacenamiento seguro en servidores con controles de acceso</li>
+        <li>Tokens de acceso a la API almacenados de forma segura, fuera del c&oacute;digo fuente</li>
+      </ul>
+    </section>
+
+    <section id="cookies">
+      <h2>12. Cookies</h2>
+      <p>Nuestro sitio web puede utilizar cookies t&eacute;cnicas necesarias para su funcionamiento y cookies anal&iacute;ticas para comprender c&oacute;mo los visitantes interact&uacute;an con el sitio. No utilizamos cookies con fines publicitarios ni de seguimiento entre sitios.</p>
+    </section>
+
+    <section id="menores">
+      <h2>13. Menores de edad</h2>
+      <p>Nuestros servicios no est&aacute;n dirigidos a menores de 18 a&ntilde;os. No recopilamos intencionalmente datos de menores de edad. Si detectamos que hemos recopilado datos de un menor, los eliminaremos de inmediato.</p>
+    </section>
+
+    <section id="cambios">
+      <h2>14. Cambios a esta pol&iacute;tica</h2>
+      <p>Nos reservamos el derecho de actualizar esta pol&iacute;tica de privacidad en cualquier momento. Cualquier cambio ser&aacute; publicado en esta misma p&aacute;gina con la fecha de &uacute;ltima actualizaci&oacute;n. Te recomendamos revisar esta pol&iacute;tica peri&oacute;dicamente.</p>
+    </section>
+
+    <section id="contacto">
+      <h2>15. Contacto</h2>
+      <p>Si ten&eacute;s preguntas, dudas o solicitudes relacionadas con esta pol&iacute;tica de privacidad o con el tratamiento de tus datos personales, pod&eacute;s contactarnos a trav&eacute;s de los siguientes medios:</p>
+
+      <div class="contact-card">
+        <p><strong>FabricaLaser</strong></p>
+        <p>Responsable: Alonso Alp&iacute;zar Torres</p>
+        <p>Ubicaci&oacute;n: Tib&aacute;s, San Jos&eacute;, Costa Rica</p>
+        <p>Sitio web: <a href="https://fabricalaser.com">fabricalaser.com</a></p>
+        <p>Correo electr&oacute;nico: <a href="mailto:social@fabricalaser.com">social@fabricalaser.com</a></p>
+        <p>WhatsApp: A trav&eacute;s del n&uacute;mero publicado en nuestro sitio web</p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="privacy-footer">
+  <p>&copy; 2026 FabricaLaser.com &mdash; Alonso Alp&iacute;zar Torres. Todos los derechos reservados.</p>
+</div>
+
+</body>
+</html>
