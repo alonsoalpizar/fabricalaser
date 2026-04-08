@@ -1,6 +1,7 @@
 package models
 
 import (
+	"math"
 	"time"
 
 	"gorm.io/datatypes"
@@ -53,8 +54,22 @@ func (SVGAnalysis) TableName() string {
 	return "svg_analyses"
 }
 
-// TotalArea returns the total working area (bounding box)
+// TotalArea returns the effective work area in mm², clamped to the SVG canvas.
+// Path coordinates are used (the original intent: "bounding box real, no canvas")
+// but clamped to [0, Width] × [0, Height] to exclude elements that fall outside
+// the viewport due to transforms. price_per_mm2 is calibrated for work area, not canvas.
 func (a *SVGAnalysis) TotalArea() float64 {
+	if a.Width > 0 && a.Height > 0 {
+		minX := math.Max(a.BoundsMinX, 0)
+		minY := math.Max(a.BoundsMinY, 0)
+		maxX := math.Min(a.BoundsMaxX, a.Width)
+		maxY := math.Min(a.BoundsMaxY, a.Height)
+		if maxX > minX && maxY > minY {
+			return (maxX - minX) * (maxY - minY)
+		}
+		// All paths outside canvas — fallback to canvas area
+		return a.Width * a.Height
+	}
 	return (a.BoundsMaxX - a.BoundsMinX) * (a.BoundsMaxY - a.BoundsMinY)
 }
 
