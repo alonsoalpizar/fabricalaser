@@ -276,14 +276,19 @@ func (c *Calculator) Calculate(
 		valueBase = math.Max(minValueBase, scaledCutLength*pricePerMmCut)
 		result.PriceModelDetail = "perimeter"
 	} else {
-		// Con grabado: valor por área (comportamiento original)
-		totalArea := scaledMaterialArea
+		// Con grabado: valor por área grabada real (raster + vector), no por canvas.
+		// El canvas es relevante para costo de material, no para el servicio de grabado.
+		// Si el diseño ocupa 1% del canvas, no se cobra el 100% del canvas.
+		workArea := scaledRasterArea + scaledVectorLength*0.5 // vector contribuye 50% como área equiv.
+		if workArea <= 0 {
+			workArea = scaledMaterialArea // fallback si no hay geometría medible
+		}
 		minAreaMM2 := config.GetMinAreaMM2()
-		if totalArea < minAreaMM2 {
-			totalArea = minAreaMM2
+		if workArea < minAreaMM2 {
+			workArea = minAreaMM2
 		}
 		pricePerMM2 := config.GetPricePerMM2()
-		valueBase = math.Max(minValueBase, totalArea*pricePerMM2)
+		valueBase = math.Max(minValueBase, workArea*pricePerMM2)
 		result.PriceModelDetail = "area"
 	}
 

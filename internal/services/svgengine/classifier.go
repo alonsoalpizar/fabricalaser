@@ -86,9 +86,10 @@ func (c *Classifier) Classify(elem RawElement) ClassifiedElement {
 		}
 	}
 
-	// Check fill color for Raster (black)
-	// This is independent of stroke - an element can have both!
-	if fillStr != "" && fillStr != "none" {
+	// Check fill color for Raster (black).
+	// Only apply if the element has no cut/vector stroke — a red/blue stroke takes
+	// precedence and the black fill is treated as residual (common in Illustrator/Inkscape).
+	if !result.HasCut && !result.HasVector && fillStr != "" && fillStr != "none" {
 		fillRGB := c.parseColor(fillStr)
 		if fillRGB != nil {
 			if c.isColorMatch(*fillRGB, colorBlack) {
