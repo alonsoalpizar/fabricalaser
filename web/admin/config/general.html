@@ -13,16 +13,20 @@
       gap: 1.5rem;
     }
 
+    /* Card container — alineado con el design system del panel (.card usa --bg-card).
+       Antes usaba --white (#FFFFFF) que rompía el tema oscuro con un bloque blanco. */
     .category-section {
-      background: var(--white);
+      background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 12px;
       overflow: hidden;
     }
 
+    /* Header de categoría: un tick más claro que el card body para separación visual,
+       NO más oscuro que el fondo global como antes (se veía como un agujero negro). */
     .category-header {
       padding: 1rem 1.5rem;
-      background: var(--bg);
+      background: var(--bg-card-hover);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -168,7 +172,7 @@
       font-size: 0.9375rem;
       font-weight: 600;
       color: var(--text);
-      background: var(--bg);
+      background: var(--bg-warm);
       padding: 0.5rem 0.75rem;
       border: 1px solid var(--accent);
       border-radius: 6px;
