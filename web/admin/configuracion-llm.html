@@ -11,116 +11,185 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="admin.css?v=6">
   <style>
-    /* Page-specific styles usando variables del design system */
+    /* =============================================================
+       HERO CARD (Proveedor activo)
+       ============================================================= */
+    /* Card con franja vertical roja a la izquierda — identifica visualmente
+       que este es el "estado actual" del sistema (no un formulario editable) */
+    .llm-active-card {
+      position: relative;
+      padding: 1.75rem 2rem 1.75rem 2.25rem;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, var(--bg-card) 0%, rgba(155, 32, 32, 0.04) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .llm-active-card::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--accent);
+    }
+
     .llm-hero {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 2rem;
-      align-items: start;
+      align-items: center;
     }
     .llm-hero-left {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.5rem;
     }
-    .llm-hero-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
+
+    /* Kicker chip en lugar de label en caps */
+    .llm-hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: var(--accent);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
+      padding: 0.25rem 0.625rem;
+      background: var(--accent-soft);
+      border-radius: 4px;
+      width: fit-content;
     }
+    .llm-hero-kicker::before {
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(155, 32, 32, 0.25);
+      animation: pulse-live 2s ease-in-out infinite;
+    }
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.5; }
+    }
+
     .llm-hero-provider {
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 700;
       color: var(--text);
       line-height: 1.15;
-      margin-top: 0.125rem;
+      margin-top: 0.25rem;
     }
-    /* Model line — se oculta si queda vacío para no dejar un "—" fantasma */
+
+    /* Modelo con chip "default" elegante en vez de texto itálico suelto */
     .llm-hero-model {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
       font-size: 0.9375rem;
       color: var(--text-secondary);
       font-family: 'JetBrains Mono', 'Courier New', monospace;
+      margin-top: 0.25rem;
     }
     .llm-hero-model:empty { display: none; }
     .llm-hero-model .model-default-tag {
-      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
       font-family: 'Inter', sans-serif;
-      font-size: 0.8125rem;
-      margin-left: 0.5rem;
-      font-style: italic;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg-warm);
+      border: 1px solid var(--border);
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-style: normal;
     }
+
     .llm-hero-badges {
       display: flex;
-      gap: 0.625rem;
-      margin-top: 0.5rem;
+      gap: 0.5rem;
+      margin-top: 0.875rem;
       flex-wrap: wrap;
     }
+    .llm-hero-badges .status-badge {
+      font-size: 0.8125rem;
+      padding: 0.375rem 0.75rem;
+    }
+
     .llm-hero-right {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.625rem;
       align-items: flex-end;
+      min-width: 200px;
     }
     .llm-test-result {
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       font-weight: 500;
       padding: 0.5rem 0.875rem;
       border-radius: 8px;
-      min-width: 160px;
+      min-width: 180px;
       text-align: center;
     }
     .llm-test-result.success {
       background: var(--success-bg);
       color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.25);
     }
     .llm-test-result.error {
       background: var(--error-bg);
       color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.25);
     }
     .llm-test-result.pending {
       background: var(--bg-warm);
       color: var(--text-muted);
     }
 
+    /* =============================================================
+       BANNER (info / success / error)
+       Texto blanco como principal — los colores quedan solo en el
+       icono lateral + border, así la información es legible sin
+       perder identidad semántica.
+       ============================================================= */
     .banner {
-      padding: 1rem 1.25rem;
+      padding: 0.875rem 1.125rem;
       border-radius: 8px;
-      font-size: 0.9375rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
       display: flex;
       align-items: flex-start;
       gap: 0.75rem;
       margin-bottom: 1rem;
+      color: var(--text);
+      background: var(--bg-warm);
+      border: 1px solid var(--border);
+      border-left-width: 3px;
     }
     .banner svg {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       flex-shrink: 0;
       margin-top: 2px;
     }
-    .banner-success {
-      background: var(--success-bg);
-      color: var(--success);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-    .banner-error {
-      background: var(--error-bg);
-      color: var(--error);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-    .banner-info {
-      background: var(--info-bg);
-      color: var(--info);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-    }
-    .banner strong { font-weight: 600; }
+    .banner-success { border-left-color: var(--success); }
+    .banner-success svg { color: var(--success); }
+    .banner-error   { border-left-color: var(--error); }
+    .banner-error svg   { color: var(--error); }
+    .banner-info    { border-left-color: var(--info); }
+    .banner-info svg    { color: var(--info); }
+    .banner strong { font-weight: 600; color: var(--text); }
     .banner code {
       font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 0.8125rem;
-      background: rgba(0, 0, 0, 0.25);
+      background: var(--bg);
+      color: var(--text);
       padding: 0.125rem 0.375rem;
       border-radius: 4px;
+      border: 1px solid var(--border);
     }
 
     .masked-input-wrap {
@@ -135,16 +204,49 @@
       margin-top: 0.375rem;
     }
 
+    /* =============================================================
+       FORM "Cambiar configuración"
+       ============================================================= */
+    .llm-form-card .card-body {
+      padding: 2rem;
+    }
+    .llm-form-card .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .llm-form-card .form-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+    .llm-form-card .form-input,
+    .llm-form-card .form-select {
+      padding: 0.75rem 1rem;
+      font-size: 0.9375rem;
+    }
+
     .form-actions {
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       justify-content: flex-end;
       padding-top: 1.5rem;
       border-top: 1px solid var(--border);
-      margin-top: 1.5rem;
+      margin-top: 2rem;
     }
     .form-actions .btn {
-      padding: 0.625rem 1.25rem;
+      padding: 0.6875rem 1.5rem;
+      font-weight: 600;
+    }
+    /* Botón "Probar" en ghost para distinguirlo del primary "Guardar" */
+    .form-actions .btn-test {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .form-actions .btn-test:hover {
+      background: var(--bg-warm);
+      color: var(--text);
+      border-color: var(--border-light);
     }
 
     .provider-tag {
@@ -204,11 +306,10 @@
         <div id="saveBanner" class="hidden"></div>
 
         <!-- Tarjeta: Proveedor activo -->
-        <div class="card" style="margin-bottom: 1.5rem;">
-          <div class="card-body">
-            <div class="llm-hero" id="activeSection">
-              <div class="llm-hero-left">
-                <span class="llm-hero-label">Proveedor LLM activo</span>
+        <div class="llm-active-card">
+          <div class="llm-hero" id="activeSection">
+            <div class="llm-hero-left">
+              <span class="llm-hero-kicker">Activo ahora</span>
                 <div class="llm-hero-provider" id="activeProvider">
                   <span class="text-muted" style="font-size: 1rem;">Cargando&hellip;</span>
                 </div>
@@ -225,11 +326,10 @@
                 <div id="activeTestResult" class="hidden llm-test-result"></div>
               </div>
             </div>
-          </div>
         </div>
 
         <!-- Tarjeta: Cambiar configuracion -->
-        <div class="card">
+        <div class="card llm-form-card">
           <div class="card-body">
             <div class="card-section-title">Cambiar configuraci&oacute;n</div>
             <div class="card-section-sub">
@@ -305,11 +405,11 @@
               </div>
 
               <div class="form-actions">
-                <button type="button" class="btn btn-secondary" id="btnTestForm" onclick="testForm()">
+                <button type="button" class="btn btn-test" id="btnTestForm" onclick="testForm()">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
                   </svg>
-                  Probar
+                  Probar antes de guardar
                 </button>
                 <button type="submit" class="btn btn-primary" id="btnSave">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
