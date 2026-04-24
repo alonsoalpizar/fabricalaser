@@ -257,7 +257,12 @@ func (e *toolExecutor) execCalcularCotizacion(ctx context.Context, args map[stri
 		engraveTypeID = 1
 	}
 
-	analysis := pricing.BuildSyntheticAnalysis(altoCM*10, anchoCM*10, incluyeCorte, engraveTypeID)
+	var vectorComplexityFactor float64
+	if cfg, err := e.configLoader.Load(); err == nil {
+		vectorComplexityFactor = cfg.GetSyntheticVectorComplexityFactor()
+	}
+
+	analysis := pricing.BuildSyntheticAnalysis(altoCM*10, anchoCM*10, incluyeCorte, engraveTypeID, vectorComplexityFactor)
 
 	pr, err := e.calculator.Calculate(
 		analysis, techID, materialID, engraveTypeID,

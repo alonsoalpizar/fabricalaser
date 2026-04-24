@@ -1,6 +1,8 @@
 package pricing
 
 import (
+	"log/slog"
+
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
 )
 
@@ -46,12 +48,6 @@ func (e *TimeEstimator) Estimate(
 		speedMult = 1.0
 	}
 
-	// Get material factor (harder materials = slower)
-	materialFactor := e.config.GetMaterialFactor(materialID)
-	if materialFactor <= 0 {
-		materialFactor = 1.0
-	}
-
 	// Get spot size for the technology (used to convert head speed to raster area speed)
 	spotSize := e.config.GetSpotSize(techID)
 
@@ -63,12 +59,21 @@ func (e *TimeEstimator) Estimate(
 	baseCutSpeed := e.config.GetBaseCutSpeed()
 	setupTimeMinutes := e.config.GetSetupTimeMinutes()
 
-	// Calculate head engrave speed (mm/min) - same for both raster and vector
+	// Calculate head engrave speed (mm/min) - same for both raster and vector.
+	// En fallback NO dividimos por materialFactor: ese factor es una variable comercial
+	// (MDF=1.0, metal=1.8) que no describe la velocidad física del láser. El costo extra
+	// por dificultad del material se captura en FactorMaterial dentro de calculator.go.
 	var engraveSpeedMmMin float64
 	if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
 		engraveSpeedMmMin = *specificSpeed.EngraveSpeedMmMin * speedMult
 	} else {
-		engraveSpeedMmMin = baseEngraveLineSpeed * speedMult / materialFactor
+		engraveSpeedMmMin = baseEngraveLineSpeed * speedMult
+		slog.Warn("pricing.fallback_speed",
+			"method", "Estimate",
+			"tech_id", techID,
+			"material_id", materialID,
+			"thickness", thickness,
+			"reason", "no specific engrave speed calibrated")
 	}
 
 	// Calculate raster engrave time (area-based)
@@ -100,15 +105,21 @@ func (e *TimeEstimator) Estimate(
 	}
 
 	// Calculate cut time
-	// If specific cut speed exists, use it; otherwise use base with material factor
+	// Specific cut speed is already calibrated per thickness; the fallback uses the
+	// base speed directly without materialFactor (see rationale above).
 	if analysis.CutLengthMM > 0 {
 		var effectiveCutSpeed float64
 		if specificSpeed.Found && specificSpeed.CutSpeedMmMin != nil && *specificSpeed.CutSpeedMmMin > 0 {
-			// Use specific speed (already calibrated for thickness)
 			effectiveCutSpeed = *specificSpeed.CutSpeedMmMin
 		} else {
-			// Fallback to base speed with material factor
-			effectiveCutSpeed = baseCutSpeed / materialFactor
+			effectiveCutSpeed = baseCutSpeed
+			slog.Warn("pricing.fallback_speed",
+				"method", "Estimate",
+				"kind", "cut",
+				"tech_id", techID,
+				"material_id", materialID,
+				"thickness", thickness,
+				"reason", "no specific cut speed calibrated")
 		}
 		estimate.CutMins = analysis.CutLengthMM / effectiveCutSpeed
 	}
@@ -161,11 +172,6 @@ func (e *TimeEstimator) EstimateWithGeometry(
 		speedMult = 1.0
 	}
 
-	materialFactor := e.config.GetMaterialFactor(materialID)
-	if materialFactor <= 0 {
-		materialFactor = 1.0
-	}
-
 	spotSize := e.config.GetSpotSize(techID)
 	specificSpeed := e.config.GetMaterialSpeed(techID, materialID, thickness)
 
@@ -173,7 +179,9 @@ func (e *TimeEstimator) EstimateWithGeometry(
 	baseCutSpeed := e.config.GetBaseCutSpeed()
 	setupTimeMinutes := e.config.GetSetupTimeMinutes()
 
-	// Raster (área): usar raster_speed_mm2_min si existe, sino fallback a head_speed × spot_size
+	// Raster (área): usar raster_speed_mm2_min si existe, sino fallback a head_speed × spot_size.
+	// En el fallback NO dividimos por materialFactor: esa es una variable comercial, no física.
+	// El costo extra por dificultad del material se captura en FactorMaterial en calculator.go.
 	if rasterAreaMM2 > 0 {
 		var effectiveRasterSpeed float64
 		if specificSpeed.Found && specificSpeed.RasterSpeedMm2Min != nil && *specificSpeed.RasterSpeedMm2Min > 0 {
@@ -183,8 +191,15 @@ func (e *TimeEstimator) EstimateWithGeometry(
 			if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
 				engraveSpeedMmMin = *specificSpeed.EngraveSpeedMmMin * speedMult
 			} else {
-				engraveSpeedMmMin = baseEngraveLineSpeed * speedMult / materialFactor
+				engraveSpeedMmMin = baseEngraveLineSpeed * speedMult
 				estimate.UsedFallback = true
+				slog.Warn("pricing.fallback_speed",
+					"method", "EstimateWithGeometry",
+					"kind", "raster",
+					"tech_id", techID,
+					"material_id", materialID,
+					"thickness", thickness,
+					"reason", "no specific engrave speed calibrated")
 			}
 			baseAreaSpeed := e.config.GetBaseEngraveAreaSpeed()
 			if baseAreaSpeed > 0 {
@@ -204,8 +219,15 @@ func (e *TimeEstimator) EstimateWithGeometry(
 		if specificSpeed.Found && specificSpeed.EngraveSpeedMmMin != nil && *specificSpeed.EngraveSpeedMmMin > 0 {
 			effectiveVectorSpeed = *specificSpeed.EngraveSpeedMmMin * speedMult
 		} else {
-			effectiveVectorSpeed = baseEngraveLineSpeed * speedMult / materialFactor
+			effectiveVectorSpeed = baseEngraveLineSpeed * speedMult
 			estimate.UsedFallback = true
+			slog.Warn("pricing.fallback_speed",
+				"method", "EstimateWithGeometry",
+				"kind", "vector",
+				"tech_id", techID,
+				"material_id", materialID,
+				"thickness", thickness,
+				"reason", "no specific engrave speed calibrated")
 		}
 		vectorTime := vectorLengthMM / effectiveVectorSpeed
 		estimate.VectorMins = vectorTime
@@ -218,8 +240,15 @@ func (e *TimeEstimator) EstimateWithGeometry(
 		if specificSpeed.Found && specificSpeed.CutSpeedMmMin != nil && *specificSpeed.CutSpeedMmMin > 0 {
 			effectiveCutSpeed = *specificSpeed.CutSpeedMmMin
 		} else {
-			effectiveCutSpeed = baseCutSpeed / materialFactor
+			effectiveCutSpeed = baseCutSpeed
 			estimate.UsedFallback = true
+			slog.Warn("pricing.fallback_speed",
+				"method", "EstimateWithGeometry",
+				"kind", "cut",
+				"tech_id", techID,
+				"material_id", materialID,
+				"thickness", thickness,
+				"reason", "no specific cut speed calibrated")
 		}
 		estimate.CutMins = cutLengthMM / effectiveCutSpeed
 	}

@@ -1,6 +1,7 @@
 package pricing
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -50,12 +51,12 @@ type PriceResult struct {
 	PriceModel         string  // "hybrid" o "value" — indica cuál modelo determinó el precio final
 	PriceModelDetail   string  // "area" o "perimeter" — detalle del modelo value
 
-	// Simulation: What if we apply FactorMaterial to Hybrid?
-	SimHybridWithMaterialFactor float64 // What hybrid would be WITH material factor
-	SimDifferencePct            float64 // Percentage difference
-
 	// Cut technology (when different from main engrave tech)
 	CutTechnologyID *uint // nil = misma tech principal
+
+	// Minimum order floor (aplicado solo al modelo ganador)
+	MinOrderApplied bool    // true si el precio fue levantado al mínimo
+	MinOrderAmount  float64 // el mínimo aplicado (CRC), para que el agente lo explique
 
 	// Fallback warning
 	UsedFallbackSpeeds bool
@@ -231,6 +232,11 @@ func (c *Calculator) Calculate(
 
 	totalCostBase := machineCost + materialCost
 
+	// FactorMaterial en Hybrid aplica solo cuando el cliente provee el material.
+	// Si FabricaLaser provee el material, el costo del material ya está en
+	// CostMaterialWithWaste y aplicar el factor sería doble cobro. Si el cliente
+	// lo trae, CostMaterialWithWaste=0 y el factor es la única forma de reflejar
+	// la dificultad del material (metal 1.8, vidrio 1.5, etc.) en Hybrid.
 	if cutTechnologyID != nil && *cutTechnologyID != techID {
 		// Dos tecnologías: márgenes separados por tech, setups sumados
 		marginEngrave := config.GetMarginPercent(techID)
@@ -238,6 +244,9 @@ func (c *Calculator) Calculate(
 
 		costEngraveBase := (result.CostEngrave + materialCost) *
 			(1 + marginEngrave) * result.FactorEngrave * (1 + result.FactorUVPremium)
+		if !materialIncluded {
+			costEngraveBase *= result.FactorMaterial
+		}
 		costCutBase := result.CostCut * (1 + marginCut)
 
 		// Setup de ambas máquinas
@@ -251,6 +260,9 @@ func (c *Calculator) Calculate(
 		hybridTotal *= (1 + result.FactorMargin)
 		hybridTotal *= result.FactorEngrave
 		hybridTotal *= (1 + result.FactorUVPremium)
+		if !materialIncluded {
+			hybridTotal *= result.FactorMaterial
+		}
 		hybridTotal *= (1 - result.DiscountVolumePct)
 		hybridTotal += result.CostSetup
 		result.PriceHybridTotal = math.Round(hybridTotal*100) / 100
@@ -314,22 +326,6 @@ func (c *Calculator) Calculate(
 	}
 
 	// =============================================================
-	// SIMULACIÓN: ¿Qué pasaría si aplicamos FactorMaterial al Hybrid?
-	// =============================================================
-	simHybridTotal := totalCostBase
-	simHybridTotal *= (1 + result.FactorMargin)
-	simHybridTotal *= result.FactorEngrave
-	simHybridTotal *= (1 + result.FactorUVPremium)
-	simHybridTotal *= result.FactorMaterial // <-- CAMBIO SIMULADO
-	simHybridTotal *= (1 - result.DiscountVolumePct)
-	simHybridTotal += result.CostSetup
-
-	result.SimHybridWithMaterialFactor = math.Round(simHybridTotal*100) / 100
-	if result.PriceHybridTotal > 0 {
-		result.SimDifferencePct = (result.SimHybridWithMaterialFactor - result.PriceHybridTotal) / result.PriceHybridTotal * 100
-	}
-
-	// =============================================================
 	// AUTO-APPROVAL CLASSIFICATION
 	// Based on design complexity factor (thresholds from system_config)
 	// =============================================================
@@ -347,6 +343,31 @@ func (c *Calculator) Calculate(
 	} else {
 		result.Status = models.QuoteStatusRejected
 		result.ComplexityNote = "Design is too complex for automated processing"
+	}
+
+	// =============================================================
+	// MÍNIMO DE ORDEN — piso de rentabilidad
+	// Si el precio ganador queda por debajo del mínimo configurado, lo subimos.
+	// Solo tocamos el modelo ganador; el otro queda como referencia informativa.
+	// 0 en config desactiva la regla.
+	// Se aplica después del auto-approval para que la nota quede al final.
+	// =============================================================
+	minOrder := config.GetMinOrderAmount()
+	finalPrice := math.Max(result.PriceHybridTotal, result.PriceValueTotal)
+	if minOrder > 0 && finalPrice < minOrder && finalPrice > 0 {
+		if result.PriceModel == "hybrid" {
+			result.PriceHybridTotal = minOrder
+			result.PriceHybridUnit = math.Round((minOrder/float64(quantity))*100) / 100
+		} else {
+			result.PriceValueTotal = minOrder
+			result.PriceValueUnit = math.Round((minOrder/float64(quantity))*100) / 100
+		}
+		result.MinOrderApplied = true
+		result.MinOrderAmount = minOrder
+		if result.ComplexityNote != "" {
+			result.ComplexityNote += " · "
+		}
+		result.ComplexityNote += fmt.Sprintf("Precio mínimo de orden aplicado (₡%.0f)", minOrder)
 	}
 
 	return result, nil
@@ -429,9 +450,9 @@ func (c *Calculator) ToQuoteModel(
 		PriceModel:       result.PriceModel,
 		PriceModelDetail: result.PriceModelDetail,
 
-		// Simulation fields
-		SimHybridWithMaterialFactor: result.SimHybridWithMaterialFactor,
-		SimDifferencePct:            result.SimDifferencePct,
+		// Minimum order fields
+		MinOrderApplied: result.MinOrderApplied,
+		MinOrderAmount:  result.MinOrderAmount,
 
 		// Fallback warning fields
 		UsedFallbackSpeeds: result.UsedFallbackSpeeds,

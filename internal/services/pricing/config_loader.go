@@ -393,6 +393,26 @@ func (c *PricingConfig) GetPricePerMmCut() float64 {
 	return c.GetSystemConfigFloat("price_per_mm_cut", 0.25)
 }
 
+// GetSyntheticVectorComplexityFactor returns the multiplier applied to the
+// bounding-box perimeter when constructing a synthetic VectorLengthMM for
+// quotes without a real SVG (WhatsApp / admin chat tool).
+// 1.0 = perimeter only (underestimates real designs). Default 3.5 = realistic
+// for logos/text. Configurable via system_config.
+func (c *PricingConfig) GetSyntheticVectorComplexityFactor() float64 {
+	return c.GetSystemConfigFloat("synthetic_vector_complexity_factor", 3.5)
+}
+
+// GetMinOrderAmount returns the minimum final price in CRC.
+// Below this value the winning pricing model is lifted to minimum.
+// 0 (default) disables the floor.
+func (c *PricingConfig) GetMinOrderAmount() float64 {
+	val := c.GetSystemConfigFloat("minimum_order_amount", 0)
+	if val < 0 {
+		return 0
+	}
+	return val
+}
+
 // =============================================================
 // Tech Material Speed Methods
 // =============================================================

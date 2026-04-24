@@ -81,9 +81,9 @@ type Quote struct {
 	PriceModel       string  `gorm:"type:varchar(10);default:'hybrid'" json:"price_model"` // "hybrid" o "value" — indica cuál modelo determinó el precio final
 	PriceModelDetail string  `gorm:"type:varchar(20)" json:"price_model_detail,omitempty"` // "area" o "perimeter" — detalle del modelo value
 
-	// Simulation: What if we apply FactorMaterial to Hybrid?
-	SimHybridWithMaterialFactor float64 `gorm:"type:decimal(12,2);default:0" json:"sim_hybrid_with_material_factor"`
-	SimDifferencePct            float64 `gorm:"type:decimal(8,4);default:0" json:"sim_difference_pct"`
+	// Minimum order floor (when final price was lifted to configured minimum)
+	MinOrderApplied bool    `gorm:"default:false" json:"min_order_applied"`
+	MinOrderAmount  float64 `gorm:"type:decimal(12,2);default:0" json:"min_order_amount,omitempty"`
 
 	// Fallback warning (when specific speeds not found)
 	UsedFallbackSpeeds bool    `gorm:"default:false" json:"used_fallback_speeds"`
@@ -201,11 +201,6 @@ func (q *Quote) ToDetailedJSON() map[string]interface{} {
 			"final":        q.PriceFinal,
 			"model":        q.PriceModel,
 			"model_detail": q.PriceModelDetail,
-		},
-
-		"simulation": map[string]interface{}{
-			"hybrid_with_material_factor": q.SimHybridWithMaterialFactor,
-			"difference_pct":              q.SimDifferencePct,
 		},
 
 		"status":               q.Status,
