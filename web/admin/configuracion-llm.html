@@ -12,13 +12,13 @@
     .llm-hero {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 1.5rem;
-      align-items: center;
+      gap: 2rem;
+      align-items: start;
     }
     .llm-hero-left {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
     .llm-hero-label {
       font-size: 0.75rem;
@@ -31,17 +31,27 @@
       font-size: 2rem;
       font-weight: 700;
       color: var(--text);
-      line-height: 1.2;
+      line-height: 1.15;
+      margin-top: 0.125rem;
     }
+    /* Model line — se oculta si queda vacío para no dejar un "—" fantasma */
     .llm-hero-model {
-      font-size: 1rem;
+      font-size: 0.9375rem;
       color: var(--text-secondary);
       font-family: 'JetBrains Mono', 'Courier New', monospace;
     }
+    .llm-hero-model:empty { display: none; }
+    .llm-hero-model .model-default-tag {
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8125rem;
+      margin-left: 0.5rem;
+      font-style: italic;
+    }
     .llm-hero-badges {
       display: flex;
-      gap: 0.5rem;
-      margin-top: 0.25rem;
+      gap: 0.625rem;
+      margin-top: 0.5rem;
       flex-wrap: wrap;
     }
     .llm-hero-right {
@@ -124,11 +134,14 @@
 
     .form-actions {
       display: flex;
-      gap: 0.75rem;
+      gap: 1rem;
       justify-content: flex-end;
-      padding-top: 1rem;
+      padding-top: 1.5rem;
       border-top: 1px solid var(--border);
-      margin-top: 0.5rem;
+      margin-top: 1.5rem;
+    }
+    .form-actions .btn {
+      padding: 0.625rem 1.25rem;
     }
 
     .provider-tag {
@@ -196,7 +209,7 @@
                 <div class="llm-hero-provider" id="activeProvider">
                   <span class="text-muted" style="font-size: 1rem;">Cargando&hellip;</span>
                 </div>
-                <div class="llm-hero-model" id="activeModel">&mdash;</div>
+                <div class="llm-hero-model" id="activeModel"></div>
                 <div class="llm-hero-badges" id="activeBadges"></div>
               </div>
               <div class="llm-hero-right">
@@ -389,7 +402,17 @@
     function renderActive(cfg) {
       document.getElementById('activeProvider').textContent =
         providerLabels[cfg.provider] || cfg.provider || '(sin configurar)';
-      document.getElementById('activeModel').textContent = cfg.model || '—';
+
+      // Si el gestor no fijó un modelo, mostrar el default con un tag discreto.
+      // Antes mostraba "—" solo, que se veía como un placeholder vacío.
+      const modelEl = document.getElementById('activeModel');
+      if (cfg.model) {
+        modelEl.textContent = cfg.model;
+      } else if (defaultModels[cfg.provider]) {
+        modelEl.innerHTML = `${defaultModels[cfg.provider]}<span class="model-default-tag">default del proveedor</span>`;
+      } else {
+        modelEl.textContent = '';
+      }
 
       const badges = document.getElementById('activeBadges');
       badges.innerHTML = '';
