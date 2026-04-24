@@ -7,6 +7,7 @@ import (
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // ErrAgentPromptNotFound se retorna cuando el agent_key no existe.
@@ -94,17 +95,22 @@ func (r *AgentPromptRepository) SaveNewVersion(promptID uint, newBody string, us
 			return err
 		}
 
-		// Guardar el body actual como versión histórica (version actual)
-		// Solo si body no vacío — no guardamos el vacío inicial del seed como histórico
+		// Guardar el body actual como versión histórica (con version actual).
+		// ON CONFLICT DO NOTHING porque a partir del 2do save, la fila v=current.Version
+		// ya fue creada como "activa" por el save anterior (el bloque de abajo que inserta
+		// v=newVersion). Sin ON CONFLICT el rollback o segundo save falla con duplicate key.
+		//
+		// En el primer save (v=1 → v=2): esta fila NUEVA crea v=1 en versions (el seed no
+		// la creó, solo tocó agent_prompts.body). En los siguientes: es no-op.
 		if current.Body != "" {
 			historical := models.AgentPromptVersion{
 				AgentPromptID: current.ID,
 				Version:       current.Version,
 				Body:          current.Body,
 				UpdatedBy:     current.UpdatedBy,
-				Note:          nil, // la nota del save anterior ya está en el fila del save previo
+				Note:          nil,
 			}
-			if err := tx.Create(&historical).Error; err != nil {
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&historical).Error; err != nil {
 				return fmt.Errorf("save historical version: %w", err)
 			}
 		}
