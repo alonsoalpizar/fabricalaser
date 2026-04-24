@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
 	"github.com/go-chi/chi/v5"
 	"github.com/redis/go-redis/v9"
 )
@@ -30,14 +31,16 @@ type Handler struct {
 
 // NewHandler construye el handler con todas las dependencias.
 // El context provider se inyecta porque también lo usa el ContextProvider
-// global del servidor (cache compartido).
-func NewHandler(redisClient *redis.Client, ctxProvider *ContextProvider) *Handler {
+// global del servidor (cache compartido). El factory LLM se inyecta para
+// que el adapter conmute de proveedor en vivo al editarse la config desde
+// el admin UI (R6, hot reload).
+func NewHandler(redisClient *redis.Client, ctxProvider *ContextProvider, factory *llm.Factory) *Handler {
 	executor := newToolExecutor()
 	return &Handler{
 		redis:    redisClient,
 		repo:     NewConversationRepository(),
 		executor: executor,
-		gemini:   newGeminiAdapter(ctxProvider, executor),
+		gemini:   newGeminiAdapter(factory, ctxProvider, executor),
 	}
 }
 

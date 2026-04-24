@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"cloud.google.com/go/vertexai/genai"
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
 	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 	"github.com/redis/go-redis/v9"
 )
@@ -52,9 +52,9 @@ func StartDigestScheduler(_ *redis.Client) {
 // ─────────────────────────────────────────────
 
 // SendDigest queries new WhatsApp conversations since the last digest, summarizes long ones
-// with Gemini, and emails a digest to info@fabricalaser.com.
+// usando el LLM activo, y emails a digest to info@fabricalaser.com.
 // Returns nil without sending if there are no new messages.
-func SendDigest(rc *redis.Client) error {
+func SendDigest(rc *redis.Client, factory *llm.Factory) error {
 	since := getLastSent(rc)
 	sentAt := time.Now()
 
@@ -72,9 +72,9 @@ func SendDigest(rc *redis.Client) error {
 
 	groups := groupByPhone(messages)
 
-	// Resumir conversaciones largas con Gemini
-	if err := summarizeGroups(groups); err != nil {
-		log.Printf("[WhatsApp digest] Gemini summarization partial error: %v", err)
+	// Resumir conversaciones largas con el LLM activo
+	if err := summarizeGroups(groups, factory); err != nil {
+		log.Printf("[WhatsApp digest] LLM summarization partial error: %v", err)
 	}
 
 	body := buildEmailBody(groups, since, sentAt)
@@ -114,11 +114,11 @@ func groupByPhone(messages []repository.DigestMessage) []phoneGroup {
 }
 
 // ─────────────────────────────────────────────
-// Gemini summarization
+// LLM summarization
 // ─────────────────────────────────────────────
 
-func summarizeGroups(groups []phoneGroup) error {
-	// Check if any group needs summarization before creating the client
+func summarizeGroups(groups []phoneGroup, factory *llm.Factory) error {
+	// Check if any group needs summarization before touching the factory
 	needsSummary := false
 	for _, g := range groups {
 		if len(g.messages) > summaryThreshold {
@@ -130,14 +130,14 @@ func summarizeGroups(groups []phoneGroup) error {
 		return nil
 	}
 
+	if factory == nil {
+		return fmt.Errorf("llm factory is nil")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	client, err := genai.NewClient(ctx, waProjectID, waLocation)
-	if err != nil {
-		return fmt.Errorf("vertex ai client: %w", err)
-	}
-	defer client.Close()
+	client := factory.Client()
 
 	const maxConcurrent = 3
 	sem := make(chan struct{}, maxConcurrent)
@@ -155,9 +155,9 @@ func summarizeGroups(groups []phoneGroup) error {
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			summary, err := geminiSummarize(ctx, client, groups[idx])
+			summary, err := summarizeWithLLM(ctx, client, groups[idx])
 			if err != nil {
-				log.Printf("[WhatsApp digest] Gemini failed for %s: %v — usando mensajes completos", groups[idx].phone, err)
+				log.Printf("[WhatsApp digest] LLM failed for %s: %v — usando mensajes completos", groups[idx].phone, err)
 				return
 			}
 			mu.Lock()
@@ -170,12 +170,8 @@ func summarizeGroups(groups []phoneGroup) error {
 	return nil
 }
 
-func geminiSummarize(ctx context.Context, client *genai.Client, g phoneGroup) (string, error) {
-	model := client.GenerativeModel(waModelName)
-	model.SetTemperature(0.2)
-	model.SetMaxOutputTokens(2048)
-
-	// Limitar a los últimos 40 mensajes para no exceder el contexto de Gemini
+func summarizeWithLLM(ctx context.Context, client llm.Client, g phoneGroup) (string, error) {
+	// Limitar a los últimos 40 mensajes para no exceder el contexto
 	msgs := g.messages
 	const maxMsgsForSummary = 40
 	truncated := len(msgs) > maxMsgsForSummary
@@ -206,21 +202,21 @@ Escribí en español directo, como si le hablaras al asesor de igual a igual. Si
 %sConversación (%d mensajes):
 %s`, contextNote, len(msgs), conv.String())
 
-	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
+	resp, err := client.Chat(ctx,
+		"",
+		[]llm.Message{{Role: llm.RoleUser, Content: prompt}},
+		nil,
+		llm.WithTemperature(0.2),
+		llm.WithMaxTokens(1024),
+	)
 	if err != nil {
 		return "", err
 	}
-	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
+	result := strings.TrimSpace(resp.Content)
+	if result == "" {
 		return "", fmt.Errorf("empty response")
 	}
-
-	var result strings.Builder
-	for _, part := range resp.Candidates[0].Content.Parts {
-		if text, ok := part.(genai.Text); ok {
-			result.WriteString(string(text))
-		}
-	}
-	return strings.TrimSpace(result.String()), nil
+	return result, nil
 }
 
 // ─────────────────────────────────────────────

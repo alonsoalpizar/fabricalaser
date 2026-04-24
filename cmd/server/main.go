@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
 	"github.com/alonsoalpizar/fabricalaser/internal/config"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers"
+	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 	"github.com/alonsoalpizar/fabricalaser/internal/whatsapp"
 	"github.com/joho/godotenv"
 )
@@ -51,8 +53,24 @@ func main() {
 	// Start WhatsApp digest email scheduler (every 4 hours)
 	whatsapp.StartDigestScheduler(redisClient)
 
+	// LLM factory — único cliente activo compartido por todos los handlers
+	// (chat web, WhatsApp, Telegram, admin chat). Permite hot reload de proveedor
+	// desde el admin UI sin reiniciar el servicio.
+	appSecret := os.Getenv("FABRICALASER_APP_SECRET")
+	if appSecret == "" {
+		appSecret = os.Getenv("APP_SECRET")
+	}
+	if appSecret == "" {
+		log.Fatalf("APP_SECRET (o FABRICALASER_APP_SECRET) requerido para inicializar LLM factory")
+	}
+	sysConfigRepo := repository.NewSystemConfigRepository()
+	llmFactory, err := llm.NewFactory(sysConfigRepo, appSecret)
+	if err != nil {
+		log.Fatalf("LLM factory: %v", err)
+	}
+
 	// Setup router
-	router := handlers.NewRouter(redisClient)
+	router := handlers.NewRouter(redisClient, llmFactory)
 
 	// Start server
 	addr := ":" + cfg.Port

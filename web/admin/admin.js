@@ -509,6 +509,10 @@ function renderSidebar(activePage = 'dashboard') {
           ${icons.tech}
           <span>Velocidades</span>
         </a>
+        <a href="/admin/configuracion-llm.html" class="nav-item ${activePage === 'llm-config' ? 'active' : ''}" data-page="llm-config">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><circle cx="8" cy="16" r="1"></circle><circle cx="16" cy="16" r="1"></circle></svg>
+          <span>Configuración LLM</span>
+        </a>
       </div>
 
       <div class="nav-section">

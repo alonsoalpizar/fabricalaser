@@ -6,28 +6,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"cloud.google.com/go/vertexai/genai"
 	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
 )
 
 const (
-	waProjectID = "div-aloalpizar"
-	waLocation  = "us-central1"
-	waModelName = "gemini-2.5-flash"
-
-	toolLoopMax     = 5
-	estimateURL     = "http://localhost:8083/api/v1/quotes/estimate"
+	toolLoopMax       = 5
+	estimateURL       = "http://localhost:8083/api/v1/quotes/estimate"
 	consultarBlankURL = "http://localhost:8083/api/v1/blanks/consultar"
-	httpToolTimeout = 10 * time.Second
+	httpToolTimeout   = 10 * time.Second
 )
 
 // systemPromptWA — prompt para el agente de WhatsApp de FabricaLaser.
@@ -239,7 +232,7 @@ Reglas para imágenes:
 - No des precios ni estimados basados en la imagen`
 
 type geminiAdapter struct {
-	client          *genai.Client
+	factory         *llm.Factory
 	contextProvider *agentctx.Provider
 	sender          *Sender
 	tgSender        *tgSenderAdapter
@@ -278,14 +271,10 @@ func jsonEscapeString(s string) string {
 }
 
 // NewGeminiAdapter crea un GeminiCaller con soporte de tools y contexto dinámico.
-func NewGeminiAdapter(provider *agentctx.Provider) GeminiCaller {
-	ctx := context.Background()
-	client, err := genai.NewClient(ctx, waProjectID, waLocation)
-	if err != nil {
-		log.Fatalf("whatsapp: failed to create Vertex AI client: %v", err)
-	}
+// Recibe un llm.Factory para obtener el cliente activo en cada request (hot reload friendly).
+func NewGeminiAdapter(factory *llm.Factory, provider *agentctx.Provider) GeminiCaller {
 	return &geminiAdapter{
-		client:          client,
+		factory:         factory,
 		contextProvider: provider,
 		sender:          NewSender(),
 		tgSender: &tgSenderAdapter{
@@ -301,7 +290,7 @@ func (g *geminiAdapter) CallWithHistory(ctx context.Context, history []ChatTurn,
 }
 
 // SummarizeConversation genera un resumen conciso de la conversación para el asesor.
-// Usa un modelo sin tools y con temperatura baja para obtener un resumen factual.
+// Usa temperatura baja y sin tools para obtener un resumen factual.
 func (g *geminiAdapter) SummarizeConversation(ctx context.Context, history []ChatTurn) (string, error) {
 	if len(history) == 0 {
 		return "", nil
@@ -324,285 +313,265 @@ func (g *geminiAdapter) SummarizeConversation(ctx context.Context, history []Cha
 		"y si mostró intención de compra. Solo datos concretos, sin adornos.\n\n" +
 		"Conversación:\n" + sb.String()
 
-	model := g.client.GenerativeModel(waModelName)
-	model.SetTemperature(0.1)
-	model.SetMaxOutputTokens(300)
-
 	ctxTimeout, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
-	resp, err := model.GenerateContent(ctxTimeout, genai.Text(prompt))
+	client := g.factory.Client()
+	resp, err := client.Chat(ctxTimeout,
+		"",
+		[]llm.Message{{Role: llm.RoleUser, Content: prompt}},
+		nil,
+		llm.WithTemperature(0.1),
+		llm.WithMaxTokens(300),
+	)
 	if err != nil {
 		return "", fmt.Errorf("SummarizeConversation: %w", err)
 	}
-	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-		return "", nil
-	}
-	if txt, ok := resp.Candidates[0].Content.Parts[0].(genai.Text); ok {
-		return strings.TrimSpace(string(txt)), nil
-	}
-	return "", nil
+	return strings.TrimSpace(resp.Content), nil
 }
 
-// CallWithTools llama a Gemini con historial, tools habilitadas y contexto dinámico.
+// buildSystemPrompt compone el system prompt para WhatsApp con el contexto dinámico
+// y el contexto del usuario (registrado o no).
+func (g *geminiAdapter) buildSystemPrompt(userCtx string) string {
+	dynCtx := g.contextProvider.GetDynamicContext()
+	return systemPromptWA + dynCtx + userCtx
+}
+
+// convertHistoryToLLMMessages transforma []ChatTurn a []llm.Message.
+// ChatTurn.Role es "user" o "model" — alineado con llm.RoleUser/RoleModel.
+func convertHistoryToLLMMessages(history []ChatTurn) []llm.Message {
+	out := make([]llm.Message, 0, len(history))
+	for _, t := range history {
+		role := llm.RoleUser
+		if t.Role == "model" {
+			role = llm.RoleModel
+		}
+		out = append(out, llm.Message{
+			Role:    role,
+			Content: t.Content,
+		})
+	}
+	return out
+}
+
+// CallWithTools llama al LLM con historial, tools habilitadas y contexto dinámico.
 // Ejecuta el loop de tool calling hasta toolLoopMax iteraciones.
 func (g *geminiAdapter) CallWithTools(ctx context.Context, phone string, history []ChatTurn, newMessage string, userCtx string) (string, error) {
-	model := g.client.GenerativeModel(waModelName)
+	systemPrompt := g.buildSystemPrompt(userCtx)
 
-	dynCtx := g.contextProvider.GetDynamicContext()
-	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{genai.Text(systemPromptWA + dynCtx + userCtx)},
-	}
-	model.Tools = []*genai.Tool{{
-		FunctionDeclarations: []*genai.FunctionDeclaration{
-			calcularCotizacionTool(),
-			consultarBlankTool(),
-			escalarAHumanoTool(),
-		},
-	}}
-	model.SetTemperature(0.3)
-	model.SetTopP(0.95)
-	model.SetMaxOutputTokens(1024)
+	// Construir historial para el LLM
+	llmHistory := convertHistoryToLLMMessages(history)
+	llmHistory = append(llmHistory, llm.Message{
+		Role:    llm.RoleUser,
+		Content: newMessage,
+	})
 
-	chat := model.StartChat()
-	for _, turn := range history {
-		chat.History = append(chat.History, &genai.Content{
-			Role:  turn.Role,
-			Parts: []genai.Part{genai.Text(turn.Content)},
-		})
-	}
+	tools := llmTools()
 
-	// Primer turno también con retry ante 429
-	resp, err := sendWithRetry(ctx, chat, genai.Text(newMessage))
-	if err != nil {
-		return "", fmt.Errorf("geminiAdapter: error llamando al modelo: %w", err)
-	}
+	for iter := 0; iter < toolLoopMax; iter++ {
+		client := g.factory.Client() // hot reload friendly
+		resp, err := client.Chat(ctx, systemPrompt, llmHistory, tools,
+			llm.WithTemperature(0.3),
+			llm.WithTopP(0.95),
+			llm.WithMaxTokens(1024),
+		)
+		if err != nil {
+			return "", fmt.Errorf("geminiAdapter: error llamando al modelo: %w", err)
+		}
 
-	// Loop de tool calling
-	for i := 0; i < toolLoopMax; i++ {
-		if len(resp.Candidates) == 0 || resp.Candidates[0].Content == nil {
+		// Sin tool calls → respuesta final
+		if len(resp.ToolCalls) == 0 {
+			if strings.TrimSpace(resp.Content) != "" {
+				return resp.Content, nil
+			}
 			break
 		}
 
-		// Buscar FunctionCall en los parts de la respuesta
-		var fc *genai.FunctionCall
-		for _, part := range resp.Candidates[0].Content.Parts {
-			if call, ok := part.(genai.FunctionCall); ok {
-				fc = &call
-				break
-			}
-		}
-
-		if fc == nil {
-			// Sin tool call → extraer texto y retornar
-			var sb strings.Builder
-			for _, part := range resp.Candidates[0].Content.Parts {
-				if text, ok := part.(genai.Text); ok {
-					sb.WriteString(string(text))
-				}
-			}
-			if sb.Len() > 0 {
-				return sb.String(), nil
-			}
-			// Respuesta vacía — salir del loop y usar fallback
-			break
-		}
-
-		// Ejecutar la función
-		result, err := g.executeFunction(ctx, phone, fc)
-		if err != nil {
-			slog.Error("geminiAdapter: error ejecutando tool", "tool", fc.Name, "error", err)
-			result = map[string]any{"error": err.Error()}
-		}
-
-		// Enviar FunctionResponse al modelo (con retry en caso de 429)
-		resp, err = sendWithRetry(ctx, chat, genai.FunctionResponse{
-			Name:     fc.Name,
-			Response: result,
+		// Agregar la respuesta del modelo al history (con sus tool_calls)
+		llmHistory = append(llmHistory, llm.Message{
+			Role:      llm.RoleModel,
+			Content:   resp.Content,
+			ToolCalls: resp.ToolCalls,
 		})
-		if err != nil {
-			return "", fmt.Errorf("geminiAdapter: error enviando FunctionResponse: %w", err)
-		}
-	}
 
-	// Extraer texto del último resp
-	if len(resp.Candidates) > 0 && resp.Candidates[0].Content != nil {
-		var sb strings.Builder
-		for _, part := range resp.Candidates[0].Content.Parts {
-			if text, ok := part.(genai.Text); ok {
-				sb.WriteString(string(text))
+		// Ejecutar cada tool y agregar resultados al history
+		for _, tc := range resp.ToolCalls {
+			result, err := g.executeToolCall(ctx, phone, tc)
+			if err != nil {
+				slog.Error("geminiAdapter: error ejecutando tool", "tool", tc.Name, "error", err)
+				result = fmt.Sprintf(`{"error":%s}`, jsonEscapeString(err.Error()))
 			}
-		}
-		if sb.Len() > 0 {
-			return sb.String(), nil
+			llmHistory = append(llmHistory, llm.Message{
+				Role:       llm.RoleTool,
+				Content:    result,
+				ToolCallID: tc.ID, // crítico para OpenAI/Anthropic (R11); Vertex ignora
+			})
 		}
 	}
 
 	return "Hubo un problema procesando tu consulta. Por favor escribinos al +506 7018-3073.", nil
 }
 
-// CallWithImage llama a Gemini con historial y una imagen inline (sin tools).
+// CallWithImage llama al LLM con historial y una imagen inline (sin tools).
 // Usa systemPromptImagen adicional para guiar el análisis de la imagen.
 func (g *geminiAdapter) CallWithImage(ctx context.Context, phone string, history []ChatTurn, imageBytes []byte, mimeType string, caption string, userCtx string) (string, error) {
-	model := g.client.GenerativeModel(waModelName)
+	// Para imágenes: systemPromptWA + systemPromptImagen + contexto dinámico + contexto usuario
+	// (mismo orden que el prompt histórico pre-migración)
+	_ = phone
+	systemPrompt := systemPromptWA + systemPromptImagen + g.contextProvider.GetDynamicContext() + userCtx
 
-	dynCtx := g.contextProvider.GetDynamicContext()
-	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{genai.Text(systemPromptWA + systemPromptImagen + dynCtx + userCtx)},
-	}
-	// Sin tools — solo análisis visual y respuesta de texto
-	model.SetTemperature(0.7)
-	model.SetTopP(0.95)
-	model.SetMaxOutputTokens(512)
+	llmHistory := convertHistoryToLLMMessages(history)
 
-	chat := model.StartChat()
-	for _, turn := range history {
-		chat.History = append(chat.History, &genai.Content{
-			Role:  turn.Role,
-			Parts: []genai.Part{genai.Text(turn.Content)},
-		})
+	// Mensaje del usuario con imagen + caption (puede ser vacío)
+	userMsg := llm.Message{
+		Role:    llm.RoleUser,
+		Content: caption,
+		Images:  []llm.ImageBlob{{MIMEType: mimeType, Data: imageBytes}},
 	}
+	if caption == "" {
+		userMsg.Content = "El cliente mandó esta imagen."
+	}
+	llmHistory = append(llmHistory, userMsg)
 
-	// Construir mensaje con imagen + texto
-	parts := []genai.Part{
-		genai.Blob{MIMEType: mimeType, Data: imageBytes},
-	}
-	if caption != "" {
-		parts = append(parts, genai.Text(caption))
-	} else {
-		parts = append(parts, genai.Text("El cliente mandó esta imagen."))
-	}
-
-	resp, err := chat.SendMessage(ctx, parts...)
+	client := g.factory.Client()
+	resp, err := client.Chat(ctx, systemPrompt, llmHistory, nil,
+		llm.WithTemperature(0.7),
+		llm.WithTopP(0.95),
+		llm.WithMaxTokens(512),
+	)
 	if err != nil {
 		return "", fmt.Errorf("geminiAdapter: error llamando al modelo con imagen: %w", err)
 	}
 
-	if len(resp.Candidates) > 0 && resp.Candidates[0].Content != nil {
-		var sb strings.Builder
-		for _, part := range resp.Candidates[0].Content.Parts {
-			if text, ok := part.(genai.Text); ok {
-				sb.WriteString(string(text))
-			}
-		}
-		if sb.Len() > 0 {
-			return sb.String(), nil
-		}
+	if strings.TrimSpace(resp.Content) != "" {
+		return resp.Content, nil
 	}
-
 	return "No pude analizar la imagen. ¿Me podés describir qué querés hacer?", nil
 }
 
 // ─── Tool Definitions ────────────────────────────────────────────────────────
 
-func calcularCotizacionTool() *genai.FunctionDeclaration {
-	return &genai.FunctionDeclaration{
-		Name:        "calcular_cotizacion",
-		Description: "Calcula el precio estimado de un trabajo de grabado o corte láser según las medidas del área de trabajo. Usar cuando el cliente ya proporcionó material, medidas y cantidad.",
-		Parameters: &genai.Schema{
-			Type: genai.TypeObject,
-			Properties: map[string]*genai.Schema{
-				"alto_cm": {
-					Type:        genai.TypeNumber,
-					Description: "Alto del área a grabar o cortar, en centímetros",
+// llmTools retorna las 3 tools disponibles para el agente de WhatsApp en formato
+// JSON Schema estándar (R7). El adapter Vertex traduce internamente a genai.Schema.
+func llmTools() []llm.ToolDef {
+	return []llm.ToolDef{
+		{
+			Name:        "calcular_cotizacion",
+			Description: "Calcula el precio estimado de un trabajo de grabado o corte láser según las medidas del área de trabajo. Usar cuando el cliente ya proporcionó material, medidas y cantidad.",
+			Parameters: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"alto_cm": map[string]any{
+						"type":        "number",
+						"description": "Alto del área a grabar o cortar, en centímetros",
+					},
+					"ancho_cm": map[string]any{
+						"type":        "number",
+						"description": "Ancho del área a grabar o cortar, en centímetros",
+					},
+					"cantidad": map[string]any{
+						"type":        "integer",
+						"description": "Número de unidades a producir",
+					},
+					"technology_id": map[string]any{
+						"type":        "integer",
+						"description": "ID de la tecnología láser a usar (ver IDs al final del system prompt)",
+					},
+					"material_id": map[string]any{
+						"type":        "integer",
+						"description": "ID del material a trabajar (ver IDs al final del system prompt)",
+					},
+					"engrave_type_id": map[string]any{
+						"type":        "integer",
+						"description": "ID del tipo de grabado: 1=Vectorial, 2=Rasterizado, 3=Fotograbado, 4=3D/Relieve. Default: 1",
+					},
+					"thickness": map[string]any{
+						"type":        "number",
+						"description": "Grosor del material en milímetros. Default: 3.0",
+					},
+					"material_included": map[string]any{
+						"type":        "boolean",
+						"description": "true si FabricaLaser provee el material, false si el cliente lo trae",
+					},
+					"incluye_corte": map[string]any{
+						"type":        "boolean",
+						"description": "true si el trabajo incluye corte del perímetro además del grabado",
+					},
+					"cut_technology_id": map[string]any{
+						"type":        "integer",
+						"description": "ID de tecnología para el corte cuando es diferente a la tecnología de grabado. Usar SOLO en Caso 3B: cuando el cliente quiere grabar con UV y cortar con CO2 (acrílico o plástico con grabado+corte). En todos los demás casos omitir este campo.",
+					},
 				},
-				"ancho_cm": {
-					Type:        genai.TypeNumber,
-					Description: "Ancho del área a grabar o cortar, en centímetros",
-				},
-				"cantidad": {
-					Type:        genai.TypeInteger,
-					Description: "Número de unidades a producir",
-				},
-				"technology_id": {
-					Type:        genai.TypeInteger,
-					Description: "ID de la tecnología láser a usar (ver IDs al final del system prompt)",
-				},
-				"material_id": {
-					Type:        genai.TypeInteger,
-					Description: "ID del material a trabajar (ver IDs al final del system prompt)",
-				},
-				"engrave_type_id": {
-					Type:        genai.TypeInteger,
-					Description: "ID del tipo de grabado: 1=Vectorial, 2=Rasterizado, 3=Fotograbado, 4=3D/Relieve. Default: 1",
-				},
-				"thickness": {
-					Type:        genai.TypeNumber,
-					Description: "Grosor del material en milímetros. Default: 3.0",
-				},
-				"material_included": {
-					Type:        genai.TypeBoolean,
-					Description: "true si FabricaLaser provee el material, false si el cliente lo trae",
-				},
-				"incluye_corte": {
-					Type:        genai.TypeBoolean,
-					Description: "true si el trabajo incluye corte del perímetro además del grabado",
-				},
-				"cut_technology_id": {
-					Type:        genai.TypeInteger,
-					Description: "ID de tecnología para el corte cuando es diferente a la tecnología de grabado. Usar SOLO en Caso 3B: cuando el cliente quiere grabar con UV y cortar con CO2 (acrílico o plástico con grabado+corte). En todos los demás casos omitir este campo.",
-				},
+				"required": []string{"alto_cm", "ancho_cm", "cantidad", "technology_id", "material_id", "material_included", "incluye_corte"},
 			},
-			Required: []string{"alto_cm", "ancho_cm", "cantidad", "technology_id", "material_id", "material_included", "incluye_corte"},
 		},
-	}
-}
-
-func escalarAHumanoTool() *genai.FunctionDeclaration {
-	return &genai.FunctionDeclaration{
-		Name:        "escalar_a_humano",
-		Description: "Envía al asesor de ventas un resumen de la conversación cuando el cliente está listo para hacer el pedido o necesita atención personalizada.",
-		Parameters: &genai.Schema{
-			Type: genai.TypeObject,
-			Properties: map[string]*genai.Schema{
-				"resumen": {
-					Type:        genai.TypeString,
-					Description: "Resumen del contexto de la conversación: qué quiere el cliente, producto, medidas, cantidad, precio estimado si se calculó",
+		{
+			Name:        "consultar_blank",
+			Description: "Consulta precio y disponibilidad de un blank (producto preconfigurado) del catálogo de FabricaLaser, como llaveros o medallas. Usar cuando el cliente pregunte por estos productos.",
+			Parameters: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"categoria": map[string]any{
+						"type":        "string",
+						"description": "Categoría del blank: 'llavero', 'medalla', etc.",
+					},
+					"cantidad": map[string]any{
+						"type":        "integer",
+						"description": "Cantidad de unidades que el cliente quiere",
+					},
+					"blank_id": map[string]any{
+						"type":        "integer",
+						"description": "ID específico del blank. Usar 0 (o no incluir) si no se conoce — el tool retorna todas las opciones de la categoría",
+					},
 				},
+				"required": []string{"categoria", "cantidad"},
 			},
-			Required: []string{"resumen"},
 		},
-	}
-}
-
-func consultarBlankTool() *genai.FunctionDeclaration {
-	return &genai.FunctionDeclaration{
-		Name:        "consultar_blank",
-		Description: "Consulta precio y disponibilidad de un blank (producto preconfigurado) del catálogo de FabricaLaser, como llaveros o medallas. Usar cuando el cliente pregunte por estos productos.",
-		Parameters: &genai.Schema{
-			Type: genai.TypeObject,
-			Properties: map[string]*genai.Schema{
-				"categoria": {
-					Type:        genai.TypeString,
-					Description: "Categoría del blank: 'llavero', 'medalla', etc.",
+		{
+			Name:        "escalar_a_humano",
+			Description: "Envía al asesor de ventas un resumen de la conversación cuando el cliente está listo para hacer el pedido o necesita atención personalizada.",
+			Parameters: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"resumen": map[string]any{
+						"type":        "string",
+						"description": "Resumen del contexto de la conversación: qué quiere el cliente, producto, medidas, cantidad, precio estimado si se calculó",
+					},
 				},
-				"cantidad": {
-					Type:        genai.TypeInteger,
-					Description: "Cantidad de unidades que el cliente quiere",
-				},
-				"blank_id": {
-					Type:        genai.TypeInteger,
-					Description: "ID específico del blank. Usar 0 (o no incluir) si no se conoce — el tool retorna todas las opciones de la categoría",
-				},
+				"required": []string{"resumen"},
 			},
-			Required: []string{"categoria", "cantidad"},
 		},
 	}
 }
 
 // ─── Tool Execution ──────────────────────────────────────────────────────────
 
-func (g *geminiAdapter) executeFunction(ctx context.Context, clientPhone string, fc *genai.FunctionCall) (map[string]any, error) {
-	switch fc.Name {
+// executeToolCall dispatcha la ejecución según el nombre de la tool y retorna
+// el resultado serializado como JSON string (el formato que el LLM recibe en
+// el turno Role=Tool).
+func (g *geminiAdapter) executeToolCall(ctx context.Context, clientPhone string, tc llm.ToolCall) (string, error) {
+	var (
+		result map[string]any
+		err    error
+	)
+	switch tc.Name {
 	case "calcular_cotizacion":
-		return g.execCalcCotizacion(ctx, fc.Args)
+		result, err = g.execCalcCotizacion(ctx, tc.Args)
 	case "consultar_blank":
-		return g.execConsultarBlank(ctx, fc.Args)
+		result, err = g.execConsultarBlank(ctx, tc.Args)
 	case "escalar_a_humano":
-		return g.execEscalarAHumano(ctx, clientPhone, fc.Args)
+		result, err = g.execEscalarAHumano(ctx, clientPhone, tc.Args)
 	default:
-		return nil, fmt.Errorf("tool desconocida: %s", fc.Name)
+		return "", fmt.Errorf("tool desconocida: %s", tc.Name)
 	}
+	if err != nil {
+		return "", err
+	}
+	buf, mErr := json.Marshal(result)
+	if mErr != nil {
+		return "", fmt.Errorf("executeToolCall: error serializando resultado: %w", mErr)
+	}
+	return string(buf), nil
 }
 
 func (g *geminiAdapter) execCalcCotizacion(ctx context.Context, args map[string]any) (map[string]any, error) {
@@ -742,47 +711,4 @@ func (g *geminiAdapter) execEscalarAHumano(ctx context.Context, clientPhone stri
 		"cliente", clientPhone,
 	)
 	return map[string]any{"enviado": true}, nil
-}
-
-// ─── Retry helper ────────────────────────────────────────────────────────────
-
-// sendWithRetry envía un mensaje al chat con reintentos exponenciales ante errores 429.
-// Vertex AI puede retornar ResourceExhausted (429) en el segundo turno del tool loop
-// cuando se envía el FunctionResponse. Hasta 3 reintentos: 2s, 4s, 8s.
-func sendWithRetry(ctx context.Context, chat *genai.ChatSession, part genai.Part) (*genai.GenerateContentResponse, error) {
-	delays := []time.Duration{2 * time.Second, 4 * time.Second, 8 * time.Second}
-
-	var lastErr error
-	for attempt := 0; attempt <= len(delays); attempt++ {
-		resp, err := chat.SendMessage(ctx, part)
-		if err == nil {
-			return resp, nil
-		}
-
-		st, ok := status.FromError(err)
-		if !ok || st.Code() != codes.ResourceExhausted {
-			// Error no recuperable — retornar de inmediato
-			return nil, err
-		}
-
-		if attempt == len(delays) {
-			lastErr = err
-			break
-		}
-
-		slog.Warn("geminiAdapter: Vertex AI 429 — reintentando",
-			"attempt", attempt+1,
-			"wait", delays[attempt],
-		)
-
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-time.After(delays[attempt]):
-		}
-
-		lastErr = err
-	}
-
-	return nil, fmt.Errorf("sendWithRetry: agotados los reintentos tras 429: %w", lastErr)
 }

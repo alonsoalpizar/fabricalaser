@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"cloud.google.com/go/vertexai/genai"
 	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 )
 
@@ -250,12 +250,6 @@ Los links en formato markdown garantizan que sean clickeables en el chat.
 - No inventés información que no tenés — mejor decirlo y mandar al WhatsApp o Telegram
 - Si preguntan cosas que no son del negocio, redirigí amablemente al tema`
 
-var (
-	projectID = "div-aloalpizar"
-	location  = "us-central1"
-	modelName = "gemini-2.5-flash"
-)
-
 // ChatRequest represents an incoming chat message
 type ChatRequest struct {
 	Message string         `json:"message"`
@@ -276,25 +270,22 @@ type ChatResponse struct {
 
 // Handler handles chat requests
 type Handler struct {
+	factory         *llm.Factory
 	contextProvider *agentctx.Provider
-	genai           *genai.Client
 }
 
-// NewHandler creates a new chat handler with a shared Vertex AI client and
-// a shared agentctx.Provider (mismo que usan los agentes de WhatsApp/Telegram).
-func NewHandler(provider *agentctx.Provider) *Handler {
-	ctx := context.Background()
-	client, err := genai.NewClient(ctx, projectID, location)
-	if err != nil {
-		log.Fatalf("chat: failed to create Vertex AI client: %v", err)
-	}
+// NewHandler creates a new chat handler con el factory de LLM compartido y
+// un agentctx.Provider (mismo que usan los agentes de WhatsApp/Telegram).
+// El cliente LLM se obtiene on-demand via factory.Client() en cada request,
+// lo que permite hot reload de proveedor sin reiniciar el servicio.
+func NewHandler(factory *llm.Factory, provider *agentctx.Provider) *Handler {
 	return &Handler{
+		factory:         factory,
 		contextProvider: provider,
-		genai:           client,
 	}
 }
 
-// HandleChat processes a chat message via Vertex AI
+// HandleChat processes a chat message via el Client LLM activo
 func (h *Handler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	var req ChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -315,9 +306,9 @@ func (h *Handler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	dynCtx := h.contextProvider.GetDynamicContext()
-	response, err := h.callGemini(ctx, req.Message, req.History, userName, dynCtx)
+	response, err := h.callLLM(ctx, req.Message, req.History, userName, dynCtx)
 	if err != nil {
-		log.Printf("Gemini error: %v", err)
+		log.Printf("LLM error: %v", err)
 		sendError(w, "Error procesando la solicitud", http.StatusInternalServerError)
 		return
 	}
@@ -364,9 +355,10 @@ func persistWebTurns(userID uint, userMsg, modelMsg string) {
 	}
 }
 
-func (h *Handler) callGemini(ctx context.Context, message string, history []HistoryEntry, userName string, dynCtx string) (string, error) {
-	model := h.genai.GenerativeModel(modelName)
-
+// callLLM construye el system prompt según auth state, arma el historial en formato
+// llm.Message y envía la conversación al cliente LLM activo via h.factory.Client().
+// No utiliza tools — el chat web aún no las soporta (ver roadmap paso 3).
+func (h *Handler) callLLM(ctx context.Context, message string, history []HistoryEntry, userName string, dynCtx string) (string, error) {
 	// Choose instruction based on auth state, then append live DB context
 	var instruction string
 	if userName == "" {
@@ -377,48 +369,37 @@ func (h *Handler) callGemini(ctx context.Context, message string, history []Hist
 			dynCtx
 	}
 
-	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{genai.Text(instruction)},
-	}
-	model.SetTemperature(0.7)
-	model.SetTopP(0.95)
-	model.SetMaxOutputTokens(2048)
-
-	chat := model.StartChat()
-
-	for _, h := range history {
-		role := "user"
-		if h.Role == "assistant" {
-			role = "model"
+	// Traducir history a []llm.Message: "user" -> RoleUser, "assistant"/"model" -> RoleModel
+	llmHistory := make([]llm.Message, 0, len(history)+1)
+	for _, entry := range history {
+		role := llm.RoleUser
+		if entry.Role == "assistant" || entry.Role == "model" {
+			role = llm.RoleModel
 		}
-		chat.History = append(chat.History, &genai.Content{
-			Role:  role,
-			Parts: []genai.Part{genai.Text(h.Content)},
+		llmHistory = append(llmHistory, llm.Message{
+			Role:    role,
+			Content: entry.Content,
 		})
 	}
 
-	resp, err := chat.SendMessage(ctx, genai.Text(message))
+	// El mensaje actual del usuario va como último turno
+	llmHistory = append(llmHistory, llm.Message{
+		Role:    llm.RoleUser,
+		Content: message,
+	})
+
+	// Hot reload friendly: cada request obtiene el cliente actual desde el factory
+	client := h.factory.Client()
+	resp, err := client.Chat(ctx, instruction, llmHistory, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to send message: %w", err)
 	}
 
-	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
+	if resp == nil || strings.TrimSpace(resp.Content) == "" {
 		return "", fmt.Errorf("empty response from model")
 	}
 
-	candidate := resp.Candidates[0]
-	if candidate.FinishReason == genai.FinishReasonMaxTokens {
-		log.Printf("chat: respuesta cortada por límite de tokens (MaxOutputTokens=%d)", 2048)
-	}
-
-	var result strings.Builder
-	for _, part := range candidate.Content.Parts {
-		if text, ok := part.(genai.Text); ok {
-			result.WriteString(string(text))
-		}
-	}
-
-	return result.String(), nil
+	return resp.Content, nil
 }
 
 // SummaryRequest represents the conversation history to summarize
@@ -454,12 +435,7 @@ func (h *Handler) HandleSummary(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
-	model := h.genai.GenerativeModel(modelName)
-	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{genai.Text("Sos un asistente especializado en resumir conversaciones de ventas para traspasar contexto a un asesor humano. Respondé solo con el resumen estructurado, sin saludos, sin explicaciones adicionales.")},
-	}
-	model.SetTemperature(0.2)
-	model.SetMaxOutputTokens(700)
+	systemSummary := "Sos un asistente especializado en resumir conversaciones de ventas para traspasar contexto a un asesor humano. Respondé solo con el resumen estructurado, sin saludos, sin explicaciones adicionales."
 
 	prompt := `Analizá la conversación completa y generá un resumen estructurado para el asesor de FabricaLaser que va a atender al cliente por WhatsApp.
 
@@ -482,22 +458,18 @@ Reglas:
 Conversación:
 ` + conv.String()
 
-	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
-	if err != nil || len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
+	client := h.factory.Client()
+	resp, err := client.Chat(ctx, systemSummary, []llm.Message{
+		{Role: llm.RoleUser, Content: prompt},
+	}, nil, llm.WithTemperature(0.2), llm.WithMaxTokens(700))
+	if err != nil || resp == nil || strings.TrimSpace(resp.Content) == "" {
 		log.Printf("summary: error from model: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(SummaryResponse{Error: "No se pudo generar el resumen"})
 		return
 	}
 
-	var result strings.Builder
-	for _, part := range resp.Candidates[0].Content.Parts {
-		if text, ok := part.(genai.Text); ok {
-			result.WriteString(string(text))
-		}
-	}
-
-	summary := "Consulta desde el chat de FabricaLaser.com:\n\n" + strings.TrimSpace(result.String())
+	summary := "Consulta desde el chat de FabricaLaser.com:\n\n" + strings.TrimSpace(resp.Content)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(SummaryResponse{Summary: summary})

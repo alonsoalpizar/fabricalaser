@@ -1,4 +1,4 @@
-.PHONY: all build run test clean migrate-up migrate-down seed db-reset deps lint help
+.PHONY: all build run test clean migrate-up migrate-down seed db-reset deps lint help check-llm-isolation
 
 # Variables
 BINARY_NAME=fabricalaser-api
@@ -44,6 +44,19 @@ clean: ## Clean build artifacts
 
 lint: ## Run linter
 	golangci-lint run
+
+check-llm-isolation: ## Verify no LLM SDK imports outside internal/agent/llm/ (R1 del Paso 2)
+	@OUTPUT=$$(grep -rn "vertexai/genai\|anthropic-sdk-go\|sashabaranov/go-openai" \
+	  ./internal/ ./cmd/ --include="*.go" \
+	  | grep -v "internal/agent/llm/" \
+	  | grep -v -E '^[^:]*:[0-9]+:\s*//' \
+	  | grep -v -E '^[^:]*:[0-9]+:\s*\*'); \
+	if [ -n "$$OUTPUT" ]; then \
+	  echo "X R1 violado — imports de SDK LLM fuera de internal/agent/llm/:"; \
+	  echo "$$OUTPUT"; \
+	  exit 1; \
+	fi
+	@echo "OK: No hay imports de SDK LLM fuera de internal/agent/llm/"
 
 # Database commands
 db-create: ## Create PostgreSQL database

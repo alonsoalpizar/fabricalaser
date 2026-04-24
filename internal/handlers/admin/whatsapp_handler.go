@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
 	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 	"github.com/alonsoalpizar/fabricalaser/internal/whatsapp"
 	"github.com/go-chi/chi/v5"
@@ -14,14 +15,16 @@ import (
 )
 
 type WhatsappHandler struct {
-	waRepo *repository.WhatsappRepository
-	rc     *redis.Client
+	waRepo  *repository.WhatsappRepository
+	rc      *redis.Client
+	factory *llm.Factory
 }
 
-func NewWhatsappHandler(rc *redis.Client) *WhatsappHandler {
+func NewWhatsappHandler(rc *redis.Client, factory *llm.Factory) *WhatsappHandler {
 	return &WhatsappHandler{
-		waRepo: repository.NewWhatsappRepository(),
-		rc:     rc,
+		waRepo:  repository.NewWhatsappRepository(),
+		rc:      rc,
+		factory: factory,
 	}
 }
 
@@ -173,7 +176,7 @@ func (h *WhatsappHandler) GetConversation(w http.ResponseWriter, r *http.Request
 
 // POST /api/v1/admin/whatsapp/digest/send
 func (h *WhatsappHandler) SendDigest(w http.ResponseWriter, r *http.Request) {
-	if err := whatsapp.SendDigest(h.rc); err != nil {
+	if err := whatsapp.SendDigest(h.rc, h.factory); err != nil {
 		respondError(w, http.StatusInternalServerError, "MAIL_ERROR", err.Error())
 		return
 	}

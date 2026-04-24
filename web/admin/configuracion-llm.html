@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuraci&oacute;n LLM | Admin FabricaLaser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css?v=6">
+  <style>
+    /* Page-specific styles usando variables del design system */
+    .llm-hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .llm-hero-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .llm-hero-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .llm-hero-provider {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .llm-hero-model {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+    }
+    .llm-hero-badges {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+      flex-wrap: wrap;
+    }
+    .llm-hero-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+    .llm-test-result {
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.5rem 0.875rem;
+      border-radius: 8px;
+      min-width: 160px;
+      text-align: center;
+    }
+    .llm-test-result.success {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+    .llm-test-result.error {
+      background: var(--error-bg);
+      color: var(--error);
+    }
+    .llm-test-result.pending {
+      background: var(--bg-warm);
+      color: var(--text-muted);
+    }
+
+    .banner {
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .banner svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .banner-success {
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .banner-error {
+      background: var(--error-bg);
+      color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .banner-info {
+      background: var(--info-bg);
+      color: var(--info);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .banner strong { font-weight: 600; }
+    .banner code {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.8125rem;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+    }
+
+    .masked-input-wrap {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .masked-input-wrap .form-input { flex: 1; }
+
+    .form-inline-help {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 0.375rem;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      margin-top: 0.5rem;
+    }
+
+    .provider-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+    .card-section-sub {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 720px) {
+      .llm-hero {
+        grid-template-columns: 1fr;
+      }
+      .llm-hero-right { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="content-header">
+        <div>
+          <h1 class="content-title">Configuraci&oacute;n LLM</h1>
+          <div class="content-breadcrumb">
+            <a href="/admin/">Dashboard</a>
+            <span>/</span>
+            <span>Configuraci&oacute;n LLM</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="content-body">
+        <!-- Banner de resultado (guardar) -->
+        <div id="saveBanner" class="hidden"></div>
+
+        <!-- Tarjeta: Proveedor activo -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-body">
+            <div class="llm-hero" id="activeSection">
+              <div class="llm-hero-left">
+                <span class="llm-hero-label">Proveedor LLM activo</span>
+                <div class="llm-hero-provider" id="activeProvider">
+                  <span class="text-muted" style="font-size: 1rem;">Cargando&hellip;</span>
+                </div>
+                <div class="llm-hero-model" id="activeModel">&mdash;</div>
+                <div class="llm-hero-badges" id="activeBadges"></div>
+              </div>
+              <div class="llm-hero-right">
+                <button type="button" class="btn btn-secondary" id="btnTestActive" onclick="testActive()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                  </svg>
+                  Probar conexi&oacute;n
+                </button>
+                <div id="activeTestResult" class="hidden llm-test-result"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjeta: Cambiar configuracion -->
+        <div class="card">
+          <div class="card-body">
+            <div class="card-section-title">Cambiar configuraci&oacute;n</div>
+            <div class="card-section-sub">
+              Seleccion&aacute; un proveedor y complet&aacute; las credenciales. El cambio es at&oacute;mico:
+              si la validaci&oacute;n falla, el cliente actual sigue activo.
+            </div>
+
+            <form id="llmForm" onsubmit="saveConfig(event)">
+              <!-- Provider -->
+              <div class="form-group">
+                <label class="form-label" for="provider">Proveedor *</label>
+                <select class="form-select" id="provider" required onchange="handleProviderChange()">
+                  <option value="vertex">Vertex AI (Gemini)</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="deepseek">DeepSeek</option>
+                  <option value="kimi">Kimi (Moonshot)</option>
+                  <option value="anthropic">Anthropic (Claude)</option>
+                </select>
+              </div>
+
+              <!-- Modelo -->
+              <div class="form-group">
+                <label class="form-label" for="model">Modelo</label>
+                <input type="text" class="form-input" id="model" placeholder="gemini-2.5-flash" autocomplete="off">
+                <span class="form-hint">Dejar vac&iacute;o para usar el modelo por defecto del proveedor.</span>
+              </div>
+
+              <!-- Vertex info -->
+              <div id="vertexInfo" class="banner banner-info hidden">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <div>
+                  <strong>Vertex AI</strong> usa las credenciales del servidor (Application Default Credentials).
+                  No requiere API key ni endpoint.
+                </div>
+              </div>
+
+              <!-- API Key -->
+              <div class="form-group" id="apiKeyGroup">
+                <label class="form-label" for="apiKey">API Key</label>
+                <div class="masked-input-wrap">
+                  <input type="password" class="form-input" id="apiKey"
+                         placeholder="sk-..." autocomplete="off">
+                  <button type="button" class="btn btn-secondary btn-sm hidden" id="btnReplaceKey" onclick="enableKeyReplace()">
+                    Reemplazar
+                  </button>
+                </div>
+                <span class="form-hint" id="apiKeyHint">Requerido para este proveedor.</span>
+              </div>
+
+              <!-- Endpoint -->
+              <div class="form-group" id="endpointGroup">
+                <label class="form-label" for="endpoint">Endpoint (opcional)</label>
+                <input type="text" class="form-input" id="endpoint"
+                       placeholder="https://api.openai.com" autocomplete="off">
+                <span class="form-hint">Dejar vac&iacute;o para usar el endpoint oficial del proveedor.</span>
+              </div>
+
+              <!-- Banner de test efimero -->
+              <div id="testBanner" class="hidden"></div>
+
+              <!-- Errores guardar -->
+              <div id="errorBanner" class="hidden banner banner-error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <div id="errorBannerText"></div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="btnTestForm" onclick="testForm()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                  </svg>
+                  Probar
+                </button>
+                <button type="submit" class="btn btn-primary" id="btnSave">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="admin.js?v=6"></script>
+  <script>
+    // ================================================
+    // DEFAULTS
+    // ================================================
+    const defaultModels = {
+      vertex: 'gemini-2.5-flash',
+      openai: 'gpt-4.1-mini',
+      deepseek: 'deepseek-chat',
+      kimi: 'moonshot-v1-8k',
+      anthropic: 'claude-haiku-4-5'
+    };
+
+    const defaultEndpoints = {
+      vertex: '',
+      openai: 'https://api.openai.com',
+      deepseek: 'https://api.deepseek.com',
+      kimi: 'https://api.moonshot.ai',
+      anthropic: 'https://api.anthropic.com'
+    };
+
+    const providerLabels = {
+      vertex: 'Vertex AI',
+      openai: 'OpenAI',
+      deepseek: 'DeepSeek',
+      kimi: 'Kimi (Moonshot)',
+      anthropic: 'Anthropic'
+    };
+
+    // Providers que exponen endpoint configurable
+    const showEndpoint = {
+      vertex: false,
+      openai: true,
+      deepseek: true,
+      kimi: true,
+      anthropic: false
+    };
+
+    // ================================================
+    // STATE
+    // ================================================
+    let currentCfg = null;     // {provider, model, endpoint, api_key_set, supports_images}
+    let keyIsMasked = false;   // true cuando el input muestra "mantener actual"
+
+    // ================================================
+    // LOW-LEVEL FETCH (endpoints LLM retornan {error: "msg"}, no el formato estandar)
+    // ================================================
+    async function llmFetch(endpoint, options = {}) {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers: {
+          'Authorization': `Bearer ${adminState.token}`,
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        }
+      });
+      let data;
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = {};
+      }
+      if (!res.ok) {
+        const msg = data.error?.message || data.error || `HTTP ${res.status}`;
+        const err = new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+        err.status = res.status;
+        err.data = data;
+        throw err;
+      }
+      return data;
+    }
+
+    // ================================================
+    // RENDER: Tarjeta proveedor activo
+    // ================================================
+    function renderActive(cfg) {
+      document.getElementById('activeProvider').textContent =
+        providerLabels[cfg.provider] || cfg.provider || '(sin configurar)';
+      document.getElementById('activeModel').textContent = cfg.model || '—';
+
+      const badges = document.getElementById('activeBadges');
+      badges.innerHTML = '';
+
+      // Badge supports images
+      const imgBadge = document.createElement('span');
+      if (cfg.supports_images) {
+        imgBadge.className = 'status-badge approved';
+        imgBadge.textContent = 'Soporta imágenes';
+      } else {
+        imgBadge.className = 'status-badge';
+        imgBadge.style.background = 'var(--bg-warm)';
+        imgBadge.style.color = 'var(--text-muted)';
+        imgBadge.textContent = 'Solo texto';
+      }
+      badges.appendChild(imgBadge);
+
+      // Badge api key
+      const keyBadge = document.createElement('span');
+      if (cfg.provider === 'vertex') {
+        keyBadge.className = 'status-badge reviewed';
+        keyBadge.textContent = 'ADC servidor';
+      } else if (cfg.api_key_set) {
+        keyBadge.className = 'status-badge approved';
+        keyBadge.textContent = 'API key configurada';
+      } else {
+        keyBadge.className = 'status-badge rejected';
+        keyBadge.textContent = 'Sin API key';
+      }
+      badges.appendChild(keyBadge);
+    }
+
+    // ================================================
+    // RENDER: Formulario segun provider seleccionado
+    // ================================================
+    function handleProviderChange() {
+      const provider = document.getElementById('provider').value;
+      const vertexInfo = document.getElementById('vertexInfo');
+      const apiKeyGroup = document.getElementById('apiKeyGroup');
+      const endpointGroup = document.getElementById('endpointGroup');
+      const modelInput = document.getElementById('model');
+      const endpointInput = document.getElementById('endpoint');
+      const apiKeyInput = document.getElementById('apiKey');
+      const btnReplaceKey = document.getElementById('btnReplaceKey');
+      const apiKeyHint = document.getElementById('apiKeyHint');
+
+      // Placeholder de modelo
+      modelInput.placeholder = defaultModels[provider] || '';
+
+      // Vertex: ocultar key y endpoint, mostrar info
+      if (provider === 'vertex') {
+        vertexInfo.classList.remove('hidden');
+        apiKeyGroup.classList.add('hidden');
+        endpointGroup.classList.add('hidden');
+        apiKeyInput.value = '';
+        apiKeyInput.required = false;
+        keyIsMasked = false;
+        btnReplaceKey.classList.add('hidden');
+        return;
+      }
+
+      vertexInfo.classList.add('hidden');
+      apiKeyGroup.classList.remove('hidden');
+
+      // Endpoint visible solo si aplica
+      if (showEndpoint[provider]) {
+        endpointGroup.classList.remove('hidden');
+        endpointInput.placeholder = defaultEndpoints[provider] || '';
+      } else {
+        endpointGroup.classList.add('hidden');
+        endpointInput.value = '';
+      }
+
+      // Estado de API key: si el provider coincide con el activo y habia key → enmascarar
+      const sameProvider = currentCfg && currentCfg.provider === provider;
+      if (sameProvider && currentCfg.api_key_set) {
+        // Modo enmascarado: no pedir la key, el backend reusara la existente
+        apiKeyInput.type = 'password';
+        apiKeyInput.value = '••••••••••••';
+        apiKeyInput.readOnly = true;
+        apiKeyInput.required = false;
+        apiKeyHint.textContent = 'API key configurada. Haz clic en Reemplazar para cambiarla.';
+        btnReplaceKey.classList.remove('hidden');
+        btnReplaceKey.textContent = 'Reemplazar';
+        keyIsMasked = true;
+      } else {
+        apiKeyInput.type = 'password';
+        apiKeyInput.value = '';
+        apiKeyInput.readOnly = false;
+        apiKeyInput.required = true;
+        apiKeyHint.textContent = 'Requerido para este proveedor.';
+        btnReplaceKey.classList.add('hidden');
+        keyIsMasked = false;
+      }
+    }
+
+    function enableKeyReplace() {
+      const apiKeyInput = document.getElementById('apiKey');
+      const btnReplaceKey = document.getElementById('btnReplaceKey');
+      const apiKeyHint = document.getElementById('apiKeyHint');
+
+      apiKeyInput.readOnly = false;
+      apiKeyInput.required = true;
+      apiKeyInput.value = '';
+      apiKeyInput.focus();
+      apiKeyHint.textContent = 'Ingresa la nueva API key.';
+      btnReplaceKey.classList.add('hidden');
+      keyIsMasked = false;
+    }
+
+    // ================================================
+    // LOAD CONFIG
+    // ================================================
+    async function loadConfig() {
+      try {
+        const data = await llmFetch('/admin/llm/config');
+        currentCfg = data;
+        renderActive(currentCfg);
+
+        // Poblar formulario con valores actuales
+        document.getElementById('provider').value = currentCfg.provider || 'vertex';
+        document.getElementById('model').value = currentCfg.model || '';
+        document.getElementById('endpoint').value = currentCfg.endpoint || '';
+        handleProviderChange();
+      } catch (err) {
+        console.error('Failed to load LLM config:', err);
+        document.getElementById('activeProvider').innerHTML =
+          '<span class="text-error" style="font-size: 1rem;">Error al cargar configuración</span>';
+        showToast(err.message || 'Error al cargar configuración', 'error');
+      }
+    }
+
+    // ================================================
+    // TEST: cliente activo (body vacio)
+    // ================================================
+    async function testActive() {
+      const btn = document.getElementById('btnTestActive');
+      const resultEl = document.getElementById('activeTestResult');
+      btn.disabled = true;
+      resultEl.className = 'llm-test-result pending';
+      resultEl.textContent = 'Probando…';
+      resultEl.classList.remove('hidden');
+
+      try {
+        const data = await llmFetch('/admin/llm/test', {
+          method: 'POST',
+          body: JSON.stringify({})
+        });
+        if (data.ok) {
+          resultEl.className = 'llm-test-result success';
+          resultEl.textContent = `OK — ${data.latency_ms}ms`;
+        } else {
+          resultEl.className = 'llm-test-result error';
+          resultEl.textContent = data.error || 'Fallo la prueba';
+        }
+      } catch (err) {
+        resultEl.className = 'llm-test-result error';
+        resultEl.textContent = err.message || 'Error de red';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ================================================
+    // TEST: formulario (efimero, no guarda)
+    // ================================================
+    async function testForm() {
+      const btn = document.getElementById('btnTestForm');
+      const testBanner = document.getElementById('testBanner');
+
+      const body = buildRequestBody({ allowMaskedKey: false, forTest: true });
+      if (!body) return; // buildRequestBody ya mostro error
+
+      btn.disabled = true;
+      const originalText = btn.innerHTML;
+      btn.textContent = 'Probando…';
+      testBanner.classList.add('hidden');
+
+      try {
+        const data = await llmFetch('/admin/llm/test', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        testBanner.className = data.ok ? 'banner banner-success' : 'banner banner-error';
+        const icon = data.ok
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        testBanner.innerHTML = data.ok
+          ? `${icon}<div><strong>Conexión OK</strong> — latencia ${data.latency_ms}ms. Prueba efímera, no se guardó nada.</div>`
+          : `${icon}<div><strong>Fallo la prueba</strong> — ${escapeHtml(data.error || 'Error desconocido')}</div>`;
+        testBanner.classList.remove('hidden');
+      } catch (err) {
+        testBanner.className = 'banner banner-error';
+        testBanner.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <div><strong>Error</strong> — ${escapeHtml(err.message || 'Error de red')}</div>`;
+        testBanner.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // ================================================
+    // SAVE CONFIG
+    // ================================================
+    async function saveConfig(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSave');
+      const errorBanner = document.getElementById('errorBanner');
+      const errorText = document.getElementById('errorBannerText');
+      const saveBanner = document.getElementById('saveBanner');
+
+      errorBanner.classList.add('hidden');
+      saveBanner.classList.add('hidden');
+
+      const body = buildRequestBody({ allowMaskedKey: true, forTest: false });
+      if (!body) return;
+
+      btn.disabled = true;
+      const originalText = btn.innerHTML;
+      btn.textContent = 'Guardando…';
+
+      try {
+        const data = await llmFetch('/admin/llm/config', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+
+        // Exito
+        saveBanner.className = 'banner banner-success';
+        const reloadedAt = data.reloaded_at
+          ? new Date(data.reloaded_at).toLocaleString('es-CR', { dateStyle: 'medium', timeStyle: 'medium' })
+          : '—';
+        saveBanner.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <div>
+            <strong>Configuración guardada.</strong>
+            Proveedor activo: <code>${escapeHtml(data.provider)}</code>
+            — modelo: <code>${escapeHtml(data.model || '(default)')}</code>
+            <br><small>Recargado: ${escapeHtml(reloadedAt)}</small>
+          </div>`;
+        saveBanner.classList.remove('hidden');
+        saveBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        // Refrescar config desde backend
+        await loadConfig();
+        showToast('LLM reconfigurado exitosamente', 'success');
+      } catch (err) {
+        errorText.textContent = err.message || 'Error al guardar';
+        errorBanner.classList.remove('hidden');
+        errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // ================================================
+    // Helpers
+    // ================================================
+    function buildRequestBody({ allowMaskedKey, forTest }) {
+      const provider = document.getElementById('provider').value;
+      const model = document.getElementById('model').value.trim();
+      const endpoint = document.getElementById('endpoint').value.trim();
+      const apiKeyInput = document.getElementById('apiKey');
+
+      const body = {
+        provider: provider,
+        model: model,
+        endpoint: endpoint,
+        api_key: ''
+      };
+
+      if (provider === 'vertex') {
+        // No api_key para vertex
+        return body;
+      }
+
+      // Provider requiere key
+      if (keyIsMasked) {
+        if (forTest) {
+          // No podemos probar sin key explicita (el endpoint /test no tiene DB lookup)
+          showToast('Para probar, ingresa la API key o usa "Probar conexión" en la tarjeta superior.', 'warning');
+          return null;
+        }
+        // Guardar: body sin api_key, backend reutilizara la existente (mismo provider)
+        return body;
+      }
+
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        showToast('La API key es requerida para este proveedor.', 'error');
+        apiKeyInput.focus();
+        return null;
+      }
+      body.api_key = key;
+      return body;
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // ================================================
+    // INIT
+    // ================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      const ready = await initAdmin('llm-config');
+      if (ready) {
+        await loadConfig();
+      }
+    });
+  </script>
+</body>
+</html>

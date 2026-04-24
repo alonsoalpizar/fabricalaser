@@ -8,9 +8,11 @@ import (
 	"time"
 
 	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/admin"
 	adminchat "github.com/alonsoalpizar/fabricalaser/internal/handlers/admin/chat"
+	adminllm "github.com/alonsoalpizar/fabricalaser/internal/handlers/admin/llm"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/auth"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/chat"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/config"
@@ -25,7 +27,7 @@ import (
 
 const Version = "1.0.0"
 
-func NewRouter(redisClient *redis.Client) *chi.Mux {
+func NewRouter(redisClient *redis.Client, llmFactory *llm.Factory) *chi.Mux {
 	r := chi.NewRouter()
 
 	// Global middleware
@@ -167,7 +169,7 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 		r.Patch("/blanks/{id}/featured", blankHandler.ToggleFeatured)
 
 		// WhatsApp bitácora — sesiones paginadas + depuración + digest manual
-		waAdminHandler := admin.NewWhatsappHandler(redisClient)
+		waAdminHandler := admin.NewWhatsappHandler(redisClient, llmFactory)
 		r.Get("/whatsapp/sessions", waAdminHandler.GetSessions)
 		r.Get("/whatsapp/sessions/{phone}/{date}", waAdminHandler.GetSessionMessages)
 		r.Post("/whatsapp/purge", waAdminHandler.PurgeConversations)
@@ -178,12 +180,20 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 
 		// Chat administrativo — asistente Gemini para gestores
 		adminChatCtxProvider := adminchat.NewContextProvider()
-		adminChatHandler := adminchat.NewHandler(redisClient, adminChatCtxProvider)
+		adminChatHandler := adminchat.NewHandler(redisClient, adminChatCtxProvider, llmFactory)
 		r.Post("/chat/message", adminChatHandler.SendMessage)
 		r.Post("/chat/reset", adminChatHandler.Reset)
 		r.Get("/chat/history", adminChatHandler.GetHistory)
 		r.Get("/chat/sessions", adminChatHandler.ListSessions)
 		r.Get("/chat/sessions/{id}", adminChatHandler.GetSessionMessages)
+
+		// Configuración LLM — gestor puede conmutar proveedor (Vertex/DeepSeek/Kimi/OpenAI/Anthropic)
+		// con hot reload sin reiniciar. GET /config nunca expone api_key (R3).
+		// POST /test usa cliente efímero — permite validar credenciales antes de guardar (R4b).
+		adminLLMHandler := adminllm.NewHandler(llmFactory)
+		r.Get("/llm/config", adminLLMHandler.GetConfig)
+		r.Post("/llm/config", adminLLMHandler.SaveConfig)
+		r.Post("/llm/test", adminLLMHandler.TestConnection)
 	})
 
 	// Provider de contexto dinámico compartido entre chat web, WhatsApp y Telegram.
@@ -194,7 +204,7 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 	waHandler := whatsapp.NewHandler(
 		whatsapp.NewRedisAdapter(redisClient),
 		whatsapp.NewPGAdapter(database.Get()),
-		whatsapp.NewGeminiAdapter(agentContext),
+		whatsapp.NewGeminiAdapter(llmFactory, agentContext),
 		whatsapp.NewRateLimiter(redisClient),
 		agentContext,
 	)
@@ -207,7 +217,7 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 	tgProcessor := telegram.NewProcessor(
 		whatsapp.NewRedisAdapter(redisClient),
 		whatsapp.NewPGAdapter(database.Get()),
-		whatsapp.NewGeminiAdapter(agentContext),
+		whatsapp.NewGeminiAdapter(llmFactory, agentContext),
 		whatsapp.NewRateLimiter(redisClient),
 		agentContext,
 	)
@@ -218,7 +228,7 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 	r.Post("/api/v1/blanks/consultar", admin.NewBlankHandler().ConsultarBlank)
 
 	// Chat route (public - auth optional, enriches context if logged in)
-	chatHandler := chat.NewHandler(agentContext)
+	chatHandler := chat.NewHandler(llmFactory, agentContext)
 	r.Route("/api/v1/chat", func(r chi.Router) {
 		r.Use(middleware.AuthOptional)
 		r.Post("/", chatHandler.HandleChat)

@@ -4,8 +4,11 @@ package main
 
 import (
 	"log"
+	"os"
 
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
+	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 	"github.com/alonsoalpizar/fabricalaser/internal/whatsapp"
 	"github.com/joho/godotenv"
 )
@@ -23,7 +26,22 @@ func main() {
 		log.Fatalf("Redis: %v", err)
 	}
 
-	if err := whatsapp.SendDigest(rc); err != nil {
+	// APP_SECRET requerido para desencriptar la API key del LLM activo desde system_config.
+	appSecret := os.Getenv("FABRICALASER_APP_SECRET")
+	if appSecret == "" {
+		appSecret = os.Getenv("APP_SECRET")
+	}
+	if appSecret == "" {
+		log.Fatalf("APP_SECRET (o FABRICALASER_APP_SECRET) requerido para inicializar LLM factory")
+	}
+
+	sysConfigRepo := repository.NewSystemConfigRepository()
+	llmFactory, err := llm.NewFactory(sysConfigRepo, appSecret)
+	if err != nil {
+		log.Fatalf("LLM factory: %v", err)
+	}
+
+	if err := whatsapp.SendDigest(rc, llmFactory); err != nil {
 		log.Fatalf("SendDigest: %v", err)
 	}
 }

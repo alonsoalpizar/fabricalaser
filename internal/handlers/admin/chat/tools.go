@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"cloud.google.com/go/vertexai/genai"
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
 	"github.com/alonsoalpizar/fabricalaser/internal/repository"
@@ -55,10 +55,10 @@ func newToolExecutor() *toolExecutor {
 	}
 }
 
-// ─── Function Declarations ───────────────────────────────────────────────────
+// ─── Tool Definitions (llm.ToolDef con JSON Schema, R7) ──────────────────────
 
-func toolDeclarations() []*genai.FunctionDeclaration {
-	return []*genai.FunctionDeclaration{
+func toolDeclarations() []llm.ToolDef {
+	return []llm.ToolDef{
 		calcularCotizacionTool(),
 		consultarBlankTool(),
 		listarMaterialesTool(),
@@ -68,142 +68,142 @@ func toolDeclarations() []*genai.FunctionDeclaration {
 	}
 }
 
-func calcularCotizacionTool() *genai.FunctionDeclaration {
-	return &genai.FunctionDeclaration{
+func calcularCotizacionTool() llm.ToolDef {
+	return llm.ToolDef{
 		Name: "calcular_cotizacion",
 		Description: "Calcula precio detallado de un trabajo de grabado o corte láser usando el motor de pricing oficial. " +
 			"Devuelve breakdown completo: tiempos, costos, factores aplicados, ambos modelos de precio (híbrido y por valor) y cuál ganó. " +
 			"Usar cuando el gestor ya proporcionó material, medidas y cantidad.",
-		Parameters: &genai.Schema{
-			Type: genai.TypeObject,
-			Properties: map[string]*genai.Schema{
-				"alto_cm":           {Type: genai.TypeNumber, Description: "Alto del área a grabar/cortar en centímetros"},
-				"ancho_cm":          {Type: genai.TypeNumber, Description: "Ancho del área a grabar/cortar en centímetros"},
-				"cantidad":          {Type: genai.TypeInteger, Description: "Número de unidades a producir"},
-				"technology_id":     {Type: genai.TypeInteger, Description: "ID de tecnología láser (ver listar_tecnologias o IDs en system prompt)"},
-				"material_id":       {Type: genai.TypeInteger, Description: "ID del material (ver listar_materiales o IDs en system prompt)"},
-				"engrave_type_id":   {Type: genai.TypeInteger, Description: "1=Vectorial, 2=Rasterizado, 3=Fotograbado, 4=3D/Relieve. Default: 1"},
-				"thickness":         {Type: genai.TypeNumber, Description: "Grosor del material en mm. Default: 3.0"},
-				"material_included": {Type: genai.TypeBoolean, Description: "true si FabricaLaser provee el material, false si el cliente lo trae"},
-				"incluye_corte":     {Type: genai.TypeBoolean, Description: "true si el trabajo incluye corte del perímetro además del grabado"},
-				"cut_technology_id": {Type: genai.TypeInteger, Description: "ID de tecnología para el corte cuando es diferente. Solo en Caso 3B (UV graba + CO2 corta)"},
+		Parameters: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"alto_cm":           map[string]any{"type": "number", "description": "Alto del área a grabar/cortar en centímetros"},
+				"ancho_cm":          map[string]any{"type": "number", "description": "Ancho del área a grabar/cortar en centímetros"},
+				"cantidad":          map[string]any{"type": "integer", "description": "Número de unidades a producir"},
+				"technology_id":     map[string]any{"type": "integer", "description": "ID de tecnología láser (ver listar_tecnologias o IDs en system prompt)"},
+				"material_id":       map[string]any{"type": "integer", "description": "ID del material (ver listar_materiales o IDs en system prompt)"},
+				"engrave_type_id":   map[string]any{"type": "integer", "description": "1=Vectorial, 2=Rasterizado, 3=Fotograbado, 4=3D/Relieve. Default: 1"},
+				"thickness":         map[string]any{"type": "number", "description": "Grosor del material en mm. Default: 3.0"},
+				"material_included": map[string]any{"type": "boolean", "description": "true si FabricaLaser provee el material, false si el cliente lo trae"},
+				"incluye_corte":     map[string]any{"type": "boolean", "description": "true si el trabajo incluye corte del perímetro además del grabado"},
+				"cut_technology_id": map[string]any{"type": "integer", "description": "ID de tecnología para el corte cuando es diferente. Solo en Caso 3B (UV graba + CO2 corta)"},
 			},
-			Required: []string{"alto_cm", "ancho_cm", "cantidad", "technology_id", "material_id", "material_included", "incluye_corte"},
+			"required": []string{"alto_cm", "ancho_cm", "cantidad", "technology_id", "material_id", "material_included", "incluye_corte"},
 		},
 	}
 }
 
-func consultarBlankTool() *genai.FunctionDeclaration {
-	return &genai.FunctionDeclaration{
+func consultarBlankTool() llm.ToolDef {
+	return llm.ToolDef{
 		Name:        "consultar_blank",
 		Description: "Consulta precio y disponibilidad de un blank (producto preconfigurado: llaveros, medallas, etc.). Usar cuando el gestor pregunte por estos productos del catálogo.",
-		Parameters: &genai.Schema{
-			Type: genai.TypeObject,
-			Properties: map[string]*genai.Schema{
-				"categoria": {Type: genai.TypeString, Description: "Categoría del blank: 'llavero', 'medalla', etc."},
-				"cantidad":  {Type: genai.TypeInteger, Description: "Cantidad de unidades que el cliente quiere"},
-				"blank_id":  {Type: genai.TypeInteger, Description: "ID específico del blank. 0 (o no incluir) si no se conoce — el tool retorna todas las opciones de la categoría"},
+		Parameters: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"categoria": map[string]any{"type": "string", "description": "Categoría del blank: 'llavero', 'medalla', etc."},
+				"cantidad":  map[string]any{"type": "integer", "description": "Cantidad de unidades que el cliente quiere"},
+				"blank_id":  map[string]any{"type": "integer", "description": "ID específico del blank. 0 (o no incluir) si no se conoce — el tool retorna todas las opciones de la categoría"},
 			},
-			Required: []string{"categoria", "cantidad"},
+			"required": []string{"categoria", "cantidad"},
 		},
 	}
 }
 
-func listarMaterialesTool() *genai.FunctionDeclaration {
-	return &genai.FunctionDeclaration{
+func listarMaterialesTool() llm.ToolDef {
+	return llm.ToolDef{
 		Name:        "listar_materiales",
 		Description: "Lista los materiales disponibles en el catálogo, opcionalmente filtrando por cortabilidad o categoría. Útil cuando el gestor pregunta '¿qué materiales tenemos?' o '¿qué cortamos?'.",
-		Parameters: &genai.Schema{
-			Type: genai.TypeObject,
-			Properties: map[string]*genai.Schema{
-				"cortable_solo": {Type: genai.TypeBoolean, Description: "true para listar solo materiales que se pueden cortar con CO2"},
-				"categoria":     {Type: genai.TypeString, Description: "Filtrar por categoría (ej: 'madera', 'acrilico', 'metal'). Vacío = todos"},
+		Parameters: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"cortable_solo": map[string]any{"type": "boolean", "description": "true para listar solo materiales que se pueden cortar con CO2"},
+				"categoria":     map[string]any{"type": "string", "description": "Filtrar por categoría (ej: 'madera', 'acrilico', 'metal'). Vacío = todos"},
 			},
 		},
 	}
 }
 
-func listarTecnologiasTool() *genai.FunctionDeclaration {
-	return &genai.FunctionDeclaration{
+func listarTecnologiasTool() llm.ToolDef {
+	return llm.ToolDef{
 		Name:        "listar_tecnologias",
 		Description: "Lista las tecnologías láser disponibles (CO2, UV, Fibra, MOPA) con sus IDs. Útil cuando el gestor pregunta '¿qué tecnologías tenemos?'.",
-		Parameters: &genai.Schema{
-			Type:       genai.TypeObject,
-			Properties: map[string]*genai.Schema{},
+		Parameters: map[string]any{
+			"type":       "object",
+			"properties": map[string]any{},
 		},
 	}
 }
 
-func buscarClienteTool() *genai.FunctionDeclaration {
-	return &genai.FunctionDeclaration{
+func buscarClienteTool() llm.ToolDef {
+	return llm.ToolDef{
 		Name:        "buscar_cliente",
 		Description: "Busca un cliente en la base de datos por cédula (9 o 10 dígitos) o por nombre/email (búsqueda fuzzy). Devuelve hasta 20 resultados con datos de contacto.",
-		Parameters: &genai.Schema{
-			Type: genai.TypeObject,
-			Properties: map[string]*genai.Schema{
-				"query": {Type: genai.TypeString, Description: "Cédula numérica (9-10 dígitos) o nombre/email para buscar"},
+		Parameters: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"query": map[string]any{"type": "string", "description": "Cédula numérica (9-10 dígitos) o nombre/email para buscar"},
 			},
-			Required: []string{"query"},
+			"required": []string{"query"},
 		},
 	}
 }
 
-func historialCotizacionesTool() *genai.FunctionDeclaration {
-	return &genai.FunctionDeclaration{
+func historialCotizacionesTool() llm.ToolDef {
+	return llm.ToolDef{
 		Name:        "historial_cotizaciones",
 		Description: "Devuelve las cotizaciones recientes de un cliente (por user_id obtenido con buscar_cliente). Incluye tecnología, material, precio final y fecha.",
-		Parameters: &genai.Schema{
-			Type: genai.TypeObject,
-			Properties: map[string]*genai.Schema{
-				"user_id": {Type: genai.TypeInteger, Description: "ID del usuario (obtener primero con buscar_cliente)"},
-				"limit":   {Type: genai.TypeInteger, Description: "Máximo de cotizaciones a retornar. Default 10, máximo 50"},
+		Parameters: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"user_id": map[string]any{"type": "integer", "description": "ID del usuario (obtener primero con buscar_cliente)"},
+				"limit":   map[string]any{"type": "integer", "description": "Máximo de cotizaciones a retornar. Default 10, máximo 50"},
 			},
-			Required: []string{"user_id"},
+			"required": []string{"user_id"},
 		},
 	}
 }
 
 // ─── Dispatcher ──────────────────────────────────────────────────────────────
 
-// executeFunction despacha la llamada a la implementación correcta.
+// executeToolCall despacha la invocación a la implementación correcta.
 // adminID se pasa por parámetro para futuras decisiones de auditoría/permisos por gestor
 // (hoy no se usa pero queda en la firma para no romper en v2).
 //
-// Aplica normalización JSON al resultado antes de devolverlo: el SDK de Vertex AI
-// (genai.FunctionResponse) requiere tipos compatibles con structpb, y NO acepta
-// []map[string]any. El round-trip JSON convierte todo a map[string]any + []any.
-func (e *toolExecutor) executeFunction(ctx context.Context, adminID uint, fc *genai.FunctionCall) (map[string]any, error) {
+// Aplica normalización JSON al resultado antes de devolverlo: los adapters pueden
+// requerir tipos compatibles con serialización (Vertex/structpb, OpenAI/JSON).
+// El round-trip JSON convierte todo a map[string]any + []any.
+func (e *toolExecutor) executeToolCall(ctx context.Context, adminID uint, tc llm.ToolCall) (map[string]any, error) {
 	_ = adminID
 	var result map[string]any
 	var err error
 
-	switch fc.Name {
+	switch tc.Name {
 	case "calcular_cotizacion":
-		result, err = e.execCalcularCotizacion(ctx, fc.Args)
+		result, err = e.execCalcularCotizacion(ctx, tc.Args)
 	case "consultar_blank":
-		result, err = e.execConsultarBlank(ctx, fc.Args)
+		result, err = e.execConsultarBlank(ctx, tc.Args)
 	case "listar_materiales":
-		result, err = e.execListarMateriales(ctx, fc.Args)
+		result, err = e.execListarMateriales(ctx, tc.Args)
 	case "listar_tecnologias":
-		result, err = e.execListarTecnologias(ctx, fc.Args)
+		result, err = e.execListarTecnologias(ctx, tc.Args)
 	case "buscar_cliente":
-		result, err = e.execBuscarCliente(ctx, fc.Args)
+		result, err = e.execBuscarCliente(ctx, tc.Args)
 	case "historial_cotizaciones":
-		result, err = e.execHistorialCotizaciones(ctx, fc.Args)
+		result, err = e.execHistorialCotizaciones(ctx, tc.Args)
 	default:
-		return nil, fmt.Errorf("tool desconocida: %s", fc.Name)
+		return nil, fmt.Errorf("tool desconocida: %s", tc.Name)
 	}
 
 	if err != nil {
 		return nil, err
 	}
-	return normalizeForStructPB(result), nil
+	return normalizeToolResult(result), nil
 }
 
-// normalizeForStructPB hace round-trip JSON para que cualquier slice/map
+// normalizeToolResult hace round-trip JSON para que cualquier slice/map
 // concretos ([]map[string]any, []SomeStruct, []clienteOut, etc.) se conviertan
-// a tipos plain ([]any, map[string]any) que structpb sí acepta.
-func normalizeForStructPB(v map[string]any) map[string]any {
+// a tipos plain ([]any, map[string]any) que los adapters sí aceptan.
+func normalizeToolResult(v map[string]any) map[string]any {
 	if v == nil {
 		return map[string]any{}
 	}
