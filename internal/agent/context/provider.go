@@ -1,4 +1,4 @@
-package whatsapp
+package context
 
 import (
 	"fmt"
@@ -16,13 +16,19 @@ const (
 	defaultMaxMsgs     = 20
 )
 
-// WAContextProvider carga contexto dinámico desde BD (tecnologías, materiales, TelAsesor)
-// con cache de 5 minutos para evitar hits innecesarios a la DB.
-type WAContextProvider struct {
+// Provider carga contexto dinámico desde BD (tecnologías, materiales, TelAsesor,
+// CostoVectorizacion, catálogo de blanks) con cache de 5 minutos para evitar
+// hits innecesarios a la DB.
+//
+// Es consumido por los agentes Gemini de WhatsApp/Telegram y del chat web.
+// El admin chat usa su propio provider (internal/handlers/admin/chat) porque
+// necesita un contexto más rico (tarifas, descuentos, factores).
+type Provider struct {
 	techRepo      *repository.TechnologyRepository
 	matRepo       *repository.MaterialRepository
 	sysConfigRepo *repository.SystemConfigRepository
 	blankRepo     *repository.BlankRepository
+
 	mu                   sync.RWMutex
 	cachedContext        string
 	asesorPhone          string
@@ -31,9 +37,9 @@ type WAContextProvider struct {
 	fetchedAt            time.Time
 }
 
-// NewWAContextProvider crea un provider con repositorios conectados a la BD.
-func NewWAContextProvider() *WAContextProvider {
-	return &WAContextProvider{
+// New construye un provider con repositorios conectados a la BD.
+func New() *Provider {
+	return &Provider{
 		techRepo:      repository.NewTechnologyRepository(),
 		matRepo:       repository.NewMaterialRepository(),
 		sysConfigRepo: repository.NewSystemConfigRepository(),
@@ -44,7 +50,7 @@ func NewWAContextProvider() *WAContextProvider {
 // GetDynamicContext retorna el bloque de contexto dinámico para inyectar al system prompt.
 // Incluye IDs exactos de tecnologías y materiales para que Gemini pueda usarlos en tools.
 // El resultado se cachea por 5 minutos.
-func (p *WAContextProvider) GetDynamicContext() string {
+func (p *Provider) GetDynamicContext() string {
 	p.mu.RLock()
 	if p.cachedContext != "" && time.Since(p.fetchedAt) < contextCacheTTL {
 		ctx := p.cachedContext
@@ -65,7 +71,7 @@ func (p *WAContextProvider) GetDynamicContext() string {
 
 // GetMaxMensajesDia retorna el límite diario de mensajes por número desde system_config.
 // Fallback: 20. Si no está en cache, lee de la DB directamente.
-func (p *WAContextProvider) GetMaxMensajesDia() int {
+func (p *Provider) GetMaxMensajesDia() int {
 	p.mu.RLock()
 	v := p.maxMensajes
 	p.mu.RUnlock()
@@ -90,7 +96,7 @@ func (p *WAContextProvider) GetMaxMensajesDia() int {
 
 // GetAsesorPhone retorna el teléfono del asesor desde system_config (TelAsesor).
 // Fallback: +50686091954. El valor se cachea junto con el contexto dinámico.
-func (p *WAContextProvider) GetAsesorPhone() string {
+func (p *Provider) GetAsesorPhone() string {
 	p.mu.RLock()
 	phone := p.asesorPhone
 	p.mu.RUnlock()
@@ -115,7 +121,7 @@ func (p *WAContextProvider) GetAsesorPhone() string {
 
 // GetAsesorTelegramChatID retorna el chat ID de Telegram del asesor desde system_config.
 // Retorna 0 si no está configurado. El valor se cachea junto con el contexto dinámico.
-func (p *WAContextProvider) GetAsesorTelegramChatID() int64 {
+func (p *Provider) GetAsesorTelegramChatID() int64 {
 	p.mu.RLock()
 	chatID := p.asesorTelegramChatID
 	p.mu.RUnlock()
@@ -136,12 +142,12 @@ func (p *WAContextProvider) GetAsesorTelegramChatID() int64 {
 	return chatID
 }
 
-func (p *WAContextProvider) buildContext() string {
+func (p *Provider) buildContext() string {
 	var b strings.Builder
 
 	techs, err := p.techRepo.FindAll()
 	if err != nil {
-		slog.Error("WAContextProvider: error cargando tecnologías", "error", err)
+		slog.Error("agent/context: error cargando tecnologías", "error", err)
 	} else {
 		b.WriteString("\n\n## Tecnologías disponibles (IDs exactos para calcular_cotizacion):\n")
 		for _, t := range techs {
@@ -151,7 +157,7 @@ func (p *WAContextProvider) buildContext() string {
 
 	mats, err := p.matRepo.FindAll()
 	if err != nil {
-		slog.Error("WAContextProvider: error cargando materiales", "error", err)
+		slog.Error("agent/context: error cargando materiales", "error", err)
 	} else {
 		b.WriteString("\n## Materiales disponibles (IDs exactos para calcular_cotizacion):\n")
 		for _, m := range mats {
@@ -199,7 +205,7 @@ func (p *WAContextProvider) buildContext() string {
 	// Catálogo de blanks (resumen para que el agente sepa qué categorías existen)
 	blanks, err := p.blankRepo.FindAll()
 	if err != nil {
-		slog.Error("WAContextProvider: error cargando blanks", "error", err)
+		slog.Error("agent/context: error cargando blanks", "error", err)
 	} else if len(blanks) > 0 {
 		b.WriteString("\n## Catálogo de blanks disponibles (usar consultar_blank para precios en tiempo real):\n")
 		for _, blank := range blanks {

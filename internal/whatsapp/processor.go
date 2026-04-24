@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"strings"
 	"time"
+
+	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
 )
 
 // ─── Interfaces — permiten tests sin dependencias reales ─────────────────────
@@ -164,12 +166,12 @@ type MessageProcessor struct {
 	sender          *Sender
 	downloader      *ImageDownloader
 	rateLimiter     *RateLimiter
-	contextProvider *WAContextProvider
+	contextProvider *agentctx.Provider
 }
 
 // NewMessageProcessor construye el procesador con sus dependencias.
 // rateLimiter puede ser nil — en ese caso el rate limiting queda deshabilitado (fail open).
-func NewMessageProcessor(redis RedisClient, pg PGClient, gemini GeminiCaller, rateLimiter *RateLimiter, contextProvider *WAContextProvider) *MessageProcessor {
+func NewMessageProcessor(redis RedisClient, pg PGClient, gemini GeminiCaller, rateLimiter *RateLimiter, contextProvider *agentctx.Provider) *MessageProcessor {
 	return &MessageProcessor{
 		redis:           redis,
 		pg:              pg,

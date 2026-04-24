@@ -1,15 +1,17 @@
 package whatsapp
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"context"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
+
+	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
 )
 
 // Handler agrupa las dependencias necesarias para el webhook de WhatsApp.
@@ -22,7 +24,7 @@ type Handler struct {
 
 // NewHandler construye el Handler leyendo configuración exclusivamente de variables de entorno.
 // rateLimiter es opcional (puede ser nil para deshabilitar el rate limiting).
-func NewHandler(redisClient RedisClient, pgClient PGClient, geminiCaller GeminiCaller, rateLimiter *RateLimiter, contextProvider *WAContextProvider) *Handler {
+func NewHandler(redisClient RedisClient, pgClient PGClient, geminiCaller GeminiCaller, rateLimiter *RateLimiter, contextProvider *agentctx.Provider) *Handler {
 	return &Handler{
 		appSecret:   os.Getenv("WHATSAPP_APP_SECRET"),
 		verifyToken: os.Getenv("WHATSAPP_VERIFY_TOKEN"),

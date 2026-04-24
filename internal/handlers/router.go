@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/admin"
 	adminchat "github.com/alonsoalpizar/fabricalaser/internal/handlers/admin/chat"
@@ -185,14 +186,17 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 		r.Get("/chat/sessions/{id}", adminChatHandler.GetSessionMessages)
 	})
 
+	// Provider de contexto dinámico compartido entre chat web, WhatsApp y Telegram.
+	// Una sola instancia = un solo cache de 5 min, consistencia entre los tres canales.
+	agentContext := agentctx.New()
+
 	// WhatsApp webhook
-	waContextProvider := whatsapp.NewWAContextProvider()
 	waHandler := whatsapp.NewHandler(
 		whatsapp.NewRedisAdapter(redisClient),
 		whatsapp.NewPGAdapter(database.Get()),
-		whatsapp.NewGeminiAdapter(waContextProvider),
+		whatsapp.NewGeminiAdapter(agentContext),
 		whatsapp.NewRateLimiter(redisClient),
-		waContextProvider,
+		agentContext,
 	)
 	r.Route("/api/v1/whatsapp", func(r chi.Router) {
 		r.Get("/webhook", waHandler.VerifyWebhook)
@@ -203,9 +207,9 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 	tgProcessor := telegram.NewProcessor(
 		whatsapp.NewRedisAdapter(redisClient),
 		whatsapp.NewPGAdapter(database.Get()),
-		whatsapp.NewGeminiAdapter(waContextProvider),
+		whatsapp.NewGeminiAdapter(agentContext),
 		whatsapp.NewRateLimiter(redisClient),
-		waContextProvider,
+		agentContext,
 	)
 	tgHandler := telegram.NewHandler(tgProcessor)
 	r.Post("/api/v1/telegram/webhook", tgHandler.HandleWebhook)
@@ -214,7 +218,7 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 	r.Post("/api/v1/blanks/consultar", admin.NewBlankHandler().ConsultarBlank)
 
 	// Chat route (public - auth optional, enriches context if logged in)
-	chatHandler := chat.NewHandler()
+	chatHandler := chat.NewHandler(agentContext)
 	r.Route("/api/v1/chat", func(r chi.Router) {
 		r.Use(middleware.AuthOptional)
 		r.Post("/", chatHandler.HandleChat)

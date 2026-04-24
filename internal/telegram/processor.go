@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
 	"github.com/alonsoalpizar/fabricalaser/internal/whatsapp"
 )
 
@@ -26,11 +27,11 @@ type Processor struct {
 	sender          *Sender
 	waSender        *whatsapp.Sender // para notificar al asesor vía WhatsApp
 	rateLimiter     *whatsapp.RateLimiter
-	contextProvider *whatsapp.WAContextProvider
+	contextProvider *agentctx.Provider
 }
 
 // NewProcessor construye el procesador reutilizando las interfaces del paquete whatsapp.
-func NewProcessor(redis whatsapp.RedisClient, pg whatsapp.PGClient, gemini whatsapp.GeminiCaller, rateLimiter *whatsapp.RateLimiter, contextProvider *whatsapp.WAContextProvider) *Processor {
+func NewProcessor(redis whatsapp.RedisClient, pg whatsapp.PGClient, gemini whatsapp.GeminiCaller, rateLimiter *whatsapp.RateLimiter, contextProvider *agentctx.Provider) *Processor {
 	return &Processor{
 		redis:           redis,
 		pg:              pg,

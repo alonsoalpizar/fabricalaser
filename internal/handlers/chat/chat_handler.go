@@ -8,12 +8,11 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"cloud.google.com/go/vertexai/genai"
+	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
-	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 )
 
 // publicSystemInstruction — visible a visitantes sin cuenta (landing page)
@@ -275,87 +274,24 @@ type ChatResponse struct {
 	Error    string `json:"error,omitempty"`
 }
 
-// dynamicContext holds DB-sourced context with a TTL cache
-type dynamicContext struct {
-	content   string
-	fetchedAt time.Time
-}
-
 // Handler handles chat requests
 type Handler struct {
-	techRepo      *repository.TechnologyRepository
-	matRepo       *repository.MaterialRepository
-	sysConfigRepo *repository.SystemConfigRepository
-	mu            sync.RWMutex
-	cache         *dynamicContext
-	genai         *genai.Client
+	contextProvider *agentctx.Provider
+	genai           *genai.Client
 }
 
-const cacheTTL = 5 * time.Minute
-
-// NewHandler creates a new chat handler with a shared Vertex AI client
-func NewHandler() *Handler {
+// NewHandler creates a new chat handler with a shared Vertex AI client and
+// a shared agentctx.Provider (mismo que usan los agentes de WhatsApp/Telegram).
+func NewHandler(provider *agentctx.Provider) *Handler {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, projectID, location)
 	if err != nil {
 		log.Fatalf("chat: failed to create Vertex AI client: %v", err)
 	}
 	return &Handler{
-		techRepo:      repository.NewTechnologyRepository(),
-		matRepo:       repository.NewMaterialRepository(),
-		sysConfigRepo: repository.NewSystemConfigRepository(),
-		genai:         client,
+		contextProvider: provider,
+		genai:           client,
 	}
-}
-
-// getDynamicContext returns live DB data (technologies + materials), cached 5 min
-func (h *Handler) getDynamicContext() string {
-	h.mu.RLock()
-	if h.cache != nil && time.Since(h.cache.fetchedAt) < cacheTTL {
-		content := h.cache.content
-		h.mu.RUnlock()
-		return content
-	}
-	h.mu.RUnlock()
-
-	techs, err := h.techRepo.FindAll()
-	if err != nil {
-		log.Printf("chat: error fetching technologies: %v", err)
-		return ""
-	}
-	mats, err := h.matRepo.FindAll()
-	if err != nil {
-		log.Printf("chat: error fetching materials: %v", err)
-		return ""
-	}
-
-	var b strings.Builder
-	b.WriteString("\n\n## Tecnologías actualmente disponibles en FabricaLaser (datos en tiempo real):\n")
-	for _, t := range techs {
-		b.WriteString(fmt.Sprintf("- **%s** (código: %s)\n", t.Name, t.Code))
-	}
-
-	b.WriteString("\n## Materiales que trabajamos actualmente (datos en tiempo real):\n")
-	for _, m := range mats {
-		line := fmt.Sprintf("- **%s** (categoría: %s", m.Name, m.Category)
-		if m.Notes != nil && *m.Notes != "" {
-			line += fmt.Sprintf(" — %s", *m.Notes)
-		}
-		line += ")\n"
-		b.WriteString(line)
-	}
-	b.WriteString("\nSi el cliente pregunta si trabajamos con un material o tecnología específica, reflejá exactamente esta lista. No menciones materiales o tecnologías que no estén aquí.\n")
-
-	if cfg, err := h.sysConfigRepo.FindByKey("TelAsesor"); err == nil && cfg.ConfigValue != "" {
-		b.WriteString(fmt.Sprintf("\n## Configuración operativa:\n- Teléfono asesor de ventas: %s\n", cfg.ConfigValue))
-	}
-
-	content := b.String()
-	h.mu.Lock()
-	h.cache = &dynamicContext{content: content, fetchedAt: time.Now()}
-	h.mu.Unlock()
-
-	return content
 }
 
 // HandleChat processes a chat message via Vertex AI
@@ -378,7 +314,7 @@ func (h *Handler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
-	dynCtx := h.getDynamicContext()
+	dynCtx := h.contextProvider.GetDynamicContext()
 	response, err := h.callGemini(ctx, req.Message, req.History, userName, dynCtx)
 	if err != nil {
 		log.Printf("Gemini error: %v", err)

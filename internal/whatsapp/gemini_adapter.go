@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/vertexai/genai"
+	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -239,7 +240,7 @@ Reglas para imágenes:
 
 type geminiAdapter struct {
 	client          *genai.Client
-	contextProvider *WAContextProvider
+	contextProvider *agentctx.Provider
 	sender          *Sender
 	tgSender        *tgSenderAdapter
 }
@@ -277,7 +278,7 @@ func jsonEscapeString(s string) string {
 }
 
 // NewGeminiAdapter crea un GeminiCaller con soporte de tools y contexto dinámico.
-func NewGeminiAdapter(provider *WAContextProvider) GeminiCaller {
+func NewGeminiAdapter(provider *agentctx.Provider) GeminiCaller {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, waProjectID, waLocation)
 	if err != nil {

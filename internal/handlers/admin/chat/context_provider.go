@@ -17,7 +17,7 @@ const adminContextCacheTTL = 5 * time.Minute
 // prompt en cada llamada al modelo. Cachea 5 minutos para evitar hits a DB
 // en cada mensaje.
 //
-// A diferencia del WAContextProvider del paquete whatsapp, este context es
+// A diferencia del agentctx.Provider (paquete internal/agent/context), este context es
 // más rico — incluye tarifas, descuentos por volumen y tipos de grabado con
 // factores, porque el gestor puede pedirle al asistente que explique cómo
 // llegó al precio.
