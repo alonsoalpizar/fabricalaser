@@ -74,13 +74,18 @@ type ToolDef struct {
 // Response es el resultado de una llamada Chat.
 // Siempre retorna Content o ToolCalls (o ambos). Nunca ambos vacíos si err==nil.
 type Response struct {
-	Content   string
-	ToolCalls []ToolCall
-	Provider  string // "vertex", "openai", "deepseek", "kimi", "anthropic" — para logging
-	Model     string // modelo específico usado (útil cuando llm_model="" y se usa default)
-	LatencyMS int64  // R12: medido por el adapter desde el envío hasta la primera respuesta completa
-	TokensIn  int    // R12: tokens de entrada (0 si el proveedor no lo retorna en la response)
-	TokensOut int    // R12: tokens de salida
+	Content      string
+	ToolCalls    []ToolCall
+	Provider     string // "vertex", "openai", "deepseek", "kimi", "anthropic" — para logging
+	Model        string // modelo específico usado (útil cuando llm_model="" y se usa default)
+	LatencyMS    int64  // R12: medido por el adapter desde el envío hasta la primera respuesta completa
+	TokensIn     int    // R12: tokens de entrada (0 si el proveedor no lo retorna en la response)
+	TokensOut    int    // R12: tokens de salida
+	TokensCached int    // Tokens leídos del prompt cache del proveedor (0 si no hubo hit).
+	// Subconjunto de TokensIn — no se suma aparte al total, se cobra a tarifa reducida.
+	// OpenAI: usage.prompt_tokens_details.cached_tokens (50% descuento automático)
+	// Anthropic: usage.cache_read_input_tokens (90% descuento, requiere cache_control)
+	// Vertex: usage_metadata.cached_content_token_count (implicit gratis; explicit 75% descuento)
 }
 
 // Config es la configuración de un cliente LLM — pasa al constructor del adapter.

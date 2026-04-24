@@ -80,10 +80,19 @@ type openAIResponse struct {
 		} `json:"message"`
 		FinishReason string `json:"finish_reason"`
 	} `json:"choices"`
+	// Usage reporta tokens. OpenAI-compat proveedores soportan prompt_tokens_details
+	// con cached_tokens desde oct 2024 (auto prompt caching, 50% descuento).
+	// DeepSeek reporta en prompt_cache_hit_tokens (mismo concepto, campo distinto).
+	// Kimi/Moonshot: a verificar si soporta. Si campo no viene, queda 0 → sin problema.
 	Usage struct {
-		PromptTokens     int `json:"prompt_tokens"`
-		CompletionTokens int `json:"completion_tokens"`
-		TotalTokens      int `json:"total_tokens"`
+		PromptTokens        int `json:"prompt_tokens"`
+		CompletionTokens    int `json:"completion_tokens"`
+		TotalTokens         int `json:"total_tokens"`
+		PromptTokensDetails struct {
+			CachedTokens int `json:"cached_tokens"` // OpenAI: auto-cached (50% off)
+		} `json:"prompt_tokens_details,omitempty"`
+		PromptCacheHitTokens  int `json:"prompt_cache_hit_tokens,omitempty"`  // DeepSeek
+		PromptCacheMissTokens int `json:"prompt_cache_miss_tokens,omitempty"` // DeepSeek
 	} `json:"usage"`
 	Error *struct {
 		Message string `json:"message"`
@@ -242,23 +251,34 @@ func (a *openAIAdapter) Chat(ctx context.Context, system string, history []Messa
 		}
 	}
 
-	resp := &Response{
-		Content:   choice.Content,
-		ToolCalls: toolCalls,
-		Provider:  a.cfg.Provider,
-		Model:     a.model,
-		LatencyMS: latency,
-		TokensIn:  parsed.Usage.PromptTokens,
-		TokensOut: parsed.Usage.CompletionTokens,
+	// Tokens cached: OpenAI reporta en prompt_tokens_details.cached_tokens,
+	// DeepSeek reporta en prompt_cache_hit_tokens (distinto campo, mismo concepto).
+	// Solo uno de los dos viene poblado según el proveedor; tomamos el que tenga valor.
+	cachedTokens := parsed.Usage.PromptTokensDetails.CachedTokens
+	if cachedTokens == 0 {
+		cachedTokens = parsed.Usage.PromptCacheHitTokens
 	}
 
-	// R12: logging estructurado.
+	resp := &Response{
+		Content:      choice.Content,
+		ToolCalls:    toolCalls,
+		Provider:     a.cfg.Provider,
+		Model:        a.model,
+		LatencyMS:    latency,
+		TokensIn:     parsed.Usage.PromptTokens,
+		TokensOut:    parsed.Usage.CompletionTokens,
+		TokensCached: cachedTokens,
+	}
+
+	// R12: logging estructurado. Incluye tokens_cached para visibilidad
+	// del auto-caching (OpenAI/DeepSeek lo hacen automáticamente, sin código extra).
 	slog.Info("llm.chat",
 		"provider", a.cfg.Provider,
 		"model", resp.Model,
 		"latency_ms", resp.LatencyMS,
 		"tokens_in", resp.TokensIn,
 		"tokens_out", resp.TokensOut,
+		"tokens_cached", resp.TokensCached,
 		"tool_calls", len(resp.ToolCalls),
 	)
 

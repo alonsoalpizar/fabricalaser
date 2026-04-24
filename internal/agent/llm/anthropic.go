@@ -63,14 +63,37 @@ func NewAnthropicAdapter(cfg Config) (Client, error) {
 // ---------- Wire types ----------
 
 type anthropicRequest struct {
-	Model       string             `json:"model"`
-	MaxTokens   int                `json:"max_tokens"` // required
-	System      string             `json:"system,omitempty"`
+	Model     string             `json:"model"`
+	MaxTokens int                `json:"max_tokens"` // required
+	// System puede ser string (para prompts cortos como TestConnection) o
+	// []systemBlock (cuando queremos marcar cache_control para aprovechar
+	// prompt caching de Anthropic — descuento 90% en lectura cacheada).
+	// Anthropic API acepta ambos formatos.
+	System      any                `json:"system,omitempty"`
 	Messages    []anthropicMessage `json:"messages"`
 	Tools       []anthropicTool    `json:"tools,omitempty"`
 	Temperature *float64           `json:"temperature,omitempty"`
 	TopP        *float64           `json:"top_p,omitempty"`
 }
+
+// systemBlock permite marcar el system prompt para prompt caching.
+// Ejemplo de uso: {Type: "text", Text: "<prompt largo>", CacheControl: {Type: "ephemeral"}}
+// El cache "ephemeral" vive 5 minutos; cada hit paga 10% de tokens cached.
+// Requisito Anthropic: mínimo 1024 tokens para cachear (nuestros prompts cumplen sobradamente).
+type systemBlock struct {
+	Type         string        `json:"type"` // siempre "text" para system
+	Text         string        `json:"text"`
+	CacheControl *cacheControl `json:"cache_control,omitempty"`
+}
+
+type cacheControl struct {
+	Type string `json:"type"` // "ephemeral" (5 min) — único disponible en GA
+}
+
+// Threshold bajo el cual NO vale la pena marcar cache_control: el cache creation
+// cuesta 125% de los tokens normales, solo se compensa si hay al menos 2 reads.
+// Para prompts cortos (TestConnection, etc.) mejor no cachear.
+const cacheMinBodyLen = 4000 // ~1000 tokens aprox — por encima del mínimo de Anthropic
 
 // anthropicMessage.Content puede ser string o []contentBlock — por eso any.
 type anthropicMessage struct {
@@ -125,8 +148,10 @@ type anthropicResponseBlok struct {
 }
 
 type anthropicUsage struct {
-	InputTokens  int `json:"input_tokens"`
-	OutputTokens int `json:"output_tokens"`
+	InputTokens              int `json:"input_tokens"`
+	OutputTokens             int `json:"output_tokens"`
+	CacheReadInputTokens     int `json:"cache_read_input_tokens,omitempty"`     // tokens leídos del cache (90% off)
+	CacheCreationInputTokens int `json:"cache_creation_input_tokens,omitempty"` // tokens que se cachearon esta vez (+25%)
 }
 
 type anthropicErrorEnvelope struct {
@@ -159,9 +184,24 @@ func (a *anthropicAdapter) Chat(
 
 	reqBody := anthropicRequest{
 		Model:    a.model,
-		System:   system,
 		Messages: msgs,
 		Tools:    translateTools(tools),
+	}
+
+	// Prompt caching: si el system prompt es suficientemente largo (~1000+ tokens),
+	// lo envolvemos en un systemBlock con cache_control ephemeral. El cache vive
+	// 5 min en Anthropic; cada hit paga 10% del costo normal de esos tokens.
+	// Para prompts cortos (TestConnection), enviamos string plano.
+	if system != "" {
+		if len(system) >= cacheMinBodyLen {
+			reqBody.System = []systemBlock{{
+				Type:         "text",
+				Text:         system,
+				CacheControl: &cacheControl{Type: "ephemeral"},
+			}}
+		} else {
+			reqBody.System = system
+		}
 	}
 
 	// MaxTokens required.
@@ -197,12 +237,18 @@ func (a *anthropicAdapter) Chat(
 		return nil, fmt.Errorf("anthropic: decode response: %w", err)
 	}
 
+	// TokensIn ya incluye tokens cacheados (Anthropic los suma en InputTokens).
+	// TokensCached es el subconjunto que se leyó del cache (cobra 10% del normal).
+	// Si hubo cache creation en este request (primera vez), eso NO cuenta en cached
+	// — se cobra 125% del normal. Lo trackeamos pero no lo reportamos en TokensCached
+	// porque la semántica del campo es "tokens con descuento efectivo".
 	resp := &Response{
-		Provider:  "anthropic",
-		Model:     a.model,
-		LatencyMS: latency,
-		TokensIn:  parsed.Usage.InputTokens,
-		TokensOut: parsed.Usage.OutputTokens,
+		Provider:     "anthropic",
+		Model:        a.model,
+		LatencyMS:    latency,
+		TokensIn:     parsed.Usage.InputTokens + parsed.Usage.CacheReadInputTokens + parsed.Usage.CacheCreationInputTokens,
+		TokensOut:    parsed.Usage.OutputTokens,
+		TokensCached: parsed.Usage.CacheReadInputTokens,
 	}
 
 	// Concat text blocks; collect tool_use blocks preservando ID original (R11).
@@ -221,13 +267,17 @@ func (a *anthropicAdapter) Chat(
 	}
 	resp.Content = textBuf.String()
 
-	// Logging R12.
+	// Logging R12. Incluye tokens_cached + tokens_cache_created para observar eficacia
+	// del prompt caching — si cache_created siempre es >0 y cache_read siempre 0, el
+	// cache no está funcionando (prompt cambia en cada request o TTL 5min se expira).
 	slog.Info("llm.chat",
 		"provider", "anthropic",
 		"model", resp.Model,
 		"latency_ms", resp.LatencyMS,
 		"tokens_in", resp.TokensIn,
 		"tokens_out", resp.TokensOut,
+		"tokens_cached", resp.TokensCached,
+		"tokens_cache_created", parsed.Usage.CacheCreationInputTokens,
 		"tool_calls", len(resp.ToolCalls),
 	)
 

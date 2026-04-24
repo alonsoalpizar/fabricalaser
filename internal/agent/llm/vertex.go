@@ -170,9 +170,24 @@ func (a *vertexAdapter) Chat(
 	}
 
 	// Usage metadata (tokens)
+	// NOTA sobre prompt caching en Vertex:
+	// Gemini 2.5 Flash tiene IMPLICIT CACHING activo automáticamente desde 2024
+	// (Google detecta prompts similares en una ventana de ~5 min y aplica descuento
+	// transparentemente — el usuario no ve los tokens cacheados en el billing pero
+	// paga menos). El campo cached_content_token_count existe en la proto
+	// GenerateContentResponse.UsageMetadata, PERO el SDK cloud.google.com/go/vertexai
+	// v0.13.2 (deprecated) no lo expone en su veneer UsageMetadata struct.
+	//
+	// Resultado: TokensCached=0 siempre para Vertex hoy. El beneficio de caching
+	// sigue aplicando en el billing de Google, solo no es visible en nuestra
+	// observabilidad.
+	//
+	// Para capturarlo, deuda técnica: migrar al SDK nuevo google.golang.org/genai
+	// (ya recomendado por Google, deprecation del v0.13.2 en junio 2026).
 	if resp.UsageMetadata != nil {
 		out.TokensIn = int(resp.UsageMetadata.PromptTokenCount)
 		out.TokensOut = int(resp.UsageMetadata.CandidatesTokenCount)
+		// out.TokensCached queda en 0 — no disponible en este SDK
 	}
 
 	// Extraer Content + ToolCalls del primer candidate
@@ -203,6 +218,7 @@ func (a *vertexAdapter) Chat(
 		"latency_ms", out.LatencyMS,
 		"tokens_in", out.TokensIn,
 		"tokens_out", out.TokensOut,
+		"tokens_cached", out.TokensCached, // siempre 0 en este SDK (implicit caching activo pero invisible)
 		"tool_calls", len(out.ToolCalls),
 	)
 
