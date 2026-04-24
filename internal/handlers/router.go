@@ -9,15 +9,18 @@ import (
 
 	agentctx "github.com/alonsoalpizar/fabricalaser/internal/agent/context"
 	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/prompts"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/admin"
 	adminchat "github.com/alonsoalpizar/fabricalaser/internal/handlers/admin/chat"
 	adminllm "github.com/alonsoalpizar/fabricalaser/internal/handlers/admin/llm"
+	adminprompts "github.com/alonsoalpizar/fabricalaser/internal/handlers/admin/prompts"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/auth"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/chat"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/config"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/quote"
 	"github.com/alonsoalpizar/fabricalaser/internal/middleware"
+	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 	"github.com/alonsoalpizar/fabricalaser/internal/telegram"
 	"github.com/alonsoalpizar/fabricalaser/internal/whatsapp"
 	"github.com/go-chi/chi/v5"
@@ -27,7 +30,7 @@ import (
 
 const Version = "1.0.0"
 
-func NewRouter(redisClient *redis.Client, llmFactory *llm.Factory) *chi.Mux {
+func NewRouter(redisClient *redis.Client, llmFactory *llm.Factory, promptProvider *prompts.Provider) *chi.Mux {
 	r := chi.NewRouter()
 
 	// Global middleware
@@ -180,7 +183,7 @@ func NewRouter(redisClient *redis.Client, llmFactory *llm.Factory) *chi.Mux {
 
 		// Chat administrativo — asistente Gemini para gestores
 		adminChatCtxProvider := adminchat.NewContextProvider()
-		adminChatHandler := adminchat.NewHandler(redisClient, adminChatCtxProvider, llmFactory)
+		adminChatHandler := adminchat.NewHandler(redisClient, adminChatCtxProvider, llmFactory, promptProvider)
 		r.Post("/chat/message", adminChatHandler.SendMessage)
 		r.Post("/chat/reset", adminChatHandler.Reset)
 		r.Get("/chat/history", adminChatHandler.GetHistory)
@@ -194,6 +197,19 @@ func NewRouter(redisClient *redis.Client, llmFactory *llm.Factory) *chi.Mux {
 		r.Get("/llm/config", adminLLMHandler.GetConfig)
 		r.Post("/llm/config", adminLLMHandler.SaveConfig)
 		r.Post("/llm/test", adminLLMHandler.TestConnection)
+
+		// Gestión de prompts del agente (Paso 5) — edición live de los system prompts
+		// de los 3 agentes desde /admin/prompts.html con versionado + rollback + sandbox
+		// + hot reload via pub/sub Redis.
+		promptRepo := repository.NewAgentPromptRepository()
+		adminPromptsHandler := adminprompts.NewHandler(promptRepo, promptProvider, llmFactory)
+		r.Get("/prompts", adminPromptsHandler.List)
+		r.Get("/prompts/{agent_key}", adminPromptsHandler.GetOne)
+		r.Put("/prompts/{agent_key}", adminPromptsHandler.Save)
+		r.Get("/prompts/{agent_key}/versions", adminPromptsHandler.ListVersions)
+		r.Get("/prompts/{agent_key}/versions/{version}", adminPromptsHandler.GetVersion)
+		r.Post("/prompts/{agent_key}/rollback", adminPromptsHandler.Rollback)
+		r.Post("/prompts/sandbox", adminPromptsHandler.Sandbox)
 	})
 
 	// Provider de contexto dinámico compartido entre chat web, WhatsApp y Telegram.
@@ -204,7 +220,7 @@ func NewRouter(redisClient *redis.Client, llmFactory *llm.Factory) *chi.Mux {
 	waHandler := whatsapp.NewHandler(
 		whatsapp.NewRedisAdapter(redisClient),
 		whatsapp.NewPGAdapter(database.Get()),
-		whatsapp.NewGeminiAdapter(llmFactory, agentContext),
+		whatsapp.NewGeminiAdapter(llmFactory, agentContext, promptProvider),
 		whatsapp.NewRateLimiter(redisClient),
 		agentContext,
 	)
@@ -217,7 +233,7 @@ func NewRouter(redisClient *redis.Client, llmFactory *llm.Factory) *chi.Mux {
 	tgProcessor := telegram.NewProcessor(
 		whatsapp.NewRedisAdapter(redisClient),
 		whatsapp.NewPGAdapter(database.Get()),
-		whatsapp.NewGeminiAdapter(llmFactory, agentContext),
+		whatsapp.NewGeminiAdapter(llmFactory, agentContext, promptProvider),
 		whatsapp.NewRateLimiter(redisClient),
 		agentContext,
 	)
@@ -228,7 +244,7 @@ func NewRouter(redisClient *redis.Client, llmFactory *llm.Factory) *chi.Mux {
 	r.Post("/api/v1/blanks/consultar", admin.NewBlankHandler().ConsultarBlank)
 
 	// Chat route (public - auth optional, enriches context if logged in)
-	chatHandler := chat.NewHandler(llmFactory, agentContext)
+	chatHandler := chat.NewHandler(llmFactory, agentContext, promptProvider)
 	r.Route("/api/v1/chat", func(r chi.Router) {
 		r.Use(middleware.AuthOptional)
 		r.Post("/", chatHandler.HandleChat)

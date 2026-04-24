@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/prompts"
 )
 
 const (
@@ -30,26 +31,38 @@ type CallResult struct {
 	ToolCalls []ToolCallTrace `json:"tool_calls,omitempty"`
 }
 
-// geminiAdapter encapsula el factory LLM y el ContextProvider.
+// geminiAdapter encapsula el factory LLM, el ContextProvider y el Provider de
+// system prompts.
 //
 // Nombre preservado por compatibilidad con handler.go, pero ya no está atado a
 // Gemini/Vertex — consume la interface llm.Client, por lo que opera sobre
 // cualquier proveedor activo (Vertex, OpenAI, DeepSeek, Kimi, Anthropic).
 // El factory se consulta en cada iteración del tool loop para que el hot-reload
 // del admin UI tome efecto aun durante una conversación en vuelo (R6).
+//
+// El promptProvider sirve el system prompt base del agente admin_chat desde DB
+// (con fallback hardcoded e hot-reload vía pub/sub Redis).
 type geminiAdapter struct {
 	factory         *llm.Factory
 	contextProvider *ContextProvider
 	executor        *toolExecutor
+	promptProvider  *prompts.Provider
 }
 
 // newGeminiAdapter construye el adapter. Ya no recibe ni model name ni
-// credenciales — todo viene del factory.
-func newGeminiAdapter(factory *llm.Factory, provider *ContextProvider, executor *toolExecutor) *geminiAdapter {
+// credenciales — todo viene del factory. El promptProvider se inyecta para
+// poder servir el system prompt base desde DB con hot reload.
+func newGeminiAdapter(
+	factory *llm.Factory,
+	provider *ContextProvider,
+	executor *toolExecutor,
+	promptProv *prompts.Provider,
+) *geminiAdapter {
 	return &geminiAdapter{
 		factory:         factory,
 		contextProvider: provider,
 		executor:        executor,
+		promptProvider:  promptProv,
 	}
 }
 
@@ -69,7 +82,7 @@ func (g *geminiAdapter) Call(
 ) (*CallResult, error) {
 	dynCtx := g.contextProvider.Get()
 	adminCtx := buildAdminContextBlock(adminID, adminName)
-	systemPrompt := systemPromptAdmin + adminCtx + dynCtx
+	systemPrompt := g.promptProvider.Get("admin_chat") + adminCtx + dynCtx
 
 	// Traducir historial del repo a []llm.Message
 	messages := make([]llm.Message, 0, len(history)+1)

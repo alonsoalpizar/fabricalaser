@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/prompts"
 	"github.com/go-chi/chi/v5"
 	"github.com/redis/go-redis/v9"
 )
@@ -33,14 +34,21 @@ type Handler struct {
 // El context provider se inyecta porque también lo usa el ContextProvider
 // global del servidor (cache compartido). El factory LLM se inyecta para
 // que el adapter conmute de proveedor en vivo al editarse la config desde
-// el admin UI (R6, hot reload).
-func NewHandler(redisClient *redis.Client, ctxProvider *ContextProvider, factory *llm.Factory) *Handler {
+// el admin UI (R6, hot reload). El promptProv sirve el system prompt base
+// (agent_key="admin_chat") desde DB con fallback hardcoded y hot reload
+// vía pub/sub Redis.
+func NewHandler(
+	redisClient *redis.Client,
+	ctxProvider *ContextProvider,
+	factory *llm.Factory,
+	promptProv *prompts.Provider,
+) *Handler {
 	executor := newToolExecutor()
 	return &Handler{
 		redis:    redisClient,
 		repo:     NewConversationRepository(),
 		executor: executor,
-		gemini:   newGeminiAdapter(factory, ctxProvider, executor),
+		gemini:   newGeminiAdapter(factory, ctxProvider, executor, promptProv),
 	}
 }
 

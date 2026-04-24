@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/alonsoalpizar/fabricalaser/internal/agent/llm"
+	"github.com/alonsoalpizar/fabricalaser/internal/agent/prompts"
 	"github.com/alonsoalpizar/fabricalaser/internal/config"
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers"
@@ -69,8 +71,21 @@ func main() {
 		log.Fatalf("LLM factory: %v", err)
 	}
 
+	// Prompts provider — sirve los system prompts de los 3 agentes (chat web,
+	// WhatsApp/Telegram, admin chat) desde DB con fallback hardcoded. Hot reload
+	// via pub/sub Redis: al guardar un prompt desde /admin/prompts.html, el
+	// servicio invalida su cache local en segundos sin reiniciar.
+	promptRepo := repository.NewAgentPromptRepository()
+	promptProvider := prompts.New(promptRepo, redisClient, prompts.Fallbacks())
+	if err := promptProvider.Seed(); err != nil {
+		// No fatal — Get() caerá al fallback hardcoded si DB tiene bodies vacíos.
+		log.Printf("prompts seed: %v (usando fallbacks)", err)
+	}
+	promptProvider.Warmup() // precarga los 5 bodies en cache; first request no espera DB
+	go promptProvider.Subscribe(context.Background())
+
 	// Setup router
-	router := handlers.NewRouter(redisClient, llmFactory)
+	router := handlers.NewRouter(redisClient, llmFactory, promptProvider)
 
 	// Start server
 	addr := ":" + cfg.Port
