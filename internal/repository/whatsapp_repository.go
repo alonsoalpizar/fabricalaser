@@ -54,11 +54,12 @@ type Session struct {
 }
 
 type SessionFilter struct {
-	Query string
-	From  string // "YYYY-MM-DD"
-	To    string // "YYYY-MM-DD"
-	Page  int
-	Limit int
+	Query   string
+	From    string // "YYYY-MM-DD"
+	To      string // "YYYY-MM-DD"
+	Channel string // "wa" (whatsapp), "tg" (telegram), "" / "all" (ambos)
+	Page    int
+	Limit   int
 }
 
 type SessionsPage struct {
@@ -107,18 +108,38 @@ const sessionCTE = `
 		GROUP BY phone, DATE(created_at AT TIME ZONE 'America/Costa_Rica')
 	),
 	user_lookup AS (
-		SELECT DISTINCT ON (RIGHT(REGEXP_REPLACE(telefono, '[^0-9]', '', 'g'), 8))
-			RIGHT(REGEXP_REPLACE(telefono, '[^0-9]', '', 'g'), 8) AS phone_key,
-			id      AS user_id,
-			nombre  AS user_nombre,
-			email   AS user_email
-		FROM users
-		WHERE telefono IS NOT NULL AND activo = true
-		ORDER BY RIGHT(REGEXP_REPLACE(telefono, '[^0-9]', '', 'g'), 8), id ASC
+		-- Match por últimos 8 dígitos del teléfono (WhatsApp/Telegram con número CR).
+		-- Paréntesis necesarios para combinar DISTINCT ON+ORDER BY con UNION ALL.
+		(
+			SELECT DISTINCT ON (RIGHT(REGEXP_REPLACE(telefono, '[^0-9]', '', 'g'), 8))
+				RIGHT(REGEXP_REPLACE(telefono, '[^0-9]', '', 'g'), 8) AS phone_key,
+				id      AS user_id,
+				nombre  AS user_nombre,
+				email   AS user_email
+			FROM users
+			WHERE telefono IS NOT NULL AND activo = true
+			ORDER BY RIGHT(REGEXP_REPLACE(telefono, '[^0-9]', '', 'g'), 8), id ASC
+		)
+
+		UNION ALL
+
+		-- Match exacto para chat web logueado (phone="web:<user_id>").
+		(
+			SELECT 'web:' || id::text AS phone_key,
+				id     AS user_id,
+				nombre AS user_nombre,
+				email  AS user_email
+			FROM users
+			WHERE activo = true
+		)
 	)
 `
 
 // buildSessionWhere builds a WHERE clause and arg slice from a SessionFilter.
+//
+// El filtro Channel discrimina por prefijo de phone: las sesiones de Telegram
+// se almacenan con prefijo "tg:<chat_id>" en la columna phone (ver paquete
+// internal/telegram). WhatsApp usa el número crudo sin prefijo.
 func buildSessionWhere(f SessionFilter) (string, []interface{}) {
 	var conds []string
 	var args []interface{}
@@ -134,6 +155,15 @@ func buildSessionWhere(f SessionFilter) (string, []interface{}) {
 	if f.To != "" {
 		conds = append(conds, "s.session_date <= ?::date")
 		args = append(args, f.To)
+	}
+	switch f.Channel {
+	case "wa":
+		// WhatsApp = números crudos, sin prefijo de canal
+		conds = append(conds, "s.phone NOT LIKE 'tg:%' AND s.phone NOT LIKE 'web:%'")
+	case "tg":
+		conds = append(conds, "s.phone LIKE 'tg:%'")
+	case "web":
+		conds = append(conds, "s.phone LIKE 'web:%'")
 	}
 
 	if len(conds) == 0 {
@@ -157,7 +187,7 @@ func (r *WhatsappRepository) GetSessions(f SessionFilter) (SessionsPage, error) 
 	// Count
 	countSQL := sessionCTE + fmt.Sprintf(`
 		SELECT COUNT(*) FROM sessions s
-		LEFT JOIN user_lookup ul ON ul.phone_key = RIGHT(REGEXP_REPLACE(s.phone, '[^0-9]', '', 'g'), 8)
+		LEFT JOIN user_lookup ul ON ul.phone_key = CASE WHEN s.phone LIKE 'web:%%' THEN s.phone ELSE RIGHT(REGEXP_REPLACE(s.phone, '[^0-9]', '', 'g'), 8) END
 		%s`, where)
 
 	var total int64
@@ -180,7 +210,7 @@ func (r *WhatsappRepository) GetSessions(f SessionFilter) (SessionsPage, error) 
 			ul.user_email
 		FROM sessions s
 		LEFT JOIN first_msgs fm ON fm.phone = s.phone AND fm.session_date = s.session_date
-		LEFT JOIN user_lookup ul ON ul.phone_key = RIGHT(REGEXP_REPLACE(s.phone, '[^0-9]', '', 'g'), 8)
+		LEFT JOIN user_lookup ul ON ul.phone_key = CASE WHEN s.phone LIKE 'web:%%' THEN s.phone ELSE RIGHT(REGEXP_REPLACE(s.phone, '[^0-9]', '', 'g'), 8) END
 		%s
 		ORDER BY s.last_message_at DESC
 		LIMIT ? OFFSET ?`, where)

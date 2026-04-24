@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/alonsoalpizar/fabricalaser/internal/models"
+	"github.com/alonsoalpizar/fabricalaser/internal/services/pricing"
 )
 
 // EstimateRequest — lo que recibe el endpoint desde el tool de Gemini.
@@ -89,7 +90,7 @@ func (h *Handler) HandleEstimate(w http.ResponseWriter, r *http.Request) {
 	anchoMM := req.AnchoCM * 10
 
 	// Construir SVGAnalysis sintético desde las medidas
-	analysis := buildSyntheticAnalysis(altoMM, anchoMM, req.IncluyeCorte, req.EngraveTypeID)
+	analysis := pricing.BuildSyntheticAnalysis(altoMM, anchoMM, req.IncluyeCorte, req.EngraveTypeID)
 
 	// Llamar al Calculator sin modificar su lógica
 	priceResult, err := h.calculator.Calculate(
@@ -138,39 +139,6 @@ func (h *Handler) HandleEstimate(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
-}
-
-// buildSyntheticAnalysis construye un SVGAnalysis en memoria desde medidas en mm.
-// Simula lo que haría el analizador SVG con geometría rectangular simple.
-// - engraveTypeID=1 (Vectorial): usa perímetro como VectorLengthMM
-// - engraveTypeID=2,3,4 (Raster/Foto/3D): usa área como RasterAreaMM2
-// - CutLengthMM: perímetro del rectángulo si incluye_corte=true (corte rojo)
-// - BoundsMaxX/Y: define el bounding box para que TotalArea() y ComplexityFactor() funcionen
-func buildSyntheticAnalysis(altoMM, anchoMM float64, incluyeCorte bool, engraveTypeID uint) *models.SVGAnalysis {
-	var cutLengthMM, vectorLengthMM, rasterAreaMM2 float64
-
-	if incluyeCorte {
-		cutLengthMM = 2 * (altoMM + anchoMM)
-	}
-
-	// engrave_type_id=0 → solo corte, sin grabado (vectorLengthMM y rasterAreaMM2 = 0)
-	// engrave_type_id=1 es Vectorial → usar perímetro como longitud vectorial
-	// engrave_type_id=2,3,4 son Raster/Foto/3D → usar área
-	if engraveTypeID == 1 {
-		vectorLengthMM = 2 * (altoMM + anchoMM) // perímetro como aproximación
-	} else if engraveTypeID > 1 {
-		rasterAreaMM2 = altoMM * anchoMM
-	}
-	// engraveTypeID == 0: solo corte, ambos quedan en 0
-
-	return &models.SVGAnalysis{
-		RasterAreaMM2:  rasterAreaMM2,
-		VectorLengthMM: vectorLengthMM,
-		CutLengthMM:    cutLengthMM,
-		BoundsMaxX:     anchoMM, // bounding box — TotalArea() = BoundsMaxX × BoundsMaxY
-		BoundsMaxY:     altoMM,  // ComplexityFactor() usa TotalArea() internamente
-		// BoundsMinX, BoundsMinY = 0,0 (zero value)
-	}
 }
 
 func sendEstimateError(w http.ResponseWriter, msg string, status int) {

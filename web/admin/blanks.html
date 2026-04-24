@@ -6,7 +6,7 @@
   <title>Catálogo de Blanks | Admin FabricaLaser</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=6">
   <style>
     .stock-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:12px;font-weight:500; }
     .stock-ok   { background:#16a34a22;color:#16a34a; }
@@ -197,6 +197,24 @@
           <div id="accessoriesContainer"></div>
           <button type="button" class="btn btn-secondary btn-sm" onclick="addAccessory()" style="margin-top:6px">+ Agregar accesorio</button>
         </div>
+
+        <!-- Aliases para matching del agente Gemini -->
+        <div class="form-group">
+          <label class="form-label">
+            Sinónimos para el asistente
+            <span style="font-size:11px;color:var(--text-secondary)">(uno por línea — el agente los usa para matchear con lo que escribe el gestor)</span>
+          </label>
+          <textarea
+            class="form-input"
+            id="blankAliases"
+            rows="4"
+            placeholder="acrílicos redondos&#10;discos de acrílico&#10;piezas para sublimar"
+            style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;"></textarea>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+            Ej: si tu blank es "Llavero acrílico 5cm", agregá variantes que el cliente pueda usar al pedirlo
+            ("acrílicos redondos", "discos", etc). Sin esto el agente puede no encontrarlo y cobrar como pieza custom.
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('blankModal')">Cancelar</button>
@@ -236,7 +254,7 @@
     </div>
   </div>
 
-  <script src="admin.js"></script>
+  <script src="admin.js?v=6"></script>
   <script>
     let blanksData = [];
     let activeFilter = 'todos';
@@ -402,6 +420,7 @@
       document.getElementById('blankStockQty').value = 0;
       document.getElementById('blankStockAlert').value = 10;
       document.getElementById('blankIsActive').checked = true;
+      document.getElementById('blankAliases').value = '';
       renderPriceBreaks([]);
       renderAccessories([]);
       openModal('blankModal');
@@ -422,6 +441,8 @@
       document.getElementById('blankStockQty').value = b.stock_qty;
       document.getElementById('blankStockAlert').value = b.stock_alert;
       document.getElementById('blankIsActive').checked = b.is_active;
+      // Aliases: array → textarea con uno por línea
+      document.getElementById('blankAliases').value = (b.aliases || []).join('\n');
       renderPriceBreaks(b.price_breaks || []);
       renderAccessories(b.accessories || []);
       openModal('blankModal');
@@ -506,6 +527,11 @@
         is_active:    document.getElementById('blankIsActive').checked,
         price_breaks: getPriceBreaks(),
         accessories:  getAccessories(),
+        // Aliases: textarea (uno por línea) → array de strings, sin vacíos ni duplicados
+        aliases:      Array.from(new Set(
+          document.getElementById('blankAliases').value
+            .split('\n').map(s => s.trim()).filter(Boolean)
+        )),
       };
 
       try {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/admin"
+	adminchat "github.com/alonsoalpizar/fabricalaser/internal/handlers/admin/chat"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/auth"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/chat"
 	"github.com/alonsoalpizar/fabricalaser/internal/handlers/config"
@@ -173,6 +174,15 @@ func NewRouter(redisClient *redis.Client) *chi.Mux {
 		// Legacy
 		r.Get("/whatsapp/conversations", waAdminHandler.GetConversations)
 		r.Get("/whatsapp/conversations/{phone}", waAdminHandler.GetConversation)
+
+		// Chat administrativo — asistente Gemini para gestores
+		adminChatCtxProvider := adminchat.NewContextProvider()
+		adminChatHandler := adminchat.NewHandler(redisClient, adminChatCtxProvider)
+		r.Post("/chat/message", adminChatHandler.SendMessage)
+		r.Post("/chat/reset", adminChatHandler.Reset)
+		r.Get("/chat/history", adminChatHandler.GetHistory)
+		r.Get("/chat/sessions", adminChatHandler.ListSessions)
+		r.Get("/chat/sessions/{id}", adminChatHandler.GetSessionMessages)
 	})
 
 	// WhatsApp webhook

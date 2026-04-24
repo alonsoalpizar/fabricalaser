@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
 	"cloud.google.com/go/vertexai/genai"
+	"github.com/alonsoalpizar/fabricalaser/internal/database"
 	"github.com/alonsoalpizar/fabricalaser/internal/repository"
 )
 
@@ -369,8 +371,9 @@ func (h *Handler) HandleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user name from context (set by AuthMiddleware)
+	// Get user identity from context (set by AuthMiddleware on /chat/* — auth opcional)
 	userName, _ := r.Context().Value("userName").(string)
+	userID, _ := r.Context().Value("userID").(uint)
 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
@@ -383,8 +386,46 @@ func (h *Handler) HandleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Persistencia para clientes registrados.
+	// Anónimos: no se guarda nada (decisión consciente: no consintieron explícitamente).
+	// Esquema reutiliza tabla whatsapp_conversations con prefijo "web:<userID>" en
+	// la columna phone — mismo patrón que Telegram usa "tg:<chat_id>".
+	if userID > 0 {
+		go persistWebTurns(userID, req.Message, response)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(ChatResponse{Response: response})
+}
+
+// persistWebTurns guarda el par (user, model) en whatsapp_conversations.
+// Fire-and-forget con logging estructurado de errores (no propaga al cliente).
+func persistWebTurns(userID uint, userMsg, modelMsg string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	phone := fmt.Sprintf("web:%d", userID)
+	now := time.Now()
+	db := database.Get()
+
+	if err := db.WithContext(ctx).Exec(
+		"INSERT INTO whatsapp_conversations (phone, role, content, created_at) VALUES (?, ?, ?, ?)",
+		phone, "user", userMsg, now,
+	).Error; err != nil {
+		slog.Error("chat web: failed to persist user turn",
+			"user_id", userID, "error", err)
+		return
+	}
+
+	// El segundo INSERT usa now+1ms para garantizar orden cronológico estable
+	// si los timestamps tienen baja resolución.
+	if err := db.WithContext(ctx).Exec(
+		"INSERT INTO whatsapp_conversations (phone, role, content, created_at) VALUES (?, ?, ?, ?)",
+		phone, "model", modelMsg, now.Add(time.Millisecond),
+	).Error; err != nil {
+		slog.Error("chat web: failed to persist model turn",
+			"user_id", userID, "error", err)
+	}
 }
 
 func (h *Handler) callGemini(ctx context.Context, message string, history []HistoryEntry, userName string, dynCtx string) (string, error) {

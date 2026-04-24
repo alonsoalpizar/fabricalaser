@@ -32,6 +32,12 @@ type Blank struct {
 	// Formato: [{"name": "Argolla metálica", "price": 150, "min_qty_pack": 25}]
 	Accessories datatypes.JSON `json:"accessories" gorm:"column:accessories;type:jsonb;default:'[]'"`
 
+	// Aliases: sinónimos de búsqueda semántica usados por el agente Gemini del
+	// chat admin para matchear expresiones del gestor ("acrílicos redondos",
+	// "discos", etc.) con este blank. Editable desde la UI admin sin deploy.
+	// Formato: array de strings. Ejemplo: ["acrílicos redondos", "discos"]
+	Aliases datatypes.JSON `json:"aliases" gorm:"column:aliases;type:jsonb;default:'[]'"`
+
 	StockQty   int  `json:"stock_qty"   gorm:"column:stock_qty;not null;default:0"`
 	StockAlert int  `json:"stock_alert" gorm:"column:stock_alert;not null;default:10"`
 	IsFeatured bool `json:"is_featured" gorm:"column:is_featured;default:false"`

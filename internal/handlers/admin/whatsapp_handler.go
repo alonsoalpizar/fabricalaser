@@ -29,14 +29,23 @@ func NewWhatsappHandler(rc *redis.Client) *WhatsappHandler {
 // Sessions (paginated, filterable)
 // ─────────────────────────────────────────────
 
-// GET /api/v1/admin/whatsapp/sessions?q=&from=&to=&page=1&limit=20
+// GET /api/v1/admin/whatsapp/sessions?q=&from=&to=&channel=wa|tg|all&page=1&limit=20
+//
+// channel: "wa"=solo WhatsApp, "tg"=solo Telegram, "" o "all"=ambos.
+// El backend reusa la tabla whatsapp_conversations donde Telegram se persiste
+// con prefijo "tg:" en la columna phone.
 func (h *WhatsappHandler) GetSessions(w http.ResponseWriter, r *http.Request) {
+	channel := r.URL.Query().Get("channel")
+	if channel == "all" {
+		channel = ""
+	}
 	filter := repository.SessionFilter{
-		Query: r.URL.Query().Get("q"),
-		From:  r.URL.Query().Get("from"),
-		To:    r.URL.Query().Get("to"),
-		Page:  queryInt(r, "page", 1),
-		Limit: queryInt(r, "limit", 20),
+		Query:   r.URL.Query().Get("q"),
+		From:    r.URL.Query().Get("from"),
+		To:      r.URL.Query().Get("to"),
+		Channel: channel,
+		Page:    queryInt(r, "page", 1),
+		Limit:   queryInt(r, "limit", 20),
 	}
 	if filter.Limit > 100 {
 		filter.Limit = 100

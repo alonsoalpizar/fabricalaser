@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asistente | Admin FabricaLaser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css?v=6">
+  <script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
+</head>
+<body class="page-chat">
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="content-header">
+        <div>
+          <h1 class="content-title">Asistente FabricaLaser</h1>
+          <div class="content-breadcrumb">
+            <a href="/admin/">Dashboard</a>
+            <span>/</span>
+            <span>Asistente</span>
+          </div>
+        </div>
+        <button class="btn btn-secondary" id="btnReset" onclick="resetConversation()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          Nueva conversación
+        </button>
+      </header>
+
+      <div class="content-body chat-body">
+        <div id="messages" class="chat-messages">
+          <!-- Welcome inicial -->
+        </div>
+        <div class="chat-input-bar">
+          <div class="chat-input-wrap">
+            <textarea id="input" placeholder="Preguntá lo que necesités cotizar..." rows="1"></textarea>
+          </div>
+          <button class="chat-send-btn" id="btnSend" onclick="sendMessage()" title="Enviar (Enter)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+        <div class="chat-input-hint">
+          <kbd>Enter</kbd> envía · <kbd>Shift</kbd> + <kbd>Enter</kbd> nueva línea
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="admin.js?v=6"></script>
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('input');
+    const btnSend = document.getElementById('btnSend');
+    const btnReset = document.getElementById('btnReset');
+
+    let busy = false;
+    let currentSessionID = '';
+
+    marked.setOptions({ gfm: true, breaks: true });
+
+    // ─── Iconos SVG (con width/height explícitos como cinturón y tirantes) ───
+    const chatIcons = {
+      bot: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
+      sparkle: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"/></svg>'
+    };
+
+    // ─── Sugerencias del welcome screen ──────────────────────────────────────
+    const suggestions = [
+      { label: 'Catálogo', text: '50 llaveros redondos blancos de 5cm' },
+      { label: 'Cotización custom', text: '20 placas de acrílico 10x15cm grabado vectorial, material lo damos nosotros' },
+      { label: 'Buscar cliente', text: '¿Qué le cotizamos al cliente con cédula 117520936?' },
+      { label: 'Listar materiales', text: '¿Qué materiales podemos cortar?' }
+    ];
+
+    function renderWelcome() {
+      messagesEl.innerHTML = `
+        <div class="chat-welcome">
+          <div class="chat-welcome-icon">${chatIcons.sparkle}</div>
+          <h2>¿En qué te ayudo?</h2>
+          <p>Cotizá rápido productos del catálogo o trabajos personalizados. También puedo buscar clientes y traer cotizaciones previas.</p>
+          <div class="chat-suggestions">
+            ${suggestions.map(s => `
+              <button class="chat-suggestion" data-prompt="${escapeAttr(s.text)}">
+                <span class="chat-suggestion-label">${s.label}</span>
+                <span class="chat-suggestion-text">${escapeHTML(s.text)}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      // Bind clicks de sugerencias
+      messagesEl.querySelectorAll('.chat-suggestion').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const text = btn.getAttribute('data-prompt');
+          inputEl.value = text;
+          autoResize();
+          inputEl.focus();
+        });
+      });
+    }
+
+    function renderMarkdown(text) {
+      return DOMPurify.sanitize(marked.parse(text || ''));
+    }
+
+    function escapeHTML(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function escapeAttr(s) {
+      return escapeHTML(s).replace(/"/g, '&quot;');
+    }
+
+    function appendMessage(role, content, toolCalls) {
+      const welcome = messagesEl.querySelector('.chat-welcome');
+      if (welcome) welcome.remove();
+
+      // System messages (errores) — sin avatar, centrados
+      if (role === 'system') {
+        const sys = document.createElement('div');
+        sys.className = 'chat-msg system';
+        sys.textContent = content;
+        messagesEl.appendChild(sys);
+        scrollToBottom();
+        return;
+      }
+
+      const row = document.createElement('div');
+      row.className = 'chat-row ' + role;
+
+      // Avatar
+      const avatar = document.createElement('div');
+      avatar.className = 'chat-avatar ' + role;
+      avatar.innerHTML = role === 'user' ? 'TÚ' : chatIcons.bot;
+      row.appendChild(avatar);
+
+      // Burbuja con autor
+      const bubble = document.createElement('div');
+      bubble.style.minWidth = '0'; // Para que el contenido haga shrink correctamente
+      bubble.style.maxWidth = '100%';
+
+      const author = document.createElement('div');
+      author.className = 'chat-author';
+      author.textContent = role === 'user' ? 'Vos' : 'Asistente';
+      bubble.appendChild(author);
+
+      const msg = document.createElement('div');
+      msg.className = 'chat-msg';
+      if (role === 'user') {
+        msg.textContent = content;
+      } else {
+        msg.innerHTML = renderMarkdown(content);
+
+        if (toolCalls && toolCalls.length > 0) {
+          const toolsLine = document.createElement('div');
+          toolsLine.className = 'chat-msg-tools';
+          const label = document.createElement('span');
+          label.className = 'chat-msg-tools-label';
+          label.textContent = 'Tools';
+          toolsLine.appendChild(label);
+          toolCalls.forEach(tc => {
+            const chip = document.createElement('span');
+            chip.className = 'chat-tool-chip';
+            chip.textContent = tc.name;
+            toolsLine.appendChild(chip);
+          });
+          msg.appendChild(toolsLine);
+        }
+      }
+      bubble.appendChild(msg);
+      row.appendChild(bubble);
+
+      messagesEl.appendChild(row);
+      scrollToBottom();
+    }
+
+    function scrollToBottom() {
+      requestAnimationFrame(() => { messagesEl.scrollTop = messagesEl.scrollHeight; });
+    }
+
+    function showTyping() {
+      const t = document.createElement('div');
+      t.className = 'chat-typing';
+      t.id = 'typingIndicator';
+      t.innerHTML = '<span></span><span></span><span></span>';
+      messagesEl.appendChild(t);
+      scrollToBottom();
+    }
+
+    function hideTyping() {
+      const t = document.getElementById('typingIndicator');
+      if (t) t.remove();
+    }
+
+    function setBusy(b) {
+      busy = b;
+      btnSend.disabled = b;
+      inputEl.disabled = b;
+      btnReset.disabled = b;
+    }
+
+    async function loadHistory() {
+      try {
+        const data = await apiGet('/admin/chat/history');
+        currentSessionID = data.session_id || '';
+        if (data.messages && data.messages.length > 0) {
+          messagesEl.innerHTML = '';
+          for (const m of data.messages) {
+            appendMessage(m.role, m.content, null);
+          }
+        } else {
+          renderWelcome();
+        }
+      } catch (err) {
+        console.error('Failed to load history:', err);
+        renderWelcome();
+      }
+    }
+
+    async function sendMessage() {
+      if (busy) return;
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      appendMessage('user', text, null);
+      inputEl.value = '';
+      autoResize();
+      setBusy(true);
+      showTyping();
+
+      try {
+        const data = await apiPost('/admin/chat/message', { content: text });
+        hideTyping();
+        currentSessionID = data.session_id || currentSessionID;
+        appendMessage('model', data.reply || '_(respuesta vacía)_', data.tool_calls);
+      } catch (err) {
+        hideTyping();
+        appendMessage('system', '⚠ Error: ' + (err.message || 'No se pudo procesar la consulta'));
+        console.error(err);
+      } finally {
+        setBusy(false);
+        inputEl.focus();
+      }
+    }
+
+    async function resetConversation() {
+      if (busy) return;
+      if (!confirm('¿Iniciar una nueva conversación?\n\nLa conversación actual quedará archivada para auditoría.')) return;
+
+      try {
+        await apiPost('/admin/chat/reset', {});
+        currentSessionID = '';
+        renderWelcome();
+        inputEl.focus();
+      } catch (err) {
+        showToast('No se pudo reiniciar: ' + err.message, 'error');
+      }
+    }
+
+    function autoResize() {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 200) + 'px';
+    }
+
+    inputEl.addEventListener('input', autoResize);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const ok = await initAdmin('asistente');
+      if (!ok) return;
+      await loadHistory();
+      inputEl.focus();
+    });
+  </script>
+</body>
+</html>

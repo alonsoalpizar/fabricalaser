@@ -48,6 +48,9 @@ func (h *BlankHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if blank.Accessories == nil {
 		blank.Accessories = []byte("[]")
 	}
+	if blank.Aliases == nil {
+		blank.Aliases = []byte("[]")
+	}
 	blank.IsActive = true
 	if err := h.repo.Create(&blank); err != nil {
 		respondError(w, http.StatusInternalServerError, "DB_ERROR", err.Error())
@@ -90,6 +93,9 @@ func (h *BlankHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if updates.Accessories != nil {
 		existing.Accessories = updates.Accessories
+	}
+	if updates.Aliases != nil {
+		existing.Aliases = updates.Aliases
 	}
 
 	if err := h.repo.Update(existing); err != nil {
