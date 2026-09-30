@@ -113,7 +113,7 @@ img { max-width: 100%; height: auto; display: block; }
 /* ===== NAVBAR ===== */
 .nav {
   position: fixed;
-  top: 0;
+  top: 42px;
   left: 0;
   right: 0;
   z-index: 1000;
@@ -265,7 +265,7 @@ img { max-width: 100%; height: auto; display: block; }
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 120px 24px 80px;
+  padding: 162px 24px 80px;
   position: relative;
   overflow: hidden;
 }
@@ -892,7 +892,7 @@ img { max-width: 100%; height: auto; display: block; }
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: #25D366;
+  background: var(--red-laser);
   color: white;
   padding: 16px 36px;
   border-radius: 8px;
@@ -904,10 +904,62 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .btn-whatsapp:hover {
-  background: #20BD5A;
+  background: var(--red-bright);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.3);
+  box-shadow: 0 8px 24px var(--red-glow);
   color: white;
+}
+
+/* ===== AVISO WHATSAPP BANNER ===== */
+.wa-notice-bar {
+  background: #1a1200;
+  border-bottom: 1px solid #6b4c00;
+  padding: 9px 24px;
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  height: 42px;
+  display: flex;
+  align-items: center;
+}
+.wa-notice-bar .wa-notice-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  overflow: hidden;
+}
+.wa-notice-bar .wa-icon {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  opacity: 0.9;
+}
+.wa-notice-bar .wa-notice-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  color: #f5d06a;
+  line-height: 1;
+}
+.wa-notice-bar .wa-notice-text strong {
+  font-weight: 600;
+  color: #fce08a;
+}
+@media (max-width: 768px) {
+  .wa-notice-bar { height: 44px; padding: 0 12px; }
+  .wa-notice-bar .wa-notice-text { font-size: 11.5px; }
+  .wa-notice-text-long { display: none; }
+  .wa-notice-text-short { display: inline; }
+}
+@media (min-width: 769px) {
+  .wa-notice-text-long { display: inline; }
+  .wa-notice-text-short { display: none; }
 }
 
 /* ===== FOOTER ===== */
@@ -1249,7 +1301,8 @@ footer {
   .nav-links { display: none; }
   .nav-toggle { display: block; }
 
-  .hero { min-height: auto; padding: 120px 24px 60px; }
+  .hero { min-height: auto; padding: 172px 24px 60px; }
+  .nav { top: 44px; }
   .hero-logo { max-width: 400px; }
   .hero-stats { grid-template-columns: repeat(2, 1fr); }
 
@@ -1276,6 +1329,17 @@ footer {
 </style>
 </head>
 <body>
+
+<!-- AVISO WHATSAPP — Habilitación META en proceso -->
+<div class="wa-notice-bar">
+  <div class="wa-notice-inner">
+    <svg class="wa-icon" viewBox="0 0 24 24" fill="#f5d06a"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    <span class="wa-notice-text">
+      <span class="wa-notice-text-long"><strong>Aviso:</strong> WhatsApp no disponible &mdash; completamos habilitaci&oacute;n con Meta. Disculp&aacute; las molestias. Us&aacute; el <strong>chat del sitio</strong> para consultarnos.</span>
+      <span class="wa-notice-text-short"><strong>WhatsApp no disponible</strong> &mdash; us&aacute; el chat del sitio.</span>
+    </span>
+  </div>
+</div>
 
 <!-- NAVBAR -->
 <nav class="nav">
@@ -1627,7 +1691,7 @@ footer {
       <div class="process-step">
         <div class="process-number">1</div>
         <h3>Contact&aacute;nos</h3>
-        <p>Escribinos por WhatsApp o cotiz&aacute; online. Cont&aacute;nos tu proyecto y te asesoramos sobre materiales y t&eacute;cnicas.</p>
+        <p>Escribinos a trav&eacute;s del chat del sitio o cotiz&aacute; online. Cont&aacute;nos tu proyecto y te asesoramos sobre materiales y t&eacute;cnicas.</p>
       </div>
 
       <div class="process-step">
@@ -1715,8 +1779,16 @@ footer {
       <h2 class="section-title">&iquest;Listo para tu pr&oacute;ximo proyecto?</h2>
       <p class="section-subtitle">Escribinos y hacemos realidad tu idea. Respuesta r&aacute;pida, asesor&iacute;a incluida, calidad garantizada.</p>
 
+      <!-- Aviso política de citas -->
+      <div style="background:rgba(155,32,32,0.10);border:1px solid rgba(155,32,32,0.30);border-radius:10px;padding:16px 22px;margin-bottom:28px;text-align:left;max-width:580px;margin-left:auto;margin-right:auto;">
+        <p style="font-family:'Inter',sans-serif;font-size:13px;color:var(--text-secondary);line-height:1.7;margin:0;">
+          <strong style="color:var(--text-primary);font-size:14px;">Atendemos &uacute;nicamente con cita previa, sin excepciones.</strong><br>
+          Somos un negocio principalmente virtual &mdash; no contamos con tienda abierta al p&uacute;blico. Toda coordinaci&oacute;n de visitas y entregas se agenda previamente a trav&eacute;s de nuestros canales digitales.
+        </p>
+      </div>
+
       <div class="cta-actions">
-        <button class="btn-whatsapp" onclick="flOpenChat()">
+        <button class="btn-primary" onclick="flOpenChat()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/><path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
           Chatear con el Asistente
         </button>
@@ -1726,15 +1798,18 @@ footer {
         </button>
       </div>
 
-      <p style="margin-top: 20px; font-size: 13px; color: var(--text-muted); font-family: 'Inter', sans-serif;">
-        Tambi&eacute;n pod&eacute;s escribirnos por
-        <a href="https://wa.me/50670183073" target="_blank" rel="noopener" style="color: #25D366; text-decoration: none; font-weight: 500;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366" style="vertical-align: -2px; margin-right: 2px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>WhatsApp</a>
-        o
+      <!-- Aviso WhatsApp temporalmente fuera -->
+      <div style="margin-top:24px;background:rgba(107,76,0,0.15);border:1px solid rgba(107,76,0,0.40);border-radius:8px;padding:12px 18px;max-width:540px;margin-left:auto;margin-right:auto;display:flex;align-items:flex-start;gap:10px;">
+        <svg style="flex-shrink:0;margin-top:2px;" width="15" height="15" viewBox="0 0 24 24" fill="#f5d06a"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        <p style="font-family:'Inter',sans-serif;font-size:12px;color:#c8a84a;line-height:1.6;margin:0;">
+          <strong>WhatsApp temporalmente deshabilitado.</strong> Pedimos disculpas — el n&uacute;mero <strong>7018-3073</strong> no est&aacute; recibiendo mensajes mientras completamos la habilitaci&oacute;n con Meta. Por el momento, el chat del sitio es la v&iacute;a m&aacute;s directa para consultarnos.
+        </p>
+      </div>
+
+      <p style="margin-top: 16px; font-size: 13px; color: var(--text-muted); font-family: 'Inter', sans-serif;">
         <a href="https://t.me/FabricalaserBot" target="_blank" rel="noopener" style="color: #26A5E4; text-decoration: none; font-weight: 500;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="#26A5E4" style="vertical-align: -2px; margin-right: 2px;"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>Telegram</a>
-      </p>
-      <p style="margin-top: 10px; font-size: 13px; color: var(--text-muted);">
+        &nbsp;&middot;&nbsp;
         info@fabricalaser.com &middot; San Jos&eacute;, Costa Rica
       </p>
     </div>
@@ -1774,7 +1849,7 @@ footer {
       <div class="footer-col">
         <h4>Contacto</h4>
         <ul>
-          <li><a href="https://wa.me/50670183073" target="_blank" rel="noopener">WhatsApp: 7018-3073</a></li>
+          <li><span style="color:var(--text-muted);cursor:default;" title="Temporalmente fuera de servicio — habilitación Meta en proceso">WhatsApp: 7018-3073 <span style="font-size:10px;color:#c8a84a;">(en habilitación)</span></span></li>
           <li><a href="https://t.me/FabricalaserBot" target="_blank" rel="noopener">Telegram: @FabricalaserBot</a></li>
           <li><a href="mailto:info@fabricalaser.com">info@fabricalaser.com</a></li>
           <li><a href="#contacto">San Jos&eacute;, Costa Rica</a></li>
@@ -1831,11 +1906,11 @@ footer {
           Google
         </a>
 
-        <!-- WhatsApp -->
-        <a href="https://wa.me/50670183073" target="_blank" rel="noopener" class="social-link" aria-label="WhatsApp">
+        <!-- WhatsApp — deshabilitado mientras Meta aprueba habilitación -->
+        <span class="social-link" style="opacity:0.35;cursor:not-allowed;" title="WhatsApp temporalmente no disponible — habilitación Meta en proceso" aria-label="WhatsApp (no disponible)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           WhatsApp
-        </a>
+        </span>
 
         <!-- Telegram -->
         <a href="https://t.me/FabricalaserBot" target="_blank" rel="noopener" class="social-link" aria-label="Telegram">

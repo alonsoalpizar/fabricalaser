@@ -257,12 +257,16 @@ func (e *toolExecutor) execCalcularCotizacion(ctx context.Context, args map[stri
 		engraveTypeID = 1
 	}
 
-	var vectorComplexityFactor float64
+	// Factores de geometría sintética cargados desde system_config.
+	// rasterFillFactor introducido en migración 035 (caso medallas 2026-05-11):
+	// el bounding box completo asume 100% relleno e inflaba precios 2-3×.
+	var vectorComplexityFactor, rasterFillFactor float64
 	if cfg, err := e.configLoader.Load(); err == nil {
 		vectorComplexityFactor = cfg.GetSyntheticVectorComplexityFactor()
+		rasterFillFactor = cfg.GetSyntheticRasterFillFactor()
 	}
 
-	analysis := pricing.BuildSyntheticAnalysis(altoCM*10, anchoCM*10, incluyeCorte, engraveTypeID, vectorComplexityFactor)
+	analysis := pricing.BuildSyntheticAnalysis(altoCM*10, anchoCM*10, incluyeCorte, engraveTypeID, vectorComplexityFactor, rasterFillFactor)
 
 	pr, err := e.calculator.Calculate(
 		analysis, techID, materialID, engraveTypeID,

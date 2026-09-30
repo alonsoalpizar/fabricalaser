@@ -118,8 +118,8 @@ func (s *Sender) SendText(ctx context.Context, to, text string) error {
 		"recipient_type":    "individual",
 		"to":                to,
 		"type":              "text",
-		"text": map[string]string{
-			"preview_url": "false",
+		"text": map[string]interface{}{
+			"preview_url": false,
 			"body":        text,
 		},
 	}

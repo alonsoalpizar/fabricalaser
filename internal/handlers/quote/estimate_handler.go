@@ -89,16 +89,20 @@ func (h *Handler) HandleEstimate(w http.ResponseWriter, r *http.Request) {
 	altoMM := req.AltoCM * 10
 	anchoMM := req.AnchoCM * 10
 
-	// Cargar factor de complejidad vectorial desde system_config.
-	// El perímetro del bounding box subestima el recorrido real de un logo/texto
-	// (~3×-5× menos), así que el factor lo amplifica. Configurable desde admin.
-	var vectorComplexityFactor float64
+	// Cargar factores de geometría sintética desde system_config.
+	// - vectorComplexityFactor amplifica el perímetro del bounding box (subestima
+	//   el recorrido real de logos/texto ~3×-5×).
+	// - rasterFillFactor reduce el bounding box (no todo el rectángulo está
+	//   grabado; ver migración 035, caso medallas 2026-05-11).
+	// Ambos configurables desde admin sin recompilar.
+	var vectorComplexityFactor, rasterFillFactor float64
 	if config, err := h.configLoader.Load(); err == nil {
 		vectorComplexityFactor = config.GetSyntheticVectorComplexityFactor()
+		rasterFillFactor = config.GetSyntheticRasterFillFactor()
 	}
 
 	// Construir SVGAnalysis sintético desde las medidas
-	analysis := pricing.BuildSyntheticAnalysis(altoMM, anchoMM, req.IncluyeCorte, req.EngraveTypeID, vectorComplexityFactor)
+	analysis := pricing.BuildSyntheticAnalysis(altoMM, anchoMM, req.IncluyeCorte, req.EngraveTypeID, vectorComplexityFactor, rasterFillFactor)
 
 	// Llamar al Calculator sin modificar su lógica
 	priceResult, err := h.calculator.Calculate(

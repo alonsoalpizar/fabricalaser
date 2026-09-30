@@ -402,6 +402,16 @@ func (c *PricingConfig) GetSyntheticVectorComplexityFactor() float64 {
 	return c.GetSystemConfigFloat("synthetic_vector_complexity_factor", 3.5)
 }
 
+// GetSyntheticRasterFillFactor returns the fill factor (0.0-1.0) applied to
+// the bounding box when constructing a synthetic RasterAreaMM2 for quotes
+// without a real SVG (WhatsApp / admin chat tool).
+// 1.0 = full bounding box (overestimates designs with partial fill).
+// Default 0.5 = realistic for logos/designs with partial fill.
+// Origen: migración 035 (caso medallas 2026-05-11). Configurable via system_config.
+func (c *PricingConfig) GetSyntheticRasterFillFactor() float64 {
+	return c.GetSystemConfigFloat("synthetic_raster_fill_factor", 0.5)
+}
+
 // GetMinOrderAmount returns the minimum final price in CRC.
 // Below this value the winning pricing model is lifted to minimum.
 // 0 (default) disables the floor.
