@@ -171,7 +171,7 @@ type Client interface {
 // Valores verificados contra listas de proveedores al 2026-04.
 // Actualizar con cuidado — un modelo inexistente rompe TestConnection en construcción.
 var DefaultModels = map[string]string{
-	"vertex":    "gemini-2.5-flash",  // alineado con uso actual en el proyecto
+	"vertex":    "gemini-3.5-flash-lite", // 2.5-flash se retira 16-20/10/2026 (migración 2026-09-30)
 	"deepseek":  "deepseek-chat",
 	"kimi":      "moonshot-v1-8k",
 	"openai":    "gpt-4.1-mini", // más capable y económico que gpt-4o-mini

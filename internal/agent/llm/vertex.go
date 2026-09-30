@@ -17,7 +17,7 @@ import (
 // provee las credenciales vía ADC, por lo que cfg.APIKey se ignora.
 const (
 	vertexProjectID = "div-aloalpizar"
-	vertexLocation  = "us-central1"
+	vertexLocation  = "global" // Gemini 3.x solo existe en global (migración 2026-09-30)
 
 	vertexTestTimeout = 10 * time.Second
 )
